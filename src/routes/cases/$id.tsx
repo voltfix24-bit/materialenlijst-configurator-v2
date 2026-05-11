@@ -34,7 +34,7 @@ function CaseDetailPage() {
   useEffect(() => { if (caseRow?.station_naam) setNaam(caseRow.station_naam); }, [caseRow?.station_naam]);
 
   const updateCase = useMutation({
-    mutationFn: async (patch: Record<string, unknown>) => {
+    mutationFn: async (patch: { station_naam?: string | null; status?: string }) => {
       const { error } = await supabase.from("cases").update(patch).eq("id", id);
       if (error) throw error;
     },
