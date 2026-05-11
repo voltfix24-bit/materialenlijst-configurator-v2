@@ -14,33 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_instellingen: {
+        Row: {
+          sleutel: string
+          updated_at: string
+          waarde: string | null
+        }
+        Insert: {
+          sleutel: string
+          updated_at?: string
+          waarde?: string | null
+        }
+        Update: {
+          sleutel?: string
+          updated_at?: string
+          waarde?: string | null
+        }
+        Relationships: []
+      }
       artikelen: {
         Row: {
+          aantal_in_verpakking: number | null
           actief: boolean
+          alternatief_artikel_nummer: string | null
           artikel_nummer: string
+          basis_eenheid: string | null
           categorie: string | null
           created_at: string
           eenheid: string
           id: string
           korte_omschrijving: string
+          status: string | null
         }
         Insert: {
+          aantal_in_verpakking?: number | null
           actief?: boolean
+          alternatief_artikel_nummer?: string | null
           artikel_nummer: string
+          basis_eenheid?: string | null
           categorie?: string | null
           created_at?: string
           eenheid?: string
           id?: string
           korte_omschrijving: string
+          status?: string | null
         }
         Update: {
+          aantal_in_verpakking?: number | null
           actief?: boolean
+          alternatief_artikel_nummer?: string | null
           artikel_nummer?: string
+          basis_eenheid?: string | null
           categorie?: string | null
           created_at?: string
           eenheid?: string
           id?: string
           korte_omschrijving?: string
+          status?: string | null
         }
         Relationships: []
       }
