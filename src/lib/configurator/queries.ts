@@ -16,7 +16,7 @@ export function useStamdata(caseType: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("rmu_configuraties")
-        .select("*, rmu_artikel:rmu_artikel_id(*), frame_artikel:frame_artikel_id(*)")
+        .select("*, rmu_artikel:artikelen!rmu_configuraties_rmu_artikel_id_fkey(*), frame_artikel:artikelen!rmu_configuraties_frame_artikel_id_fkey(*)")
         .eq("actief", true);
       if (error) throw error;
       return data ?? [];
