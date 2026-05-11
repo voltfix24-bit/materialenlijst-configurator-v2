@@ -44,6 +44,7 @@ function BeheerPage() {
       </div>
 
       {tab === "artikelen" && <ArtikelenTab />}
+      {tab === "assortiment" && <AssortimentTab />}
       {tab === "rmu" && <RmuTab />}
       {tab === "ms_mof" && <MsMofTab />}
       {tab === "ls_mof" && <LsMofTab />}
