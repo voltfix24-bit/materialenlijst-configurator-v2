@@ -101,6 +101,15 @@ function CaseDetailPage() {
           onChange={(v) => updateCase.mutate({ status: v })}
           options={STATUSSEN}
         />
+        <button
+          onClick={() => exporteer.mutate()}
+          disabled={!heeftMaterialen || exporteer.isPending}
+          className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed"
+          title={heeftMaterialen ? "Exporteer opgeslagen materialen naar Liander template" : "Sla eerst de materiaallijst op"}
+        >
+          {exporteer.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          Exporteren naar Excel
+        </button>
       </div>
 
       <MaterialenConfigurator
