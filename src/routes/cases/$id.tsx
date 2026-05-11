@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { MaterialenConfigurator } from "@/components/configurator/MaterialenConfigurator";
 import { PillGroup } from "@/components/ui-prim/PillGroup";
+import { exporteerNaarTemplate, downloadBlob } from "@/lib/assortiment/excel";
 
 export const Route = createFileRoute("/cases/$id")({
   component: CaseDetailPage,
@@ -40,6 +42,38 @@ function CaseDetailPage() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["case", id] }),
   });
+
+  const { data: opgeslagen } = useQuery({
+    queryKey: ["case-materialen", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("case_materialen")
+        .select("gewenste_hoeveelheid, artikelen:artikel_id(artikel_nummer)")
+        .eq("case_id", id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const exporteer = useMutation({
+    mutationFn: async () => {
+      const items = (opgeslagen ?? [])
+        .map((r) => ({
+          artikel_nummer: (r.artikelen as { artikel_nummer?: string } | null)?.artikel_nummer ?? "",
+          hoeveelheid: Number(r.gewenste_hoeveelheid) || 0,
+        }))
+        .filter((i) => i.artikel_nummer && i.hoeveelheid > 0);
+      const res = await exporteerNaarTemplate(items, caseRow?.case_nummer ?? null);
+      downloadBlob(res.blob, res.filename);
+      return res;
+    },
+    onSuccess: (res) => {
+      toast.success(`Geëxporteerd · ${res.matched} gematcht${res.unmatched.length ? `, ${res.unmatched.length} zonder Liander-nummer` : ""}`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const heeftMaterialen = (opgeslagen?.length ?? 0) > 0;
 
   if (isLoading || !caseRow) {
     return <div className="px-8 py-6 text-sm text-muted-foreground">Laden…</div>;
