@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { PillGroup } from "@/components/ui-prim/PillGroup";
 import { Field, FieldRow } from "@/components/ui-prim/Field";
 
-export const Route = createFileRoute("/cases/")({
+export const Route = createFileRoute("/cases")({
   component: CasesPage,
 });
 
