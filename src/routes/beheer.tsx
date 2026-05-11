@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { AssortimentTab } from "@/components/beheer/AssortimentTab";
 
 export const Route = createFileRoute("/beheer")({
   component: BeheerPage,
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/beheer")({
 
 const TABS = [
   { key: "artikelen", label: "Artikelen" },
+  { key: "assortiment", label: "Assortimentslijst" },
   { key: "rmu", label: "RMU configuraties" },
   { key: "ms_mof", label: "MS mof types" },
   { key: "ls_mof", label: "LS mof types" },
@@ -42,6 +44,7 @@ function BeheerPage() {
       </div>
 
       {tab === "artikelen" && <ArtikelenTab />}
+      {tab === "assortiment" && <AssortimentTab />}
       {tab === "rmu" && <RmuTab />}
       {tab === "ms_mof" && <MsMofTab />}
       {tab === "ls_mof" && <LsMofTab />}
