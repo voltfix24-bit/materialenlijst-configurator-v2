@@ -431,7 +431,11 @@ function MsSection({ config, update, sd }: { config: MaterialenConfig; update: (
                 <Field label="Bestaand kabeltype">
                   <PillGroup
                     value={r.bestaand_type}
-                    onChange={(v) => setRicht(r.id, { bestaand_type: v as "GPLK" | "XLPE" | "XLPE_singel", mof_type_id: null })}
+                    onChange={(v) => {
+                      const next = { ...r, bestaand_type: v as "GPLK" | "XLPE" | "XLPE_singel" };
+                      const m = findMof(next);
+                      setRicht(r.id, { bestaand_type: next.bestaand_type, mof_type_id: m?.id ?? null, mof_handmatig: false });
+                    }}
                     options={[
                       { value: "GPLK", label: "GPLK" },
                       { value: "XLPE", label: "XLPE 3-aderig" },
@@ -442,7 +446,11 @@ function MsSection({ config, update, sd }: { config: MaterialenConfig; update: (
                 <Field label="Doorsnede (mm²)">
                   <PillGroup
                     value={r.doorsnede ? String(r.doorsnede) : ""}
-                    onChange={(v) => setRicht(r.id, { doorsnede: Number(v), mof_type_id: null })}
+                    onChange={(v) => {
+                      const next = { ...r, doorsnede: Number(v) };
+                      const m = findMof(next);
+                      setRicht(r.id, { doorsnede: next.doorsnede, mof_type_id: m?.id ?? null, mof_handmatig: false });
+                    }}
                     options={["50", "70", "95", "120", "150", "240"].map((d) => ({ value: d, label: d }))}
                   />
                 </Field>
@@ -450,7 +458,6 @@ function MsSection({ config, update, sd }: { config: MaterialenConfig; update: (
                   auto ? (
                     <InfoBox type="success">
                       Mof gevonden: <span className="font-mono">{auto.code}</span>{auto.omschrijving ? ` — ${auto.omschrijving}` : ""}
-                      {!r.mof_type_id && setTimeout(() => setRicht(r.id, { mof_type_id: auto.id, mof_handmatig: false }), 0) && null}
                     </InfoBox>
                   ) : (
                     <div className="space-y-2">
