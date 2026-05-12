@@ -394,6 +394,7 @@ export type Database = {
           aantal_v: number
           aantal_velden: number
           actief: boolean
+          bodemplaat_artikel_id: string | null
           code: string
           frame_artikel_id: string | null
           id: string
@@ -407,6 +408,7 @@ export type Database = {
           aantal_v?: number
           aantal_velden?: number
           actief?: boolean
+          bodemplaat_artikel_id?: string | null
           code: string
           frame_artikel_id?: string | null
           id?: string
@@ -420,6 +422,7 @@ export type Database = {
           aantal_v?: number
           aantal_velden?: number
           actief?: boolean
+          bodemplaat_artikel_id?: string | null
           code?: string
           frame_artikel_id?: string | null
           id?: string
@@ -428,6 +431,13 @@ export type Database = {
           rmu_artikel_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "rmu_configuraties_bodemplaat_artikel_id_fkey"
+            columns: ["bodemplaat_artikel_id"]
+            isOneToOne: false
+            referencedRelation: "artikelen"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rmu_configuraties_frame_artikel_id_fkey"
             columns: ["frame_artikel_id"]

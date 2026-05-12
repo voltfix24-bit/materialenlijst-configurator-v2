@@ -24,6 +24,7 @@ type RmuConfig = {
   aantal_v: number;
   rmu_artikel_id: string | null;
   frame_artikel_id: string | null;
+  bodemplaat_artikel_id: string | null;
   actief: boolean;
 };
 
@@ -152,7 +153,7 @@ function ConfigsTable() {
         </Button>
       </div>
       <DataTable
-        headers={["Code", "Merk", "I-Net", "F", "C", "V", "Velden", "RMU artikel", "Actief", ""]}
+        headers={["Code", "Merk", "I-Net", "F", "C", "V", "Velden", "RMU artikel", "Bodemplaat", "Actief", ""]}
         rows={(data as RmuConfig[]).map((c) => [
           c.code,
           c.merk,
@@ -162,6 +163,7 @@ function ConfigsTable() {
           c.aantal_v,
           c.aantal_velden,
           <ArtikelLabel id={c.rmu_artikel_id} />,
+          <ArtikelLabel id={c.bodemplaat_artikel_id} />,
           c.actief ? "Ja" : "Nee",
           <RowActions
             onEdit={() => {
@@ -245,6 +247,14 @@ function ConfigForm({
       </FormField>
       <FormField label="Frame artikel">
         <ArtikelZoeker value={value.frame_artikel_id ?? null} onChange={(id) => set({ frame_artikel_id: id })} categorieSuggesties={["MS schakelinstallati"]} />
+      </FormField>
+      <FormField label="Bodemplaat artikel">
+        <ArtikelZoeker
+          value={value.bodemplaat_artikel_id ?? null}
+          onChange={(id) => set({ bodemplaat_artikel_id: id })}
+          categorieSuggesties={["MS schakelinstallati", "MS voedingsstations"]}
+          placeholder="Zoek bodemplaat artikel..."
+        />
       </FormField>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={value.actief ?? true} onChange={(e) => set({ actief: e.target.checked })} />

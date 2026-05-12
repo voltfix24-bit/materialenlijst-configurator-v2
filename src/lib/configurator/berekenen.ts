@@ -50,6 +50,7 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     const rmu = config.rmuConfig;
     add(map, rmu.rmu_artikel, 1, "RMU");
     add(map, rmu.frame_artikel, 1, "RMU frame");
+    add(map, rmu.bodemplaat_artikel, 1, `Bodemplaat ${rmu.merk} ${rmu.code}`);
 
     const isInet = rmu.is_inet;
     const merk = rmu.merk;

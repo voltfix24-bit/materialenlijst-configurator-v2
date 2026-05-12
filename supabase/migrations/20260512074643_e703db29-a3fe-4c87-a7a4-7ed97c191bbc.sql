@@ -1,0 +1,1 @@
+ALTER TABLE public.rmu_configuraties ADD COLUMN bodemplaat_artikel_id uuid REFERENCES public.artikelen(id);
