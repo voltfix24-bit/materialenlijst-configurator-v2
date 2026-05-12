@@ -251,7 +251,7 @@ export function MsMofTab() {
               </FormField>
             </FormRow>
             <FormField label="Mof artikel">
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id })} />
+              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id })} categorieSuggesties={["MS garnituren"]} />
             </FormField>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={editing.actief ?? true} onChange={(e) => setEditing({ ...editing, actief: e.target.checked })} />
