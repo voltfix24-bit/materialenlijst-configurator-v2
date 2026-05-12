@@ -22,17 +22,17 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
 
   const { data = [] } = useQuery({
     queryKey: key,
-    queryFn: async () => (await supabase.from(table).select("*").eq("mof_type_id", mofTypeId)).data ?? [],
+    queryFn: async () => (await supabase.from(table as any).select("*").eq("mof_type_id", mofTypeId)).data ?? [],
   });
 
   const save = useMutation({
     mutationFn: async (v: Partial<Mat>) => {
       const payload = { ...v, mof_type_id: mofTypeId };
       if (v.id) {
-        const { error } = await supabase.from(table).update(payload).eq("id", v.id);
+        const { error } = await supabase.from(table as any).update(payload).eq("id", v.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from(table).insert(payload as any);
+        const { error } = await supabase.from(table as any).insert(payload as any);
         if (error) throw error;
       }
     },
@@ -46,7 +46,7 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
 
   const del = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from(table).delete().eq("id", id);
+      const { error } = await supabase.from(table as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
