@@ -210,7 +210,7 @@ export function VasteArtikelenTab() {
               </div>
             </FormField>
             <FormField label="Artikel" required>
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} />
+              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} categorieSuggesties={["MS garnituren", "LS garnituren", "MS beveiliging", "Bevestigingsmiddelen"]} />
             </FormField>
             <FormRow>
               <FormField label="Hoeveelheid">
