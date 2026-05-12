@@ -81,6 +81,52 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     }
   }
 
+  // 3b. RMU veld-specifieke artikelen (alleen ABB / Siemens)
+  const isInetCfg = config.rmuInet === "ja";
+  const findArtNr = (nr: string): Artikel | null =>
+    (sd.artikelen.data ?? []).find((a) => a.artikel_nummer === nr) ?? null;
+
+  if (config.rmuConfig && config.rmuMerk !== "Magnefix") {
+    for (const veld of config.rmuVelden ?? []) {
+      if (veld.veldType === "F") {
+        add(map, findArtNr("20041682"), 1, "RMU F-veld eindsluiting");
+        if (config.trafoKabelLengte === "7.25") {
+          add(map, findArtNr("20032539"), 1, "Trafo kabel 7,25m");
+        } else if (config.trafoKabelLengte === "10") {
+          add(map, findArtNr("20032541"), 1, "Trafo kabel 10m");
+        }
+        const buispatroon: Record<string, string> = {
+          "250": "20041591",
+          "400": "20041593",
+          "630": "20041651",
+        };
+        const bpNr = buispatroon[config.trafoKva ?? ""];
+        if (bpNr) add(map, findArtNr(bpNr), 3, "RMU buispatroon");
+      }
+
+      if ((veld.veldType === "C" || veld.veldType === "V") && !veld.isReserve) {
+        if (veld.kabelType === "240AL") {
+          add(map, findArtNr("20040681"), 1, `RMU ${veld.veldType}-veld eindsluiting`);
+        } else if (veld.kabelType === "630AL") {
+          add(map, findArtNr("20040678"), 1, `RMU ${veld.veldType}-veld eindsluiting`);
+          if (veld.veldType === "V") {
+            const ombouw = isInetCfg ? "20043486" : "20043756";
+            add(map, findArtNr(ombouw), 1, "Ombouwset CT 630AL V-veld");
+          }
+        }
+      }
+    }
+
+    // I-Net vaste artikelen
+    if (isInetCfg) {
+      for (const ia of config.iNetArtikelen ?? []) {
+        if (ia.hoeveelheid > 0) {
+          add(map, findArtNr(ia.artikel_nummer), ia.hoeveelheid, "I-Net");
+        }
+      }
+    }
+  }
+
   // 4. MS moffen
   for (const r of config.msRichtingen) {
     if (r.zwaaien === false && r.mof_type_id) {

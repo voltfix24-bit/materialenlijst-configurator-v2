@@ -51,6 +51,44 @@ export interface LsMof {
   overzettingen: number;
 }
 
+export interface RmuVeldConfig {
+  id: string;
+  veldType: "F" | "C" | "V";
+  veldNummer: number;
+  isReserve: boolean;
+  kabelType: "240AL" | "630AL" | "";
+}
+
+export interface INetArtikel {
+  artikel_nummer: string;
+  hoeveelheid: number;
+}
+
+export const DEFAULT_INET_ARTIKELEN: INetArtikel[] = [
+  { artikel_nummer: "20042523", hoeveelheid: 2 },
+  { artikel_nummer: "20016067", hoeveelheid: 2 },
+  { artikel_nummer: "20039640", hoeveelheid: 1 },
+  { artikel_nummer: "20037549", hoeveelheid: 2 },
+  { artikel_nummer: "20015368", hoeveelheid: 2 },
+  { artikel_nummer: "20039770", hoeveelheid: 1 },
+  { artikel_nummer: "20039779", hoeveelheid: 1 },
+];
+
+export function buildRmuVelden(rc: RmuConfig | null): RmuVeldConfig[] {
+  if (!rc) return [];
+  const velden: RmuVeldConfig[] = [];
+  for (let i = 1; i <= rc.aantal_f; i++) {
+    velden.push({ id: crypto.randomUUID(), veldType: "F", veldNummer: i, isReserve: false, kabelType: "" });
+  }
+  for (let i = 1; i <= rc.aantal_c; i++) {
+    velden.push({ id: crypto.randomUUID(), veldType: "C", veldNummer: i, isReserve: false, kabelType: "" });
+  }
+  for (let i = 1; i <= rc.aantal_v; i++) {
+    velden.push({ id: crypto.randomUUID(), veldType: "V", veldNummer: i, isReserve: false, kabelType: "" });
+  }
+  return velden;
+}
+
 export interface MaterialenConfig {
   subType: SubType;
   rmuMerk: RmuMerk;
@@ -58,11 +96,14 @@ export interface MaterialenConfig {
   rmuConfig: RmuConfig | null;
   trafoActie: TrafoActie;
   trafoKva: TrafoKva;
+  trafoKabelLengte: "7.25" | "10" | "";
   vultKabelMeter: number;
   lsRekActie: LsRekActie;
   lsRichtingen: number;
   msRichtingen: MsRichting[];
   lsMoffen: LsMof[];
+  rmuVelden: RmuVeldConfig[];
+  iNetArtikelen: INetArtikel[];
 }
 
 export interface PreviewItem {
@@ -100,7 +141,10 @@ export const emptyConfig = (): MaterialenConfig => ({
   rmuConfig: null,
   trafoActie: "",
   trafoKva: "",
+  trafoKabelLengte: "",
   vultKabelMeter: 0,
+  rmuVelden: [],
+  iNetArtikelen: [],
   lsRekActie: "",
   lsRichtingen: 0,
   msRichtingen: [newRichting()],
