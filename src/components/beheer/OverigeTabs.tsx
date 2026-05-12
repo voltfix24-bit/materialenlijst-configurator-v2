@@ -332,7 +332,7 @@ export function TrafoVultKabelTab() {
               <Input type="number" value={editing.aantal_perskabelschoenen ?? 6} onChange={(e) => setEditing({ ...editing, aantal_perskabelschoenen: Number(e.target.value) })} className="h-9" />
             </FormField>
             <FormField label="Perskabelschoen artikel">
-              <ArtikelZoeker value={editing.perskabelschoen_artikel_id ?? null} onChange={(id) => setEditing({ ...editing, perskabelschoen_artikel_id: id })} />
+              <ArtikelZoeker value={editing.perskabelschoen_artikel_id ?? null} onChange={(id) => setEditing({ ...editing, perskabelschoen_artikel_id: id })} categorieSuggesties={["MS garnituren"]} />
             </FormField>
             <div className="flex justify-end pt-2">
               <Button onClick={() => save.mutate(editing)} disabled={save.isPending}>
