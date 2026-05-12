@@ -24,6 +24,7 @@ type RmuConfig = {
   aantal_v: number;
   rmu_artikel_id: string | null;
   frame_artikel_id: string | null;
+  bodemplaat_artikel_id: string | null;
   actief: boolean;
 };
 
