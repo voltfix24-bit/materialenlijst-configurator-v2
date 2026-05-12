@@ -248,6 +248,14 @@ function ConfigForm({
       <FormField label="Frame artikel">
         <ArtikelZoeker value={value.frame_artikel_id ?? null} onChange={(id) => set({ frame_artikel_id: id })} categorieSuggesties={["MS schakelinstallati"]} />
       </FormField>
+      <FormField label="Bodemplaat artikel">
+        <ArtikelZoeker
+          value={value.bodemplaat_artikel_id ?? null}
+          onChange={(id) => set({ bodemplaat_artikel_id: id })}
+          categorieSuggesties={["MS schakelinstallati", "MS voedingsstations"]}
+          placeholder="Zoek bodemplaat artikel..."
+        />
+      </FormField>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={value.actief ?? true} onChange={(e) => set({ actief: e.target.checked })} />
         Actief
