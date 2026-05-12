@@ -350,7 +350,7 @@ function VeldenTable() {
               I-Net uitvoering
             </label>
             <FormField label="Artikel" required>
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} />
+              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} categorieSuggesties={["MS schakelinstallati", "MS beveiliging", "MS garnituren"]} />
             </FormField>
             <FormRow>
               <FormField label="Hoeveelheid">
