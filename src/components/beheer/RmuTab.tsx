@@ -241,10 +241,10 @@ function ConfigForm({
         </FormField>
       </FormRow>
       <FormField label="RMU artikel" required>
-        <ArtikelZoeker value={value.rmu_artikel_id ?? null} onChange={(id) => set({ rmu_artikel_id: id })} />
+        <ArtikelZoeker value={value.rmu_artikel_id ?? null} onChange={(id) => set({ rmu_artikel_id: id })} categorieSuggesties={["MS schakelinstallati"]} />
       </FormField>
       <FormField label="Frame artikel">
-        <ArtikelZoeker value={value.frame_artikel_id ?? null} onChange={(id) => set({ frame_artikel_id: id })} />
+        <ArtikelZoeker value={value.frame_artikel_id ?? null} onChange={(id) => set({ frame_artikel_id: id })} categorieSuggesties={["MS schakelinstallati"]} />
       </FormField>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={value.actief ?? true} onChange={(e) => set({ actief: e.target.checked })} />
