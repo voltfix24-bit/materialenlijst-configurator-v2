@@ -89,7 +89,7 @@ export function StandaardMaterialenTab() {
               </select>
             </FormField>
             <FormField label="Artikel" required>
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} />
+              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} categorieSuggesties={["MS garnituren", "LS garnituren", "MRO algemeen", "MS voedingsstations"]} />
             </FormField>
             <FormField label="Standaard hoeveelheid">
               <Input type="number" value={editing.standaard_hoeveelheid ?? 1} onChange={(e) => setEditing({ ...editing, standaard_hoeveelheid: Number(e.target.value) })} className="h-9" />
