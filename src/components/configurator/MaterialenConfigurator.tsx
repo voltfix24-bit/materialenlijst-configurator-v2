@@ -266,12 +266,31 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
       c.merk === config.rmuMerk &&
       (config.rmuMerk === "Magnefix" ? true : c.is_inet === isInet),
   );
+
+  const pickConfig = (c: typeof filteredConfigs[number]) => {
+    update({
+      rmuConfig: c,
+      rmuVelden: buildRmuVelden(c),
+      iNetArtikelen:
+        c.is_inet && config.iNetArtikelen.length === 0
+          ? DEFAULT_INET_ARTIKELEN.map((x) => ({ ...x }))
+          : config.iNetArtikelen,
+    });
+  };
+
+  const setVeld = (id: string, patch: Partial<RmuVeldConfig>) => {
+    update({ rmuVelden: config.rmuVelden.map((v) => (v.id === id ? { ...v, ...patch } : v)) });
+  };
+
+  const showVeldKaartjes =
+    !!config.rmuConfig && config.rmuMerk !== "Magnefix" && config.rmuVelden.length > 0;
+
   return (
     <div className="space-y-4">
       <Field label="Merk">
         <PillGroup
           value={config.rmuMerk}
-          onChange={(v) => update({ rmuMerk: v as MaterialenConfig["rmuMerk"], rmuConfig: null, rmuInet: v === "Magnefix" ? "" : config.rmuInet })}
+          onChange={(v) => update({ rmuMerk: v as MaterialenConfig["rmuMerk"], rmuConfig: null, rmuVelden: [], rmuInet: v === "Magnefix" ? "" : config.rmuInet })}
           options={merken.map((m) => ({ value: m, label: m }))}
         />
       </Field>
@@ -279,7 +298,18 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
         <Field label="I-Net">
           <PillGroup
             value={config.rmuInet}
-            onChange={(v) => update({ rmuInet: v as "ja" | "nee", rmuConfig: null })}
+            onChange={(v) => {
+              const next = v as "ja" | "nee";
+              update({
+                rmuInet: next,
+                rmuConfig: null,
+                rmuVelden: [],
+                iNetArtikelen:
+                  next === "ja" && config.iNetArtikelen.length === 0
+                    ? DEFAULT_INET_ARTIKELEN.map((x) => ({ ...x }))
+                    : config.iNetArtikelen,
+              });
+            }}
             options={[{ value: "nee", label: "Nee" }, { value: "ja", label: "Ja (DA)" }]}
           />
         </Field>
@@ -297,7 +327,7 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
                     key={c.id}
                     type="button"
                     data-active={active}
-                    onClick={() => update({ rmuConfig: c })}
+                    onClick={() => pickConfig(c)}
                     className="border border-border bg-surface rounded-md px-3 py-1.5 text-sm hover:bg-accent data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:border-primary"
                   >
                     {c.code}
@@ -315,6 +345,157 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
           </span>
         </InfoBox>
       )}
+
+      {showVeldKaartjes && (
+        <div className="space-y-3 pt-2">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Veldinstellingen</div>
+          {config.rmuVelden.map((veld) => (
+            <VeldKaart
+              key={veld.id}
+              veld={veld}
+              setVeld={setVeld}
+              config={config}
+              update={update}
+              isInet={isInet}
+            />
+          ))}
+        </div>
+      )}
+
+      {showVeldKaartjes && isInet && (
+        <INetArtikelenSection config={config} update={update} sd={sd} />
+      )}
+    </div>
+  );
+}
+
+function VeldKaart({
+  veld,
+  setVeld,
+  config,
+  update,
+  isInet,
+}: {
+  veld: RmuVeldConfig;
+  setVeld: (id: string, patch: Partial<RmuVeldConfig>) => void;
+  config: MaterialenConfig;
+  update: (p: Partial<MaterialenConfig>) => void;
+  isInet: boolean;
+}) {
+  const reserveLocked = veld.veldNummer <= 2;
+  const kabelOpties = [
+    { value: "240AL", label: "3x1x240AL singels" },
+    { value: "630AL", label: "3x1x630AL singels" },
+  ];
+
+  if (veld.veldType === "F") {
+    return (
+      <div className="rounded-md border border-border bg-background/40 p-3 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">F</span>
+          <span className="text-sm font-medium">F-veld — Trafo richting</span>
+        </div>
+        <Field label="Trafo kabel lengte">
+          <PillGroup
+            value={config.trafoKabelLengte}
+            onChange={(v) => update({ trafoKabelLengte: v as MaterialenConfig["trafoKabelLengte"] })}
+            options={[
+              { value: "7.25", label: "7,25 m" },
+              { value: "10", label: "10 m" },
+            ]}
+          />
+        </Field>
+        {config.trafoKva ? (
+          <InfoBox type="info">
+            Vermogen: {config.trafoKva} kVA — buispatroon wordt automatisch bepaald
+          </InfoBox>
+        ) : (
+          <InfoBox type="warning">
+            ⚠ Vul het trafo vermogen in bij de Trafo-sectie
+          </InfoBox>
+        )}
+      </div>
+    );
+  }
+
+  // C of V
+  const aangesloten = !veld.isReserve;
+  return (
+    <div className="rounded-md border border-border bg-background/40 p-3 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">{veld.veldType}</span>
+        <span className="text-sm font-medium">
+          {veld.veldType}-veld {veld.veldNummer} — {veld.veldType === "C" ? "Kabelrichting" : "Vermogensveld"}
+        </span>
+        {reserveLocked && (
+          <span className="text-[10px] text-muted-foreground ml-auto">altijd aangesloten</span>
+        )}
+      </div>
+      {!reserveLocked && (
+        <Field label="Status">
+          <PillGroup
+            value={veld.isReserve ? "reserve" : "aan"}
+            onChange={(v) => setVeld(veld.id, { isReserve: v === "reserve", kabelType: v === "reserve" ? "" : veld.kabelType })}
+            options={[
+              { value: "aan", label: "Aangesloten", color: "green" },
+              { value: "reserve", label: "Reserve", color: "amber" },
+            ]}
+          />
+        </Field>
+      )}
+      {aangesloten && (
+        <Field label="Kabeltype">
+          <PillGroup
+            value={veld.kabelType}
+            onChange={(v) => setVeld(veld.id, { kabelType: v as RmuVeldConfig["kabelType"] })}
+            options={kabelOpties}
+          />
+        </Field>
+      )}
+      {aangesloten && veld.veldType === "V" && veld.kabelType === "630AL" && (
+        <InfoBox type="info">
+          {isInet
+            ? "Ombouwset iMSR (20043486) wordt toegevoegd"
+            : "Ombouwset W4 regMSR (20043756) wordt toegevoegd"}
+        </InfoBox>
+      )}
+    </div>
+  );
+}
+
+function INetArtikelenSection({
+  config,
+  update,
+  sd,
+}: {
+  config: MaterialenConfig;
+  update: (p: Partial<MaterialenConfig>) => void;
+  sd: ReturnType<typeof useStamdata>;
+}) {
+  const setQty = (artikel_nummer: string, hoeveelheid: number) => {
+    update({
+      iNetArtikelen: config.iNetArtikelen.map((ia) =>
+        ia.artikel_nummer === artikel_nummer ? { ...ia, hoeveelheid } : ia,
+      ),
+    });
+  };
+  const findArt = (nr: string) =>
+    (sd.artikelen.data ?? []).find((a) => a.artikel_nummer === nr);
+  return (
+    <div className="space-y-2 pt-2">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">I-Net vaste artikelen</div>
+      <div className="rounded-md border border-border bg-background/40 p-3 space-y-2">
+        {config.iNetArtikelen.map((ia) => {
+          const art = findArt(ia.artikel_nummer);
+          return (
+            <div key={ia.artikel_nummer} className="flex items-center gap-2 text-sm">
+              <span className="font-mono text-xs text-muted-foreground w-20 shrink-0">{ia.artikel_nummer}</span>
+              <span className="flex-1 truncate">{art?.korte_omschrijving ?? "—"}</span>
+              <Stepper value={ia.hoeveelheid} onChange={(v) => setQty(ia.artikel_nummer, v)} min={0} max={50} />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
