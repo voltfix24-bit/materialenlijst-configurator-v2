@@ -241,10 +241,10 @@ function ConfigForm({
         </FormField>
       </FormRow>
       <FormField label="RMU artikel" required>
-        <ArtikelZoeker value={value.rmu_artikel_id ?? null} onChange={(id) => set({ rmu_artikel_id: id })} />
+        <ArtikelZoeker value={value.rmu_artikel_id ?? null} onChange={(id) => set({ rmu_artikel_id: id })} categorieSuggesties={["MS schakelinstallati"]} />
       </FormField>
       <FormField label="Frame artikel">
-        <ArtikelZoeker value={value.frame_artikel_id ?? null} onChange={(id) => set({ frame_artikel_id: id })} />
+        <ArtikelZoeker value={value.frame_artikel_id ?? null} onChange={(id) => set({ frame_artikel_id: id })} categorieSuggesties={["MS schakelinstallati"]} />
       </FormField>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={value.actief ?? true} onChange={(e) => set({ actief: e.target.checked })} />
@@ -350,7 +350,7 @@ function VeldenTable() {
               I-Net uitvoering
             </label>
             <FormField label="Artikel" required>
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} />
+              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} categorieSuggesties={["MS schakelinstallati", "MS beveiliging", "MS garnituren"]} />
             </FormField>
             <FormRow>
               <FormField label="Hoeveelheid">
@@ -453,7 +453,7 @@ function ZekeringenTable() {
               </FormField>
             </FormRow>
             <FormField label="Artikel" required>
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} />
+              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} categorieSuggesties={["MS beveiliging"]} />
             </FormField>
             <FormField label="Hoeveelheid">
               <Input type="number" value={editing.hoeveelheid ?? 3} onChange={(e) => setEditing({ ...editing, hoeveelheid: Number(e.target.value) })} className="h-9" />

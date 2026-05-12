@@ -89,7 +89,7 @@ export function StandaardMaterialenTab() {
               </select>
             </FormField>
             <FormField label="Artikel" required>
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} />
+              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} categorieSuggesties={["MS garnituren", "LS garnituren", "MRO algemeen", "MS voedingsstations"]} />
             </FormField>
             <FormField label="Standaard hoeveelheid">
               <Input type="number" value={editing.standaard_hoeveelheid ?? 1} onChange={(e) => setEditing({ ...editing, standaard_hoeveelheid: Number(e.target.value) })} className="h-9" />
@@ -210,7 +210,7 @@ export function VasteArtikelenTab() {
               </div>
             </FormField>
             <FormField label="Artikel" required>
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} />
+              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} categorieSuggesties={["MS garnituren", "LS garnituren", "MS beveiliging", "Bevestigingsmiddelen"]} />
             </FormField>
             <FormRow>
               <FormField label="Hoeveelheid">
@@ -332,7 +332,7 @@ export function TrafoVultKabelTab() {
               <Input type="number" value={editing.aantal_perskabelschoenen ?? 6} onChange={(e) => setEditing({ ...editing, aantal_perskabelschoenen: Number(e.target.value) })} className="h-9" />
             </FormField>
             <FormField label="Perskabelschoen artikel">
-              <ArtikelZoeker value={editing.perskabelschoen_artikel_id ?? null} onChange={(id) => setEditing({ ...editing, perskabelschoen_artikel_id: id })} />
+              <ArtikelZoeker value={editing.perskabelschoen_artikel_id ?? null} onChange={(id) => setEditing({ ...editing, perskabelschoen_artikel_id: id })} categorieSuggesties={["MS garnituren"]} />
             </FormField>
             <div className="flex justify-end pt-2">
               <Button onClick={() => save.mutate(editing)} disabled={save.isPending}>

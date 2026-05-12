@@ -66,7 +66,7 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
       </div>
       <DataTable
         headers={["Artikel", "Hoeveelheid", "Formule", ""]}
-        rows={(data as Mat[]).map((m) => [
+        rows={(data as unknown as Mat[]).map((m) => [
           <ArtikelLabel id={m.artikel_id} />,
           m.hoeveelheid,
           m.hoeveelheid_formule ?? "—",
@@ -78,7 +78,11 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
         {editing && (
           <div className="space-y-3">
             <FormField label="Artikel" required>
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} />
+              <ArtikelZoeker
+                value={editing.artikel_id ?? null}
+                onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })}
+                categorieSuggesties={table === "ms_mof_materialen" ? ["MS garnituren", "MS beveiliging"] : ["LS garnituren", "LS-install.drd.&snr."]}
+              />
             </FormField>
             <FormRow>
               <FormField label="Hoeveelheid">
@@ -247,7 +251,7 @@ export function MsMofTab() {
               </FormField>
             </FormRow>
             <FormField label="Mof artikel">
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id })} />
+              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id })} categorieSuggesties={["MS garnituren"]} />
             </FormField>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={editing.actief ?? true} onChange={(e) => setEditing({ ...editing, actief: e.target.checked })} />
