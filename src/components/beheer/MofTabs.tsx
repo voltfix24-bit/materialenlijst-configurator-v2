@@ -78,7 +78,11 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
         {editing && (
           <div className="space-y-3">
             <FormField label="Artikel" required>
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} />
+              <ArtikelZoeker
+                value={editing.artikel_id ?? null}
+                onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })}
+                categorieSuggesties={table === "ms_mof_materialen" ? ["MS garnituren", "MS beveiliging"] : ["LS garnituren", "LS-install.drd.&snr."]}
+              />
             </FormField>
             <FormRow>
               <FormField label="Hoeveelheid">
