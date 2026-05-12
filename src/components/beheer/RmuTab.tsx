@@ -453,7 +453,7 @@ function ZekeringenTable() {
               </FormField>
             </FormRow>
             <FormField label="Artikel" required>
-              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} />
+              <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })} categorieSuggesties={["MS beveiliging"]} />
             </FormField>
             <FormField label="Hoeveelheid">
               <Input type="number" value={editing.hoeveelheid ?? 3} onChange={(e) => setEditing({ ...editing, hoeveelheid: Number(e.target.value) })} className="h-9" />
