@@ -153,7 +153,7 @@ function ConfigsTable() {
         </Button>
       </div>
       <DataTable
-        headers={["Code", "Merk", "I-Net", "F", "C", "V", "Velden", "RMU artikel", "Actief", ""]}
+        headers={["Code", "Merk", "I-Net", "F", "C", "V", "Velden", "RMU artikel", "Bodemplaat", "Actief", ""]}
         rows={(data as RmuConfig[]).map((c) => [
           c.code,
           c.merk,
@@ -163,6 +163,7 @@ function ConfigsTable() {
           c.aantal_v,
           c.aantal_velden,
           <ArtikelLabel id={c.rmu_artikel_id} />,
+          <ArtikelLabel id={c.bodemplaat_artikel_id} />,
           c.actief ? "Ja" : "Nee",
           <RowActions
             onEdit={() => {
