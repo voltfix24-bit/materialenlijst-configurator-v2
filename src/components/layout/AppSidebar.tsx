@@ -12,7 +12,7 @@ export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { theme, toggle } = useTheme();
   return (
-    <aside className="w-14 shrink-0 border-r border-border bg-sidebar flex flex-col items-center py-3 gap-1">
+    <aside className="w-14 shrink-0 border-r border-border bg-sidebar flex flex-col items-center py-3 gap-1 sticky top-0 h-screen z-40">
       <div className="w-8 h-8 rounded-md bg-primary/15 text-primary flex items-center justify-center font-semibold text-sm mb-2">
         M
       </div>
