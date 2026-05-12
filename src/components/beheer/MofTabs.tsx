@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -198,7 +199,7 @@ export function MsMofTab() {
               </td></tr>
             )}
             {(data as MsMof[]).map((m) => (
-              <>
+              <React.Fragment key={m.id}>
                 <tr key={m.id} className="hover:bg-accent/40">
                   <td className="px-3 py-2 w-8"><ExpandRow expanded={expanded.has(m.id)} onToggle={() => toggle(m.id)} /></td>
                   <td className="px-3 py-2 font-mono text-xs">{m.code}</td>
@@ -216,7 +217,7 @@ export function MsMofTab() {
                     </td>
                   </tr>
                 )}
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>
@@ -353,7 +354,7 @@ export function LsMofTab() {
               </td></tr>
             )}
             {(data as LsMof[]).map((m) => (
-              <>
+              <React.Fragment key={m.id}>
                 <tr key={m.id} className="hover:bg-accent/40">
                   <td className="px-3 py-2 w-8"><ExpandRow expanded={expanded.has(m.id)} onToggle={() => toggle(m.id)} /></td>
                   <td className="px-3 py-2">{m.type}</td>
@@ -369,7 +370,7 @@ export function LsMofTab() {
                     </td>
                   </tr>
                 )}
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>
