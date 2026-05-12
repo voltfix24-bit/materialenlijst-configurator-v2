@@ -10,6 +10,7 @@ import {
 import appCss from "../styles.css?url";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/lib/theme";
 
 function NotFoundComponent() {
   return (
@@ -65,8 +66,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="nl" className="dark">
-      <head><HeadContent /></head>
+    <html lang="nl" className="dark" suppressHydrationWarning>
+      <head>
+        <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('mc-theme');var d=t==='light'?false:true;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body>
         {children}
         <Scripts />
@@ -79,13 +87,15 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen flex w-full bg-background text-foreground">
-        <AppSidebar />
-        <main className="flex-1 min-w-0">
-          <Outlet />
-        </main>
-      </div>
-      <Toaster />
+      <ThemeProvider>
+        <div className="min-h-screen flex w-full bg-background text-foreground">
+          <AppSidebar />
+          <main className="flex-1 min-w-0">
+            <Outlet />
+          </main>
+        </div>
+        <Toaster />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
