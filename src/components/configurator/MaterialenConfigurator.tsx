@@ -7,11 +7,14 @@ import { Field, FieldRow, InfoBox } from "@/components/ui-prim/Field";
 import { useStamdata } from "@/lib/configurator/queries";
 import { berekenPreview } from "@/lib/configurator/berekenen";
 import {
+  buildRmuVelden,
+  DEFAULT_INET_ARTIKELEN,
   emptyConfig,
   newLsMof,
   newRichting,
   type MaterialenConfig,
   type PreviewItem,
+  type RmuVeldConfig,
   type SubType,
 } from "@/lib/configurator/types";
 import { useMutation } from "@tanstack/react-query";
