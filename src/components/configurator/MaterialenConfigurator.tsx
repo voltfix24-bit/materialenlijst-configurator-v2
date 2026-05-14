@@ -600,6 +600,21 @@ function TrafoSection({ config, update, sd }: { config: MaterialenConfig; update
           options={["250", "400", "630", "1000"].map((k) => ({ value: k, label: `${k} kVA` }))}
         />
       </Field>
+      {config.trafoActie && config.trafoKva && (
+        <InfoBox type="info">
+          {config.trafoActie === "nieuw" && (
+            <>
+              {config.trafoKva !== "1000" ? `Trafo ${config.trafoKva} kVA wordt besteld · ` : ""}
+              U-profielen (2×) · Afschermplaat · Afschermkappen (3×) · Soepele verbinding
+            </>
+          )}
+          {(config.trafoActie === "draaien" || config.trafoActie === "blijft") && config.trafoKva !== "1000" && (
+            <>
+              Aansluitvlag {config.trafoKva === "630" ? "630kVA set" : "200-400kVA"} wordt toegevoegd
+            </>
+          )}
+        </InfoBox>
+      )}
       {config.trafoActie && config.trafoActie !== "blijft" && config.trafoKva && (
         <FieldRow>
           <Field label="Vult kabel (m)">
