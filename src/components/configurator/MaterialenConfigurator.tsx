@@ -836,6 +836,9 @@ function MsSection({ config, update, sd }: { config: MaterialenConfig; update: (
   };
   const removeRicht = (id: string) => update({ msRichtingen: config.msRichtingen.filter((r) => r.id !== id) });
   const addRicht = () => update({ msRichtingen: [...config.msRichtingen, newRichting()] });
+  const updateTrace = (id: string, patch: Partial<MsKabelTrace>) => {
+    update({ msKabelTraces: config.msKabelTraces.map((t) => (t.id === id ? { ...t, ...patch } : t)) });
+  };
 
   const findMof = (r: MaterialenConfig["msRichtingen"][0]) => {
     if (!r.bestaand_type || r.doorsnede == null) return null;
