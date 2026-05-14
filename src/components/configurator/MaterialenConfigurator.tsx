@@ -349,16 +349,21 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
       {showVeldKaartjes && (
         <div className="space-y-3 pt-2">
           <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Veldinstellingen</div>
-          {config.rmuVelden.map((veld) => (
-            <VeldKaart
-              key={veld.id}
-              veld={veld}
-              setVeld={setVeld}
-              config={config}
-              update={update}
-              isInet={isInet}
-            />
-          ))}
+          {config.rmuVelden.map((veld) =>
+            isMagnefix ? (
+              <MagnefixVeldKaart key={veld.id} veld={veld} config={config} update={update} />
+            ) : (
+              <VeldKaart
+                key={veld.id}
+                veld={veld}
+                setVeld={setVeld}
+                config={config}
+                update={update}
+                isInet={isInet}
+                merk={config.rmuMerk}
+              />
+            ),
+          )}
         </div>
       )}
 
