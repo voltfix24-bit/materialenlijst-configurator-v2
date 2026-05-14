@@ -69,6 +69,7 @@ export function emptyMofConfig(): MsMofConfig {
     nieuwDoorsnede: null,
     mofTypeId: null,
     mofHandmatig: false,
+    isEindmof: false,
   };
 }
 
