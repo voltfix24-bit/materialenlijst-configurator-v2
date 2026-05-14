@@ -44,7 +44,7 @@ const RENOVATIE = (s: string) => s === "renovatie_prov" || s === "renovatie_nsa"
 export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Props) {
   const [config, setConfig] = useState<MaterialenConfig>(initialConfig ?? emptyConfig());
   const [open, setOpen] = useState<Record<SectionKey, boolean>>({
-    project: true, rmu: true, trafo: true, lsrek: true, ms: true, ls: true,
+    project: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true,
   });
   const [debounced, setDebounced] = useState(config);
 
