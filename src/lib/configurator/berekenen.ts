@@ -254,5 +254,42 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     }
   }
 
+  // 7. LS-REK (alleen renovatie)
+  if (config.lsRekActie && isRenovatie) {
+    const mespatroon: Record<string, string> = {
+      "250": "20036622",
+      "400": "20036623",
+      "630": "20036624",
+    };
+
+    if (config.lsRekActie === "vervangen") {
+      if (config.lsRekType === "8") add(map, findArtNr("20050813"), 1, "LS-rek 8 richtingen");
+      else if (config.lsRekType === "12") add(map, findArtNr("20050761"), 1, "LS-rek 12 richtingen");
+
+      if (config.lsRekExtraStroken > 0) {
+        add(map, findArtNr("20020042"), config.lsRekExtraStroken, "LS-rek extra stroken");
+      }
+
+      const mpNr = mespatroon[config.trafoKva ?? ""];
+      if (mpNr) add(map, findArtNr(mpNr), 1, "LS-rek beveiliging voedende strook");
+    }
+
+    if (config.lsRekActie === "gehandhaafd" && config.lsRekBeveiligingAanpassen) {
+      const mpNr = mespatroon[config.trafoKva ?? ""];
+      if (mpNr) add(map, findArtNr(mpNr), 1, "LS-rek beveiliging aanpassen");
+    }
+
+    if (config.lsRekOvStuurpunt) {
+      if (config.lsRekSchroefpatroon === "35A") add(map, findArtNr("20001107"), 3, "OV-stuurpunt schroefpatroon");
+      else if (config.lsRekSchroefpatroon === "50A") add(map, findArtNr("20001108"), 3, "OV-stuurpunt schroefpatroon");
+
+      add(map, findArtNr("20040148"), 1, "OV-stuurpunt router");
+      add(map, findArtNr("20040188"), 1, "OV-stuurpunt beugel router");
+      add(map, findArtNr("20039993"), 1, "OV-stuurpunt FlexOV device");
+      add(map, findArtNr("20039994"), 1, "OV-stuurpunt beugel FlexOV");
+      add(map, findArtNr("20040149"), 1, "OV-stuurpunt kabel ethernet");
+    }
+  }
+
   return Array.from(map.values()).sort((a, b) => a.categorie.localeCompare(b.categorie) || a.artikel_nummer.localeCompare(b.artikel_nummer));
 }
