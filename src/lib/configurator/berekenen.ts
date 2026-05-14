@@ -199,6 +199,8 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
         add(map, findArtNr("20038832"), 1, "Aansluitvlag trafo");
       } else if (kva === "630") {
         add(map, findArtNr("20042706"), 1, "Aansluitvlag trafo");
+      } else if (kva === "1000") {
+        add(map, findArtNr("20042707"), 1, "Aansluitvlag trafo");
       }
     }
   }
@@ -257,9 +259,13 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
       const fases = isProv && lm.kanZwaaien === false ? 2 : 1;
       const mult = lm.aantal * fases;
 
-      const lt = (sd.lsMofTypes.data ?? []).find(
+      const ltKandidaten = (sd.lsMofTypes.data ?? []).filter(
         (t) => t.type === lm.type && (t.bestaand_type === lm.bestaandType || t.bestaand_type === "beide"),
       );
+      // Voorkeur voor exacte match boven 'beide'
+      const lt =
+        ltKandidaten.find((t) => t.bestaand_type === lm.bestaandType) ??
+        ltKandidaten.find((t) => t.bestaand_type === "beide");
       if (lt) {
         const mats = (sd.lsMofMaterialen.data ?? []).filter((m) => m.mof_type_id === lt.id);
         for (const ma of mats) {

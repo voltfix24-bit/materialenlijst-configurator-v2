@@ -84,10 +84,10 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
     project: !!config.subType,
     rmu: !!config.rmuConfig,
     trafo: !showTrafo || (!!config.trafoActie && !!config.trafoKva),
-    vultkabel: !showTrafo || config.vultKabelAfstand >= 0,
+    vultkabel: !showTrafo || config.vultKabelAfstand > 0,
     lsrek: !showLsRek || !!config.lsRekActie,
     ms: config.msRichtingen.every(richtingComplete),
-    ls: true,
+    ls: !config.lsMoffenActief || (config.lsMoffen.length > 0 && config.lsMoffen.every((m) => !!m.bestaandType && !!m.type)),
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
     if (k === "trafo") return showTrafo;
@@ -480,7 +480,7 @@ function VeldKaart({
   isInet: boolean;
   merk: string;
 }) {
-  const reserveLocked = veld.veldNummer <= 2;
+  const reserveLocked = veld.veldType === "C" && veld.veldNummer <= 2;
   const kabelOpties = [
     { value: "240AL", label: "3x1x240AL singels" },
     { value: "630AL", label: "3x1x630AL singels" },
@@ -1483,11 +1483,15 @@ function LsMofKaart({
             max={999}
             suffix=" m"
           />
-          {mof.kabelLengteMeters > 0 && (
-            <span className="text-xs text-muted-foreground">
-              = {mof.kabelLengteMeters * mof.aantal}m kabel totaal
-            </span>
-          )}
+          {mof.kabelLengteMeters > 0 && (() => {
+            const fases = isProv && mof.kanZwaaien === false ? 2 : 1;
+            const totaal = mof.kabelLengteMeters * mof.aantal * fases;
+            return (
+              <span className="text-xs text-muted-foreground">
+                = {totaal}m kabel totaal{fases === 2 ? " (×2 fasen: tijdelijk + definitief)" : ""}
+              </span>
+            );
+          })()}
         </div>
       </Field>
 
