@@ -116,6 +116,7 @@ export function ExpandRow({ expanded, onToggle }: { expanded: boolean; onToggle:
 // === MS MOF TAB ===
 
 const BESTAAND_MS = ["GPLK", "XLPE", "XLPE_singel"];
+const NIEUW_MS = ["GPLK", "XLPE", "XLPE_singel", "beide"];
 
 type MsMof = {
   id: string;
@@ -123,6 +124,9 @@ type MsMof = {
   bestaand_type: string;
   bestaand_doorsnede_min: number | null;
   bestaand_doorsnede_max: number | null;
+  nieuwe_type: string | null;
+  nieuwe_doorsnede_min: number | null;
+  nieuwe_doorsnede_max: number | null;
   omschrijving: string | null;
   artikel_id: string | null;
   actief: boolean;
