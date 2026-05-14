@@ -189,6 +189,7 @@ export interface MaterialenConfig {
   lsMoffen: LsMof[];
   rmuVelden: RmuVeldConfig[];
   iNetArtikelen: INetArtikel[];
+  isCompactStation: boolean;
 }
 
 export interface PreviewItem {
@@ -248,4 +249,5 @@ export const emptyConfig = (): MaterialenConfig => ({
   msKabelTraces: [],
   lsMoffenActief: false,
   lsMoffen: [],
+  isCompactStation: false,
 });

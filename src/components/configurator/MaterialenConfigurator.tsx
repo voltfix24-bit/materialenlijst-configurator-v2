@@ -51,7 +51,15 @@ type SectionKey = (typeof SECTIONS)[number]["key"];
 const RENOVATIE = (s: string) => s === "renovatie_prov" || s === "renovatie_nsa";
 
 export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirtyChange }: Props) {
-  const [config, setConfig] = useState<MaterialenConfig>(initialConfig ?? emptyConfig());
+  const isCompact = caseType === "compact";
+  const initial = useMemo(() => {
+    const base = initialConfig ?? emptyConfig();
+    if (isCompact) {
+      return { ...base, isCompactStation: true, subType: "cs_zonder_prov" as SubType };
+    }
+    return { ...base, isCompactStation: false };
+  }, [initialConfig, isCompact]);
+  const [config, setConfig] = useState<MaterialenConfig>(initial);
   const [open, setOpen] = useState<Record<SectionKey, boolean>>({
     project: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true,
   });
@@ -79,8 +87,9 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
     [debounced, sd.isLoading, caseType, sd.artikelen.data, sd.rmuConfigs.data, sd.rmuVeldArtikelen.data, sd.rmuZekeringen.data, sd.trafoVultKabel.data, sd.msMofTypes.data, sd.msMofMaterialen.data, sd.lsMofTypes.data, sd.lsMofMaterialen.data, sd.standaardTemplates.data, sd.stationVaste.data],
   );
 
-  const showTrafo = RENOVATIE(config.subType);
-  const showLsRek = RENOVATIE(config.subType);
+  const showTrafo = !isCompact && RENOVATIE(config.subType);
+  const showLsRek = !isCompact && RENOVATIE(config.subType);
+  const showVultKabel = !isCompact && RENOVATIE(config.subType);
 
   const isProvisorum = config.subType === "cs_met_prov" || config.subType === "renovatie_prov";
   const richtingComplete = (r: MaterialenConfig["msRichtingen"][number]): boolean => {
@@ -95,12 +104,13 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
   const isRenovatie = config.subType === "renovatie_prov" || config.subType === "renovatie_nsa";
   const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
-    rmu: !!config.rmuConfig,
-    trafo: !showTrafo || (!!config.trafoActie && !!config.trafoKva),
-    vultkabel: !isRenovatie || config.vultKabelAfstand > 0,
-    lsrek:
-      !isRenovatie ||
-      (!!config.lsRekActie && (config.lsRekActie === "gehandhaafd" || !!config.lsRekType)),
+    rmu: !!config.rmuConfig && (!isCompact || !!config.trafoKva),
+    trafo: isCompact ? true : (!showTrafo || (!!config.trafoActie && !!config.trafoKva)),
+    vultkabel: isCompact ? true : (!isRenovatie || config.vultKabelAfstand > 0),
+    lsrek: isCompact
+      ? true
+      : (!isRenovatie ||
+        (!!config.lsRekActie && (config.lsRekActie === "gehandhaafd" || !!config.lsRekType))),
     ms: config.msRichtingen.every(richtingComplete),
     ls:
       !config.lsMoffenActief ||
@@ -109,7 +119,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
     if (k === "trafo") return showTrafo;
-    if (k === "vultkabel") return showTrafo;
+    if (k === "vultkabel") return showVultKabel;
     if (k === "lsrek") return showLsRek;
     return true;
   });
@@ -226,7 +236,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
 
         {SECTIONS.map((sec) => {
           if (sec.key === "trafo" && !showTrafo) return null;
-          if (sec.key === "vultkabel" && !showTrafo) return null;
+          if (sec.key === "vultkabel" && !showVultKabel) return null;
           if (sec.key === "lsrek" && !showLsRek) return null;
           return (
             <SectionCard
@@ -238,8 +248,8 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
               summary={sectionSummary(sec.key, config, sd)}
               onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
             >
-              {sec.key === "project" && <ProjectSection config={config} update={update} />}
-              {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} />}
+              {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
+              {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} isCompact={isCompact} />}
               {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
               {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
               {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
@@ -328,7 +338,23 @@ const subTypeLabel = (s: SubType) => ({
 
 // ---------- Sections ----------
 
-function ProjectSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
+function ProjectSection({ config, update, isCompact }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; isCompact: boolean }) {
+  if (isCompact) {
+    return (
+      <div className="space-y-3">
+        <InfoBox type="info">
+          Compact station — prefab. RMU, trafo, telcon, vult kabel en LS-rek zijn aanwezig.
+        </InfoBox>
+        <Field label="Sub-type">
+          <PillGroup
+            value={config.subType}
+            onChange={() => { /* vergrendeld op cs_zonder_prov */ }}
+            options={[{ value: "cs_zonder_prov", label: "CS direct" }]}
+          />
+        </Field>
+      </div>
+    );
+  }
   return (
     <Field label="Sub-type">
       <PillGroup
@@ -354,9 +380,11 @@ function ProjectSection({ config, update }: { config: MaterialenConfig; update: 
   );
 }
 
-function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata> }) {
-  const merken = ["ABB", "Siemens", "Magnefix"];
-  const isInet = config.rmuInet === "ja";
+function RmuSection({ config, update, sd, isCompact }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata>; isCompact: boolean }) {
+  const merken = isCompact ? ["ABB", "Siemens"] : ["ABB", "Siemens", "Magnefix"];
+  // Bij compact: i-Net altijd "nee"
+  const effectiveInet = isCompact ? "nee" : config.rmuInet;
+  const isInet = effectiveInet === "ja";
   const filteredConfigs = (sd.rmuConfigs.data ?? []).filter(
     (c) =>
       c.merk === config.rmuMerk &&
@@ -380,17 +408,28 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
 
   const showVeldKaartjes = !!config.rmuConfig && config.rmuVelden.length > 0;
   const isMagnefix = config.rmuMerk === "Magnefix";
+  const showConfigPicker = !!config.rmuMerk && (isCompact || isMagnefix || !!config.rmuInet);
 
   return (
     <div className="space-y-4">
+      {isCompact && (
+        <InfoBox type="info">
+          RMU is aanwezig — wordt niet besteld. Keuze bepaalt buispatronen en eindsluitingen.
+        </InfoBox>
+      )}
       <Field label="Merk">
         <PillGroup
           value={config.rmuMerk}
-          onChange={(v) => update({ rmuMerk: v as MaterialenConfig["rmuMerk"], rmuConfig: null, rmuVelden: [], rmuInet: v === "Magnefix" ? "" : config.rmuInet })}
+          onChange={(v) => update({
+            rmuMerk: v as MaterialenConfig["rmuMerk"],
+            rmuConfig: null,
+            rmuVelden: [],
+            rmuInet: isCompact ? "nee" : (v === "Magnefix" ? "" : config.rmuInet),
+          })}
           options={merken.map((m) => ({ value: m, label: m }))}
         />
       </Field>
-      {config.rmuMerk && config.rmuMerk !== "Magnefix" && (
+      {!isCompact && config.rmuMerk && config.rmuMerk !== "Magnefix" && (
         <Field label="I-Net">
           <PillGroup
             value={config.rmuInet}
@@ -410,7 +449,7 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
           />
         </Field>
       )}
-      {config.rmuMerk && (config.rmuMerk === "Magnefix" || config.rmuInet) && (
+      {showConfigPicker && (
         <Field label="Configuratie">
           {filteredConfigs.length === 0 ? (
             <p className="text-xs text-muted-foreground">Geen configuraties gevonden voor deze combinatie.</p>
@@ -442,6 +481,41 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
         </InfoBox>
       )}
 
+      {isCompact && config.rmuConfig && (
+        <>
+          <Field label="Trafo vermogen (kVA) — bepaalt buispatronen en LS-rek beveiliging">
+            <PillGroup
+              value={config.trafoKva}
+              onChange={(v) => update({ trafoKva: v as MaterialenConfig["trafoKva"] })}
+              options={[
+                { value: "250", label: "250 kVA" },
+                { value: "400", label: "400 kVA" },
+                { value: "630", label: "630 kVA" },
+                { value: "1000", label: "1000 kVA" },
+              ]}
+            />
+          </Field>
+          {config.trafoKva && (
+            <InfoBox type="info">
+              LS-rek beveiliging: mespatroon {config.trafoKva} kVA wordt automatisch toegevoegd (3×)
+            </InfoBox>
+          )}
+          <Field label="Aantal aan te sluiten LS-kabels">
+            <Stepper
+              value={config.lsRekAanSluitenKabels}
+              onChange={(v) => update({ lsRekAanSluitenKabels: v })}
+              min={0}
+              max={99}
+            />
+          </Field>
+          {config.lsRekAanSluitenKabels > 0 && (
+            <InfoBox type="info">
+              K56 U bevestigingsklem ({config.lsRekAanSluitenKabels * 2}×) + kabelinlegklem ({config.lsRekAanSluitenKabels}×)
+            </InfoBox>
+          )}
+        </>
+      )}
+
       {showVeldKaartjes && (
         <div className="space-y-3 pt-2">
           <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Veldinstellingen</div>
@@ -457,6 +531,7 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
                 update={update}
                 isInet={isInet}
                 merk={config.rmuMerk}
+                isCompact={isCompact}
               />
             ),
           )}
@@ -493,6 +568,7 @@ function VeldKaart({
   update,
   isInet,
   merk,
+  isCompact,
 }: {
   veld: RmuVeldConfig;
   setVeld: (id: string, patch: Partial<RmuVeldConfig>) => void;
@@ -500,6 +576,7 @@ function VeldKaart({
   update: (p: Partial<MaterialenConfig>) => void;
   isInet: boolean;
   merk: string;
+  isCompact: boolean;
 }) {
   const reserveLocked = (veld.veldType === "C" || veld.veldType === "V") && veld.veldNummer <= 2;
   const kabelOpties = [
@@ -516,23 +593,25 @@ function VeldKaart({
           <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">{badge}</span>
           <span className="text-sm font-medium">{label}</span>
         </div>
-        <Field label="Trafo kabel lengte">
-          <PillGroup
-            value={config.trafoKabelLengte}
-            onChange={(v) => update({ trafoKabelLengte: v as MaterialenConfig["trafoKabelLengte"] })}
-            options={[
-              { value: "7.25", label: "7,25 m" },
-              { value: "10", label: "10 m" },
-            ]}
-          />
-        </Field>
+        {!isCompact && (
+          <Field label="Trafo kabel lengte">
+            <PillGroup
+              value={config.trafoKabelLengte}
+              onChange={(v) => update({ trafoKabelLengte: v as MaterialenConfig["trafoKabelLengte"] })}
+              options={[
+                { value: "7.25", label: "7,25 m" },
+                { value: "10", label: "10 m" },
+              ]}
+            />
+          </Field>
+        )}
         {config.trafoKva ? (
           <InfoBox type="info">
             Vermogen: {config.trafoKva} kVA — buispatroon wordt automatisch bepaald
           </InfoBox>
         ) : (
           <InfoBox type="warning">
-            ⚠ Vul het trafo vermogen in bij de Trafo-sectie
+            ⚠ Vul het trafo vermogen in {isCompact ? "hierboven" : "bij de Trafo-sectie"}
           </InfoBox>
         )}
       </div>
