@@ -84,11 +84,12 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
 
   const isProvisorum = config.subType === "cs_met_prov" || config.subType === "renovatie_prov";
   const richtingComplete = (r: MaterialenConfig["msRichtingen"][number]): boolean => {
-    if (!r.mofTijdelijk.mofTypeId) return false;
     if (isProvisorum) {
       if (r.kanZwaaien === null) return false;
-      if (r.kanZwaaien === false && !r.mofDefinitief?.mofTypeId) return false;
+      if (r.kanZwaaien === true) return true;
+      if (!r.mofDefinitief?.mofTypeId) return false;
     }
+    if (!r.mofTijdelijk.mofTypeId) return false;
     return true;
   };
   const isRenovatie = config.subType === "renovatie_prov" || config.subType === "renovatie_nsa";
