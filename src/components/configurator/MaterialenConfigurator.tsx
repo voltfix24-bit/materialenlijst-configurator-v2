@@ -13,6 +13,8 @@ import {
   newLsMof,
   newRichting,
   type MaterialenConfig,
+  type MsKabelTrace,
+  type MsKabelType,
   type PreviewItem,
   type RmuVeldConfig,
   type SubType,
