@@ -205,10 +205,8 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     if (config.trafoActie === "draaien" || config.trafoActie === "blijft") {
       if (kva === "250" || kva === "400") {
         add(map, findArtNr("20038832"), 1, "Aansluitvlag trafo");
-      } else if (kva === "630") {
+      } else if (kva === "630" || kva === "1000") {
         add(map, findArtNr("20042706"), 1, "Aansluitvlag trafo");
-      } else if (kva === "1000") {
-        add(map, findArtNr("20042707"), 1, "Aansluitvlag trafo");
       }
     }
   }
