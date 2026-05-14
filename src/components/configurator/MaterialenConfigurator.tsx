@@ -583,10 +583,7 @@ function INetArtikelenSection({
   );
 }
 
-function TrafoSection({ config, update, sd }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata> }) {
-  const vk = config.trafoKva
-    ? (sd.trafoVultKabel.data ?? []).find((v) => v.trafo_kva === Number(config.trafoKva))
-    : null;
+function TrafoSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata> }) {
   return (
     <div className="space-y-4">
       <Field label="Actie">
@@ -622,17 +619,61 @@ function TrafoSection({ config, update, sd }: { config: MaterialenConfig; update
           )}
         </InfoBox>
       )}
-      {config.trafoActie && config.trafoActie !== "blijft" && config.trafoKva && (
-        <FieldRow>
-          <Field label="Vult kabel (m)">
-            <Stepper value={config.vultKabelMeter} onChange={(v) => update({ vultKabelMeter: v })} max={500} suffix="m" />
-          </Field>
-          {vk && (
-            <InfoBox type="info">
-              {vk.aantal_kabels}× {vk.kabel_doorsnede}mm² · {vk.aantal_perskabelschoenen} perskabelschoenen
-            </InfoBox>
+    </div>
+  );
+}
+
+interface VultKabelSpec {
+  kabelArtNr: string;
+  aantalKabels: number;
+  persArtNr: string;
+  aantalPers: number;
+  omschrijving: string;
+}
+
+const VULT_KABEL_SPECS: Record<string, VultKabelSpec> = {
+  "250": { kabelArtNr: "20030299", aantalKabels: 4, persArtNr: "20000986", aantalPers: 8, omschrijving: "4× 1x185mm² Cu (enkelvoudig)" },
+  "400": { kabelArtNr: "20030300", aantalKabels: 4, persArtNr: "20017790", aantalPers: 8, omschrijving: "4× 1x300mm² Cu (enkelvoudig)" },
+  "630": { kabelArtNr: "20030299", aantalKabels: 8, persArtNr: "20000986", aantalPers: 16, omschrijving: "8× 1x185mm² Cu (dubbel uitgevoerd)" },
+  "1000": { kabelArtNr: "20030300", aantalKabels: 8, persArtNr: "20017790", aantalPers: 16, omschrijving: "8× 1x300mm² Cu (dubbel uitgevoerd)" },
+};
+
+export { VULT_KABEL_SPECS };
+
+function VultKabelSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
+  const spec = config.trafoKva ? VULT_KABEL_SPECS[config.trafoKva] : null;
+  const totaalMeters = spec ? Math.ceil(config.vultKabelAfstand * spec.aantalKabels) : 0;
+  return (
+    <div className="space-y-4">
+      {!config.trafoKva && (
+        <InfoBox type="warning">⚠ Vul eerst het trafo vermogen in bij de Trafo-sectie</InfoBox>
+      )}
+      {spec && (
+        <InfoBox type="info">
+          {spec.omschrijving} · Afstand × {spec.aantalKabels} = totaal kabelmeters
+        </InfoBox>
+      )}
+      <Field label="Afstand trafo → LS-rek (meter)">
+        <div className="flex items-center gap-3">
+          <Stepper
+            value={config.vultKabelAfstand}
+            onChange={(v) => update({ vultKabelAfstand: v })}
+            min={0}
+            max={50}
+            suffix="m"
+          />
+          {spec && config.vultKabelAfstand > 0 && (
+            <span className="text-sm text-muted-foreground">
+              = {totaalMeters} m kabel totaal
+              {spec.aantalKabels >= 8 && " (dubbel uitgevoerd)"}
+            </span>
           )}
-        </FieldRow>
+        </div>
+      </Field>
+      {spec && config.vultKabelAfstand > 0 && (
+        <InfoBox type="success">
+          Wordt toegevoegd: {totaalMeters}m {spec.kabelArtNr} · {spec.aantalPers}× perskabelschoen · 1× muurbeugel
+        </InfoBox>
       )}
     </div>
   );
