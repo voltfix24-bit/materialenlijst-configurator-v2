@@ -282,8 +282,8 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
     update({ rmuVelden: config.rmuVelden.map((v) => (v.id === id ? { ...v, ...patch } : v)) });
   };
 
-  const showVeldKaartjes =
-    !!config.rmuConfig && config.rmuMerk !== "Magnefix" && config.rmuVelden.length > 0;
+  const showVeldKaartjes = !!config.rmuConfig && config.rmuVelden.length > 0;
+  const isMagnefix = config.rmuMerk === "Magnefix";
 
   return (
     <div className="space-y-4">
