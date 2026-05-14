@@ -142,7 +142,7 @@ export const emptyConfig = (): MaterialenConfig => ({
   trafoActie: "",
   trafoKva: "",
   trafoKabelLengte: "",
-  vultKabelMeter: 0,
+  vultKabelAfstand: 0,
   rmuVelden: [],
   iNetArtikelen: [],
   lsRekActie: "",
