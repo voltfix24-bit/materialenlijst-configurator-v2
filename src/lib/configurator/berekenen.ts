@@ -72,36 +72,38 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
   // 3. RMU
   if (config.rmuConfig) {
     const rmu = config.rmuConfig;
-    add(map, rmu.rmu_artikel, 1, "RMU");
-    add(map, rmu.frame_artikel, 1, "RMU frame");
-    add(map, rmu.bodemplaat_artikel, 1, `Bodemplaat ${rmu.merk} ${rmu.code}`);
+    if (!isCompact) {
+      add(map, rmu.rmu_artikel, 1, "RMU");
+      add(map, rmu.frame_artikel, 1, "RMU frame");
+      add(map, rmu.bodemplaat_artikel, 1, `Bodemplaat ${rmu.merk} ${rmu.code}`);
 
-    const isInet = rmu.is_inet;
-    const merk = rmu.merk;
-    const veldArts = (sd.rmuVeldArtikelen.data ?? []).filter(
-      (v) => v.merk === merk && v.is_inet === isInet,
-    );
-    const N = rmu.aantal_velden;
-    for (const va of veldArts) {
-      const counts: Record<string, number> = {
-        F: rmu.aantal_f,
-        C: rmu.aantal_c,
-        V: rmu.aantal_v,
-        "*": N,
-      };
-      const n = counts[va.veld_type] ?? 0;
-      if (n <= 0) continue;
-      const qty = va.hoeveelheid_formule
-        ? evaluateFormula(va.hoeveelheid_formule, { N: n })
-        : Number(va.hoeveelheid) * n;
-      add(map, (va as ArtikelLike).artikel, qty, `RMU velden ${va.veld_type}`);
-    }
+      const isInet = rmu.is_inet;
+      const merk = rmu.merk;
+      const veldArts = (sd.rmuVeldArtikelen.data ?? []).filter(
+        (v) => v.merk === merk && v.is_inet === isInet,
+      );
+      const N = rmu.aantal_velden;
+      for (const va of veldArts) {
+        const counts: Record<string, number> = {
+          F: rmu.aantal_f,
+          C: rmu.aantal_c,
+          V: rmu.aantal_v,
+          "*": N,
+        };
+        const n = counts[va.veld_type] ?? 0;
+        if (n <= 0) continue;
+        const qty = va.hoeveelheid_formule
+          ? evaluateFormula(va.hoeveelheid_formule, { N: n })
+          : Number(va.hoeveelheid) * n;
+        add(map, (va as ArtikelLike).artikel, qty, `RMU velden ${va.veld_type}`);
+      }
 
-    // Zekeringen op basis van trafoKva
-    if (config.trafoKva) {
-      const kva = Number(config.trafoKva);
-      const z = (sd.rmuZekeringen.data ?? []).find((x) => x.merk === merk && x.trafo_kva === kva);
-      if (z) add(map, (z as ArtikelLike).artikel, Number(z.hoeveelheid), `RMU zekering ${kva}kVA`);
+      // Zekeringen op basis van trafoKva
+      if (config.trafoKva) {
+        const kva = Number(config.trafoKva);
+        const z = (sd.rmuZekeringen.data ?? []).find((x) => x.merk === rmu.merk && x.trafo_kva === kva);
+        if (z) add(map, (z as ArtikelLike).artikel, Number(z.hoeveelheid), `RMU zekering ${kva}kVA`);
+      }
     }
   }
 
