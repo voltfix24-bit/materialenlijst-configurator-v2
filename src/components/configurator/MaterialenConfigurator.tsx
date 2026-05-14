@@ -51,7 +51,15 @@ type SectionKey = (typeof SECTIONS)[number]["key"];
 const RENOVATIE = (s: string) => s === "renovatie_prov" || s === "renovatie_nsa";
 
 export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirtyChange }: Props) {
-  const [config, setConfig] = useState<MaterialenConfig>(initialConfig ?? emptyConfig());
+  const isCompact = caseType === "compact";
+  const initial = useMemo(() => {
+    const base = initialConfig ?? emptyConfig();
+    if (isCompact) {
+      return { ...base, isCompactStation: true, subType: "cs_zonder_prov" as SubType };
+    }
+    return { ...base, isCompactStation: false };
+  }, [initialConfig, isCompact]);
+  const [config, setConfig] = useState<MaterialenConfig>(initial);
   const [open, setOpen] = useState<Record<SectionKey, boolean>>({
     project: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true,
   });
@@ -79,8 +87,9 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
     [debounced, sd.isLoading, caseType, sd.artikelen.data, sd.rmuConfigs.data, sd.rmuVeldArtikelen.data, sd.rmuZekeringen.data, sd.trafoVultKabel.data, sd.msMofTypes.data, sd.msMofMaterialen.data, sd.lsMofTypes.data, sd.lsMofMaterialen.data, sd.standaardTemplates.data, sd.stationVaste.data],
   );
 
-  const showTrafo = RENOVATIE(config.subType);
-  const showLsRek = RENOVATIE(config.subType);
+  const showTrafo = !isCompact && RENOVATIE(config.subType);
+  const showLsRek = !isCompact && RENOVATIE(config.subType);
+  const showVultKabel = !isCompact && RENOVATIE(config.subType);
 
   const isProvisorum = config.subType === "cs_met_prov" || config.subType === "renovatie_prov";
   const richtingComplete = (r: MaterialenConfig["msRichtingen"][number]): boolean => {
@@ -95,12 +104,13 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
   const isRenovatie = config.subType === "renovatie_prov" || config.subType === "renovatie_nsa";
   const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
-    rmu: !!config.rmuConfig,
-    trafo: !showTrafo || (!!config.trafoActie && !!config.trafoKva),
-    vultkabel: !isRenovatie || config.vultKabelAfstand > 0,
-    lsrek:
-      !isRenovatie ||
-      (!!config.lsRekActie && (config.lsRekActie === "gehandhaafd" || !!config.lsRekType)),
+    rmu: !!config.rmuConfig && (!isCompact || !!config.trafoKva),
+    trafo: isCompact ? true : (!showTrafo || (!!config.trafoActie && !!config.trafoKva)),
+    vultkabel: isCompact ? true : (!isRenovatie || config.vultKabelAfstand > 0),
+    lsrek: isCompact
+      ? true
+      : (!isRenovatie ||
+        (!!config.lsRekActie && (config.lsRekActie === "gehandhaafd" || !!config.lsRekType))),
     ms: config.msRichtingen.every(richtingComplete),
     ls:
       !config.lsMoffenActief ||
@@ -109,7 +119,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
     if (k === "trafo") return showTrafo;
-    if (k === "vultkabel") return showTrafo;
+    if (k === "vultkabel") return showVultKabel;
     if (k === "lsrek") return showLsRek;
     return true;
   });
