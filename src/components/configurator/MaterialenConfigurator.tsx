@@ -674,6 +674,7 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
               lsRekActie: v as MaterialenConfig["lsRekActie"],
               lsRekType: "",
               lsRekExtraStroken: 0,
+              lsRekAanSluitenKabels: 0,
               lsRekBeveiligingAanpassen: false,
               lsRekOvStuurpunt: false,
               lsRekSchroefpatroon: "",
