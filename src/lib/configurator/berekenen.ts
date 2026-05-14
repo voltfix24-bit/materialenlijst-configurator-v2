@@ -186,8 +186,8 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     }
   }
 
-  // 3c. TRAFO
-  if (config.trafoActie && config.trafoKva) {
+  // 3c. TRAFO — niet bij compact
+  if (!isCompact && config.trafoActie && config.trafoKva) {
     const kva = config.trafoKva;
 
     if (config.trafoActie === "nieuw") {
@@ -214,8 +214,8 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     }
   }
 
-  // 3d. Telcon kabel bevestigingsklem
-  if (config.trafoKabelLengte === "7.25" || config.trafoKabelLengte === "10") {
+  // 3d. Telcon kabel bevestigingsklem — niet bij compact
+  if (!isCompact && (config.trafoKabelLengte === "7.25" || config.trafoKabelLengte === "10")) {
     add(map, findArtNr("20044290"), 8, "Telcon kabel bevestigingsklem");
   }
 
