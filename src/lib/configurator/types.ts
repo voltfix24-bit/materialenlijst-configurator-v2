@@ -6,6 +6,13 @@ export type RmuMerk = "ABB" | "Siemens" | "Magnefix" | "";
 export type TrafoActie = "nieuw" | "blijft" | "draaien" | "";
 export type TrafoKva = "250" | "400" | "630" | "1000" | "";
 export type LsRekActie = "vervangen" | "gehandhaafd" | "";
+export type MsKabelType = "240AL_singel" | "630AL_singel" | "3x240AL" | "";
+
+export interface MsKabelTrace {
+  id: string;
+  kabelType: MsKabelType;
+  lengteMeters: number;
+}
 
 export interface Artikel {
   id: string;
@@ -107,6 +114,7 @@ export interface MaterialenConfig {
   lsRekSchroefpatroon: "35A" | "50A" | "";
   lsRichtingen: number;
   msRichtingen: MsRichting[];
+  msKabelTraces: MsKabelTrace[];
   lsMoffen: LsMof[];
   rmuVelden: RmuVeldConfig[];
   iNetArtikelen: INetArtikel[];
@@ -160,5 +168,6 @@ export const emptyConfig = (): MaterialenConfig => ({
   lsRekSchroefpatroon: "",
   lsRichtingen: 0,
   msRichtingen: [newRichting()],
+  msKabelTraces: [],
   lsMoffen: [],
 });
