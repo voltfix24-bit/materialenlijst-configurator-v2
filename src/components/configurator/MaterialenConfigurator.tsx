@@ -282,8 +282,8 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
     update({ rmuVelden: config.rmuVelden.map((v) => (v.id === id ? { ...v, ...patch } : v)) });
   };
 
-  const showVeldKaartjes =
-    !!config.rmuConfig && config.rmuMerk !== "Magnefix" && config.rmuVelden.length > 0;
+  const showVeldKaartjes = !!config.rmuConfig && config.rmuVelden.length > 0;
+  const isMagnefix = config.rmuMerk === "Magnefix";
 
   return (
     <div className="space-y-4">
@@ -349,16 +349,21 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
       {showVeldKaartjes && (
         <div className="space-y-3 pt-2">
           <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Veldinstellingen</div>
-          {config.rmuVelden.map((veld) => (
-            <VeldKaart
-              key={veld.id}
-              veld={veld}
-              setVeld={setVeld}
-              config={config}
-              update={update}
-              isInet={isInet}
-            />
-          ))}
+          {config.rmuVelden.map((veld) =>
+            isMagnefix ? (
+              <MagnefixVeldKaart key={veld.id} veld={veld} config={config} update={update} />
+            ) : (
+              <VeldKaart
+                key={veld.id}
+                veld={veld}
+                setVeld={setVeld}
+                config={config}
+                update={update}
+                isInet={isInet}
+                merk={config.rmuMerk}
+              />
+            ),
+          )}
         </div>
       )}
 
@@ -369,31 +374,51 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
   );
 }
 
+function veldLabel(merk: string, veldType: "F" | "C" | "V", veldNummer: number): string {
+  if (merk === "Siemens") {
+    if (veldType === "F") return "T-veld — Trafo richting";
+    if (veldType === "C") return `R-veld ${veldNummer} — Kabelrichting`;
+    return `R-veld ${veldNummer} — Vermogensveld`;
+  }
+  if (veldType === "F") return "F-veld — Trafo richting";
+  if (veldType === "C") return `C-veld ${veldNummer} — Kabelrichting`;
+  return `V-veld ${veldNummer} — Vermogensveld`;
+}
+
+function veldBadge(merk: string, veldType: "F" | "C" | "V"): string {
+  if (merk === "Siemens") return veldType === "F" ? "T" : "R";
+  return veldType;
+}
+
 function VeldKaart({
   veld,
   setVeld,
   config,
   update,
   isInet,
+  merk,
 }: {
   veld: RmuVeldConfig;
   setVeld: (id: string, patch: Partial<RmuVeldConfig>) => void;
   config: MaterialenConfig;
   update: (p: Partial<MaterialenConfig>) => void;
   isInet: boolean;
+  merk: string;
 }) {
   const reserveLocked = veld.veldNummer <= 2;
   const kabelOpties = [
     { value: "240AL", label: "3x1x240AL singels" },
     { value: "630AL", label: "3x1x630AL singels" },
   ];
+  const badge = veldBadge(merk, veld.veldType);
+  const label = veldLabel(merk, veld.veldType, veld.veldNummer);
 
   if (veld.veldType === "F") {
     return (
       <div className="rounded-md border border-border bg-background/40 p-3 space-y-3">
         <div className="flex items-center gap-2">
-          <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">F</span>
-          <span className="text-sm font-medium">F-veld — Trafo richting</span>
+          <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">{badge}</span>
+          <span className="text-sm font-medium">{label}</span>
         </div>
         <Field label="Trafo kabel lengte">
           <PillGroup
@@ -423,10 +448,8 @@ function VeldKaart({
   return (
     <div className="rounded-md border border-border bg-background/40 p-3 space-y-3">
       <div className="flex items-center gap-2">
-        <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">{veld.veldType}</span>
-        <span className="text-sm font-medium">
-          {veld.veldType}-veld {veld.veldNummer} — {veld.veldType === "C" ? "Kabelrichting" : "Vermogensveld"}
-        </span>
+        <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">{badge}</span>
+        <span className="text-sm font-medium">{label}</span>
         {reserveLocked && (
           <span className="text-[10px] text-muted-foreground ml-auto">altijd aangesloten</span>
         )}
@@ -459,6 +482,59 @@ function VeldKaart({
             : "Ombouwset W4 regMSR (20043756) wordt toegevoegd"}
         </InfoBox>
       )}
+    </div>
+  );
+}
+
+function MagnefixVeldKaart({
+  veld,
+  config,
+  update,
+}: {
+  veld: RmuVeldConfig;
+  config: MaterialenConfig;
+  update: (p: Partial<MaterialenConfig>) => void;
+}) {
+  if (veld.veldType === "F") {
+    return (
+      <div className="rounded-md border border-border bg-background/40 p-3 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">T</span>
+          <span className="text-sm font-medium">T-veld — Trafo richting</span>
+        </div>
+        <Field label="Trafo kabel lengte">
+          <PillGroup
+            value={config.trafoKabelLengte}
+            onChange={(v) => update({ trafoKabelLengte: v as MaterialenConfig["trafoKabelLengte"] })}
+            options={[
+              { value: "7.25", label: "7,25 m" },
+              { value: "10", label: "10 m" },
+            ]}
+          />
+        </Field>
+        {config.trafoKva ? (
+          <InfoBox type="info">
+            Vermogen: {config.trafoKva} kVA — Magnefix buispatroon wordt automatisch bepaald
+          </InfoBox>
+        ) : (
+          <InfoBox type="warning">
+            ⚠ Vul het trafo vermogen in bij de Trafo-sectie
+          </InfoBox>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-border bg-background/40 p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">K</span>
+        <span className="text-sm font-medium">K-veld {veld.veldNummer} — Kabelrichting</span>
+        <span className="text-[10px] text-muted-foreground ml-auto">materialen automatisch bepaald</span>
+      </div>
+      <InfoBox type="info">
+        Eindsluiting 240AL + afschermset worden automatisch toegevoegd
+      </InfoBox>
     </div>
   );
 }

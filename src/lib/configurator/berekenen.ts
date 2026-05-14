@@ -86,8 +86,41 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
   const findArtNr = (nr: string): Artikel | null =>
     (sd.artikelen.data ?? []).find((a) => a.artikel_nummer === nr) ?? null;
 
-  if (config.rmuConfig && config.rmuMerk !== "Magnefix") {
+  if (config.rmuConfig) {
+    const isMagnefix = config.rmuMerk === "Magnefix";
     for (const veld of config.rmuVelden ?? []) {
+      // ── MAGNEFIX ─────────────────────────────────────────
+      if (isMagnefix) {
+        if (veld.veldType === "F") {
+          add(map, findArtNr("20039303"), 1, "Magnefix T-veld eindsluiting");
+          if (config.trafoKabelLengte === "7.25") {
+            add(map, findArtNr("20032539"), 1, "Trafo kabel 7,25m");
+          } else if (config.trafoKabelLengte === "10") {
+            add(map, findArtNr("20032541"), 1, "Trafo kabel 10m");
+          }
+          const magnefixPatroon: Record<string, string> = {
+            "250": "20019483",
+            "400": "20019484",
+            "630": "20019485",
+          };
+          const mpNr = magnefixPatroon[config.trafoKva ?? ""];
+          if (mpNr) add(map, findArtNr(mpNr), 3, "Magnefix buispatroon");
+        }
+        if (veld.veldType === "C" || veld.veldType === "V") {
+          add(map, findArtNr("20039648"), 1, `Magnefix K-veld ${veld.veldNummer} eindsluiting`);
+          add(map, findArtNr("20018032"), 1, `Magnefix K-veld ${veld.veldNummer} afschermset`);
+        }
+        if (veld.veldType === "C" && veld.veldNummer === 1) {
+          const aantalK = (config.rmuVelden ?? []).filter(
+            (v) => v.veldType === "C" || v.veldType === "V",
+          ).length;
+          const doosNr = aantalK <= 2 ? "20029904" : "20029905";
+          add(map, findArtNr(doosNr), 1, "Magnefix doos met onderdelen");
+        }
+        continue;
+      }
+
+      // ── ABB / SIEMENS ────────────────────────────────────
       if (veld.veldType === "F") {
         add(map, findArtNr("20041682"), 1, "RMU F-veld eindsluiting");
         if (config.trafoKabelLengte === "7.25") {
