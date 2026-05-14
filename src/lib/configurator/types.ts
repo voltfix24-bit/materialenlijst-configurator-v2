@@ -5,7 +5,7 @@ export type CaseType = "NSA" | "provisorium" | "compact" | "custom";
 export type RmuMerk = "ABB" | "Siemens" | "Magnefix" | "";
 export type TrafoActie = "nieuw" | "blijft" | "draaien" | "";
 export type TrafoKva = "250" | "400" | "630" | "1000" | "";
-export type LsRekActie = "nieuw" | "gehandhaafd" | "uitbreiding" | "";
+export type LsRekActie = "vervangen" | "gehandhaafd" | "";
 
 export interface Artikel {
   id: string;
@@ -99,6 +99,11 @@ export interface MaterialenConfig {
   trafoKabelLengte: "7.25" | "10" | "";
   vultKabelAfstand: number;
   lsRekActie: LsRekActie;
+  lsRekType: "8" | "12" | "";
+  lsRekExtraStroken: number;
+  lsRekBeveiligingAanpassen: boolean;
+  lsRekOvStuurpunt: boolean;
+  lsRekSchroefpatroon: "35A" | "50A" | "";
   lsRichtingen: number;
   msRichtingen: MsRichting[];
   lsMoffen: LsMof[];
@@ -146,6 +151,11 @@ export const emptyConfig = (): MaterialenConfig => ({
   rmuVelden: [],
   iNetArtikelen: [],
   lsRekActie: "",
+  lsRekType: "",
+  lsRekExtraStroken: 0,
+  lsRekBeveiligingAanpassen: false,
+  lsRekOvStuurpunt: false,
+  lsRekSchroefpatroon: "",
   lsRichtingen: 0,
   msRichtingen: [newRichting()],
   lsMoffen: [],
