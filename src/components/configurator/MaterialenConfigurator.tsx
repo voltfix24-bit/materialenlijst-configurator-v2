@@ -224,6 +224,8 @@ function sectionSummary(key: SectionKey, c: MaterialenConfig, sd: ReturnType<typ
       return c.rmuConfig ? `${c.rmuConfig.merk} ${c.rmuConfig.code} — ${c.rmuConfig.aantal_velden}-velds` : "Nog in te vullen";
     case "trafo":
       return c.trafoActie && c.trafoKva ? `${c.trafoActie} — ${c.trafoKva} kVA` : "Nog in te vullen";
+    case "vultkabel":
+      return c.vultKabelAfstand > 0 ? `${c.vultKabelAfstand} m afstand` : "Nog in te vullen";
     case "lsrek":
       return c.lsRekActie ? c.lsRekActie : "Nog in te vullen";
     case "ms": {
