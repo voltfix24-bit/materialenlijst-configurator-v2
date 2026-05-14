@@ -143,7 +143,7 @@ function CaseDetailPage() {
           title={heeftMaterialen ? "Exporteer opgeslagen materialen naar Liander template" : "Sla eerst de materiaallijst op"}
         >
           {exporteer.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-          Exporteren naar Excel
+          Exporteren (opgeslagen)
         </button>
       </div>
 
