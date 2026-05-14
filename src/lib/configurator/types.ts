@@ -97,7 +97,7 @@ export interface MaterialenConfig {
   trafoActie: TrafoActie;
   trafoKva: TrafoKva;
   trafoKabelLengte: "7.25" | "10" | "";
-  vultKabelMeter: number;
+  vultKabelAfstand: number;
   lsRekActie: LsRekActie;
   lsRichtingen: number;
   msRichtingen: MsRichting[];
