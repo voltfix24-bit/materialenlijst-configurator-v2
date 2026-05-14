@@ -177,6 +177,7 @@ function CaseDetailPage() {
           caseId={id}
           caseType={caseRow.case_type}
           initialConfig={initialConfig}
+          onDirtyChange={setIsDirty}
         />
       )}
     </div>
