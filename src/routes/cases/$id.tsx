@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { MaterialenConfigurator } from "@/components/configurator/MaterialenConfigurator";
 import { PillGroup } from "@/components/ui-prim/PillGroup";
 import { exporteerNaarTemplate, downloadBlob } from "@/lib/assortiment/excel";
+import { emptyConfig, type MaterialenConfig, type RmuConfig } from "@/lib/configurator/types";
 
 export const Route = createFileRoute("/cases/$id")({
   component: CaseDetailPage,
@@ -73,11 +74,45 @@ function CaseDetailPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Stamdata nodig om opgeslagen rmuConfig referentie te herstellen
+  const { data: rmuConfigs, isLoading: rmuLoading, error: rmuError } = useQuery({
+    queryKey: ["rmu_configuraties"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rmu_configuraties")
+        .select("*, rmu_artikel:artikelen!rmu_configuraties_rmu_artikel_id_fkey(*), frame_artikel:artikelen!rmu_configuraties_frame_artikel_id_fkey(*), bodemplaat_artikel:artikelen!rmu_configuraties_bodemplaat_artikel_id_fkey(*)")
+        .eq("actief", true);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // undefined = nog laden, null = nieuwe case zonder opgeslagen config, object = hersteld
+  const initialConfig = useMemo<MaterialenConfig | null | undefined>(() => {
+    if (!caseRow) return undefined;
+    const raw = caseRow.config_json as Partial<MaterialenConfig> | null;
+    if (!raw || typeof raw !== "object") return null;
+    if (!rmuConfigs) return undefined;
+    const base: MaterialenConfig = { ...emptyConfig(), ...raw } as MaterialenConfig;
+    const savedRmuId = (raw.rmuConfig as { id?: string } | null | undefined)?.id ?? null;
+    base.rmuConfig = savedRmuId
+      ? ((rmuConfigs.find((c) => c.id === savedRmuId) as RmuConfig | undefined) ?? null)
+      : null;
+    return base;
+  }, [caseRow, rmuConfigs]);
+
   const heeftMaterialen = (opgeslagen?.length ?? 0) > 0;
 
   if (isLoading || !caseRow) {
-    return <div className="px-8 py-6 text-sm text-muted-foreground">Laden…</div>;
+    return (
+      <div className="px-8 py-6 text-sm text-muted-foreground flex items-center gap-2">
+        <Loader2 className="w-4 h-4 animate-spin" /> Case laden…
+      </div>
+    );
   }
+
+  const configReady = initialConfig !== undefined;
+  const showRehydrationError = !!rmuError && !!caseRow.config_json;
 
   return (
     <div className="px-6 py-5 max-w-[1500px] mx-auto">
@@ -112,10 +147,24 @@ function CaseDetailPage() {
         </button>
       </div>
 
-      <MaterialenConfigurator
-        caseId={id}
-        caseType={caseRow.case_type}
-      />
+      {showRehydrationError && (
+        <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          Opgeslagen configuratie kon niet volledig worden hersteld: {(rmuError as Error).message}
+        </div>
+      )}
+
+      {!configReady || rmuLoading ? (
+        <div className="px-2 py-12 text-sm text-muted-foreground flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin" /> Configuratie herstellen…
+        </div>
+      ) : (
+        <MaterialenConfigurator
+          key={id}
+          caseId={id}
+          caseType={caseRow.case_type}
+          initialConfig={initialConfig}
+        />
+      )}
     </div>
   );
 }

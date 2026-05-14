@@ -103,8 +103,22 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
 
   const opslaan = useMutation({
     mutationFn: async () => {
-      // sub_type bijwerken
-      await supabase.from("cases").update({ sub_type: config.subType || null }).eq("id", caseId);
+      // Volledige config opslaan als JSON. rmuConfig wordt afgeslankt tot {id};
+      // bij rehydratie wordt het volledige object opgezocht in de stamdata.
+      const configToSave = {
+        ...config,
+        rmuConfig: config.rmuConfig ? { id: config.rmuConfig.id } : null,
+      };
+
+      const { error: caseErr } = await supabase
+        .from("cases")
+        .update({
+          sub_type: config.subType || null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          config_json: configToSave as any,
+        })
+        .eq("id", caseId);
+      if (caseErr) throw caseErr;
 
       // case_materialen vervangen
       await supabase.from("case_materialen").delete().eq("case_id", caseId);
@@ -120,36 +134,29 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
         if (error) throw error;
       }
 
-      // ms moffen
+      // ms moffen — één rij per richting met alle definitief-velden ingebed
       await supabase.from("case_ms_moffen").delete().eq("case_id", caseId);
       if (config.msRichtingen.length > 0) {
-        const rows: Array<{
-          case_id: string; positie: number; zwaaien: boolean;
-          bestaand_type: string | null; doorsnede: number | null;
-          mof_type_id: string | null; mof_handmatig: boolean; fase: string;
-        }> = [];
-        config.msRichtingen.forEach((r, i) => {
-          rows.push({
-            case_id: caseId, positie: i + 1,
-            zwaaien: r.kanZwaaien === true,
-            bestaand_type: r.mofTijdelijk.bestaandType || null,
-            doorsnede: r.mofTijdelijk.bestaandDoorsnede,
-            mof_type_id: r.mofTijdelijk.mofTypeId,
-            mof_handmatig: r.mofTijdelijk.mofHandmatig,
-            fase: isProvisorum ? "tijdelijk" : "enkel",
-          });
-          if (isProvisorum && r.kanZwaaien === false && r.mofDefinitief) {
-            rows.push({
-              case_id: caseId, positie: i + 1,
-              zwaaien: false,
-              bestaand_type: r.mofDefinitief.bestaandType || null,
-              doorsnede: r.mofDefinitief.bestaandDoorsnede,
-              mof_type_id: r.mofDefinitief.mofTypeId,
-              mof_handmatig: r.mofDefinitief.mofHandmatig,
-              fase: "definitief",
-            });
-          }
-        });
+        const rows = config.msRichtingen.map((r, i) => ({
+          case_id: caseId,
+          positie: i + 1,
+          zwaaien: r.kanZwaaien === true,
+          fase: isProvisorum ? "tijdelijk" : "enkel",
+          bestaand_type: r.mofTijdelijk.bestaandType || null,
+          doorsnede: r.mofTijdelijk.bestaandDoorsnede,
+          nieuw_type: r.mofTijdelijk.nieuwType || null,
+          nieuw_doorsnede: r.mofTijdelijk.nieuwDoorsnede,
+          mof_type_id: r.mofTijdelijk.mofTypeId,
+          mof_handmatig: r.mofTijdelijk.mofHandmatig,
+          is_eindmof: r.mofTijdelijk.isEindmof ?? false,
+          mof_definitief_type_id: r.mofDefinitief?.mofTypeId ?? null,
+          def_bestaand_type: r.mofDefinitief?.bestaandType ?? null,
+          def_doorsnede: r.mofDefinitief?.bestaandDoorsnede ?? null,
+          def_nieuw_type: r.mofDefinitief?.nieuwType ?? null,
+          def_nieuw_doorsnede: r.mofDefinitief?.nieuwDoorsnede ?? null,
+          def_mof_handmatig: r.mofDefinitief?.mofHandmatig ?? false,
+          def_is_eindmof: r.mofDefinitief?.isEindmof ?? false,
+        }));
         const { error } = await supabase.from("case_ms_moffen").insert(rows);
         if (error) throw error;
       }
@@ -157,13 +164,21 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
       // ls moffen
       await supabase.from("case_ls_moffen").delete().eq("case_id", caseId);
       if (config.lsMoffenActief && config.lsMoffen.length > 0) {
-        const rows = config.lsMoffen.map((l, i) => ({
+        const rows = config.lsMoffen.map((m, i) => ({
           case_id: caseId,
           positie: i + 1,
-          type: l.type || "verbinding",
-          bestaand_type: l.bestaandType || "GPLK",
-          aantal: l.aantal,
-          overzettingen: l.type === "aftakmof" ? l.aantalAftakken : 0,
+          type: m.type || "verbinding",
+          bestaand_type: m.bestaandType || "GPLK",
+          hoofdkabel_doorsnede: m.hoofdkabelDoorsnede,
+          hoofdkabel_materiaal: m.hoofdkabelMateriaal || null,
+          aantal_aftakken: m.aantalAftakken,
+          aftak_doorsnede: m.aftakDoorsnede,
+          ringklem_artikel_nummer: m.ringklemArtikelNummer,
+          ringklem_handmatig: m.ringklemHandmatig,
+          aantal: m.aantal,
+          kan_zwaaien: m.kanZwaaien,
+          kabel_lengte_meters: m.kabelLengteMeters,
+          overzettingen: 0,
         }));
         const { error } = await supabase.from("case_ls_moffen").insert(rows);
         if (error) throw error;
