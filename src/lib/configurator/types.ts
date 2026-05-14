@@ -50,6 +50,7 @@ export interface MsMofConfig {
   nieuwDoorsnede: number | null;
   mofTypeId: string | null;
   mofHandmatig: boolean;
+  isEindmof: boolean;
 }
 
 export interface MsRichting {
@@ -68,6 +69,7 @@ export function emptyMofConfig(): MsMofConfig {
     nieuwDoorsnede: null,
     mofTypeId: null,
     mofHandmatig: false,
+    isEindmof: false,
   };
 }
 

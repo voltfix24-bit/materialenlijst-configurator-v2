@@ -892,10 +892,18 @@ function MofFormulier({
   onChange: (patch: Partial<import("@/lib/configurator/types").MsMofConfig>) => void;
   msMofTypes: any[];
 }) {
+  const eindmofType = useMemo(
+    () => msMofTypes.find((mt) => mt.code === "EINDMOF") ?? null,
+    [msMofTypes],
+  );
+  const eindmofTypeId: string | null = eindmofType?.id ?? null;
+
   const gevondenMoffen = useMemo(() => {
+    if (mof.isEindmof) return [];
     if (!mof.bestaandType || mof.bestaandDoorsnede == null ||
         !mof.nieuwType || mof.nieuwDoorsnede == null) return [];
     return msMofTypes.filter((mt) =>
+      mt.code !== "EINDMOF" &&
       mt.bestaand_type === mof.bestaandType &&
       mof.bestaandDoorsnede! >= (mt.bestaand_doorsnede_min ?? 0) &&
       mof.bestaandDoorsnede! <= (mt.bestaand_doorsnede_max ?? 9999) &&
@@ -907,11 +915,19 @@ function MofFormulier({
 
   // Auto-select de unieke match
   useEffect(() => {
-    if (gevondenMoffen.length === 1 && !mof.mofHandmatig && mof.mofTypeId !== gevondenMoffen[0].id) {
+    if (!mof.isEindmof && gevondenMoffen.length === 1 && !mof.mofHandmatig && mof.mofTypeId !== gevondenMoffen[0].id) {
       onChange({ mofTypeId: gevondenMoffen[0].id });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gevondenMoffen]);
+  }, [gevondenMoffen, mof.isEindmof]);
+
+  // Sync eindmof mofTypeId zodra type beschikbaar
+  useEffect(() => {
+    if (mof.isEindmof && eindmofTypeId && mof.mofTypeId !== eindmofTypeId) {
+      onChange({ mofTypeId: eindmofTypeId });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mof.isEindmof, eindmofTypeId]);
 
   const kabelOpties = [
     { value: "GPLK", label: "GPLK" },
@@ -923,88 +939,115 @@ function MofFormulier({
     <div className="space-y-3 border-l-2 border-border pl-3">
       <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</div>
 
-      <Field label="Bestaande kabel — type">
+      <Field label="Type verbinding">
         <PillGroup
-          value={mof.bestaandType}
-          onChange={(v) => onChange({ bestaandType: v as any, mofTypeId: null, mofHandmatig: false })}
-          options={kabelOpties.map((o) => ({ value: o.value, label: o.label }))}
+          value={mof.isEindmof ? "eindmof" : "verbinding"}
+          onChange={(v) =>
+            onChange({
+              isEindmof: v === "eindmof",
+              bestaandType: "",
+              bestaandDoorsnede: null,
+              nieuwType: "",
+              nieuwDoorsnede: null,
+              mofTypeId: v === "eindmof" ? eindmofTypeId : null,
+              mofHandmatig: false,
+            })
+          }
+          options={[
+            { value: "verbinding", label: "Verbinding" },
+            { value: "eindmof", label: "Eindmof" },
+          ]}
         />
       </Field>
-      {mof.bestaandType && (
-        <Field label="Bestaande kabel — doorsnede (mm²)">
-          <Stepper
-            value={mof.bestaandDoorsnede ?? 0}
-            onChange={(v) => onChange({ bestaandDoorsnede: v, mofTypeId: null, mofHandmatig: false })}
-            min={0}
-            max={999}
-            suffix=" mm²"
-          />
-        </Field>
-      )}
 
-      <Field label="Nieuwe kabel — type">
-        <PillGroup
-          value={mof.nieuwType}
-          onChange={(v) => onChange({ nieuwType: v as any, mofTypeId: null, mofHandmatig: false })}
-          options={kabelOpties.map((o) => ({ value: o.value, label: o.label }))}
-        />
-      </Field>
-      {mof.nieuwType && (
-        <Field label="Nieuwe kabel — doorsnede (mm²)">
-          <Stepper
-            value={mof.nieuwDoorsnede ?? 0}
-            onChange={(v) => onChange({ nieuwDoorsnede: v, mofTypeId: null, mofHandmatig: false })}
-            min={0}
-            max={999}
-            suffix=" mm²"
-          />
-        </Field>
-      )}
-
-      {mof.bestaandType && mof.bestaandDoorsnede && mof.nieuwType && mof.nieuwDoorsnede ? (
+      {mof.isEindmof ? (
+        <InfoBox type="info">MS eindmof materialen worden automatisch toegevoegd</InfoBox>
+      ) : (
         <>
-          {gevondenMoffen.length === 1 && !mof.mofHandmatig && (
-            <InfoBox type="success">
-              ✓ Gevonden: <span className="font-mono">{gevondenMoffen[0].code}</span>
-              {gevondenMoffen[0].omschrijving ? ` — ${gevondenMoffen[0].omschrijving}` : ""}
-            </InfoBox>
-          )}
-          {gevondenMoffen.length > 1 && (
-            <Field label="Meerdere moffen passen — kies:">
-              <div className="flex flex-wrap gap-1.5">
-                {gevondenMoffen.map((mt) => (
-                  <button
-                    key={mt.id}
-                    type="button"
-                    data-active={mof.mofTypeId === mt.id}
-                    onClick={() => onChange({ mofTypeId: mt.id, mofHandmatig: false })}
-                    className="border border-border bg-surface rounded-md px-2.5 py-1 text-xs hover:bg-accent data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:border-primary"
-                  >
-                    {mt.code}
-                  </button>
-                ))}
-              </div>
+          <Field label="Bestaande kabel — type">
+            <PillGroup
+              value={mof.bestaandType}
+              onChange={(v) => onChange({ bestaandType: v as any, mofTypeId: null, mofHandmatig: false })}
+              options={kabelOpties.map((o) => ({ value: o.value, label: o.label }))}
+            />
+          </Field>
+          {mof.bestaandType && (
+            <Field label="Bestaande kabel — doorsnede (mm²)">
+              <Stepper
+                value={mof.bestaandDoorsnede ?? 0}
+                onChange={(v) => onChange({ bestaandDoorsnede: v, mofTypeId: null, mofHandmatig: false })}
+                min={0}
+                max={999}
+                suffix=" mm²"
+              />
             </Field>
           )}
-          {gevondenMoffen.length === 0 && (
-            <div className="space-y-2">
-              <InfoBox type="warning">⚠ Geen mof gevonden voor deze combinatie — kies handmatig:</InfoBox>
-              <select
-                className="w-full text-xs p-1.5 rounded border border-border bg-input text-foreground"
-                value={mof.mofTypeId ?? ""}
-                onChange={(e) => onChange({ mofTypeId: e.target.value || null, mofHandmatig: true })}
-              >
-                <option value="">Kies mof…</option>
-                {msMofTypes.map((mt) => (
-                  <option key={mt.id} value={mt.id}>
-                    {mt.code}{mt.omschrijving ? ` — ${mt.omschrijving}` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
+
+          <Field label="Nieuwe kabel — type">
+            <PillGroup
+              value={mof.nieuwType}
+              onChange={(v) => onChange({ nieuwType: v as any, mofTypeId: null, mofHandmatig: false })}
+              options={kabelOpties.map((o) => ({ value: o.value, label: o.label }))}
+            />
+          </Field>
+          {mof.nieuwType && (
+            <Field label="Nieuwe kabel — doorsnede (mm²)">
+              <Stepper
+                value={mof.nieuwDoorsnede ?? 0}
+                onChange={(v) => onChange({ nieuwDoorsnede: v, mofTypeId: null, mofHandmatig: false })}
+                min={0}
+                max={999}
+                suffix=" mm²"
+              />
+            </Field>
           )}
+
+          {mof.bestaandType && mof.bestaandDoorsnede && mof.nieuwType && mof.nieuwDoorsnede ? (
+            <>
+              {gevondenMoffen.length === 1 && !mof.mofHandmatig && (
+                <InfoBox type="success">
+                  ✓ Gevonden: <span className="font-mono">{gevondenMoffen[0].code}</span>
+                  {gevondenMoffen[0].omschrijving ? ` — ${gevondenMoffen[0].omschrijving}` : ""}
+                </InfoBox>
+              )}
+              {gevondenMoffen.length > 1 && (
+                <Field label="Meerdere moffen passen — kies:">
+                  <div className="flex flex-wrap gap-1.5">
+                    {gevondenMoffen.map((mt) => (
+                      <button
+                        key={mt.id}
+                        type="button"
+                        data-active={mof.mofTypeId === mt.id}
+                        onClick={() => onChange({ mofTypeId: mt.id, mofHandmatig: false })}
+                        className="border border-border bg-surface rounded-md px-2.5 py-1 text-xs hover:bg-accent data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:border-primary"
+                      >
+                        {mt.code}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+              )}
+              {gevondenMoffen.length === 0 && (
+                <div className="space-y-2">
+                  <InfoBox type="warning">⚠ Geen mof gevonden voor deze combinatie — kies handmatig:</InfoBox>
+                  <select
+                    className="w-full text-xs p-1.5 rounded border border-border bg-input text-foreground"
+                    value={mof.mofTypeId ?? ""}
+                    onChange={(e) => onChange({ mofTypeId: e.target.value || null, mofHandmatig: true })}
+                  >
+                    <option value="">Kies mof…</option>
+                    {msMofTypes.filter((mt) => mt.code !== "EINDMOF").map((mt) => (
+                      <option key={mt.id} value={mt.id}>
+                        {mt.code}{mt.omschrijving ? ` — ${mt.omschrijving}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </>
+          ) : null}
         </>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -1294,7 +1337,13 @@ function LsMofKaart({
         </Field>
       )}
 
-      {mof.bestaandType && (
+      {mof.type === "eindmof" && mof.bestaandType && (
+        <InfoBox type="info">
+          Eindmof materialen worden automatisch toegevoegd incl. aftakklem aarde
+        </InfoBox>
+      )}
+
+      {mof.bestaandType && mof.type !== "eindmof" && (
         <FieldRow>
           <Field label="Hoofdkabel doorsnede (mm²)">
             <Stepper
