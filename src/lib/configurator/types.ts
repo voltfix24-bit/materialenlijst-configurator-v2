@@ -211,9 +211,16 @@ export const newRichting = (): MsRichting => ({
 export const newLsMof = (): LsMof => ({
   id: crypto.randomUUID(),
   type: "",
-  bestaand_type: "",
+  bestaandType: "",
+  hoofdkabelDoorsnede: null,
+  hoofdkabelMateriaal: "",
+  aantalAftakken: 1,
+  aftakDoorsnede: null,
+  ringklemArtikelNummer: null,
+  ringklemHandmatig: false,
   aantal: 1,
-  overzettingen: 0,
+  kanZwaaien: null,
+  kabelLengteMeters: 0,
 });
 
 export const emptyConfig = (): MaterialenConfig => ({
