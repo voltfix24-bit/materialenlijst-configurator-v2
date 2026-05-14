@@ -338,7 +338,23 @@ const subTypeLabel = (s: SubType) => ({
 
 // ---------- Sections ----------
 
-function ProjectSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
+function ProjectSection({ config, update, isCompact }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; isCompact: boolean }) {
+  if (isCompact) {
+    return (
+      <div className="space-y-3">
+        <InfoBox type="info">
+          Compact station — prefab. RMU, trafo, telcon, vult kabel en LS-rek zijn aanwezig.
+        </InfoBox>
+        <Field label="Sub-type">
+          <PillGroup
+            value={config.subType}
+            onChange={() => { /* vergrendeld op cs_zonder_prov */ }}
+            options={[{ value: "cs_zonder_prov", label: "CS direct" }]}
+          />
+        </Field>
+      </div>
+    );
+  }
   return (
     <Field label="Sub-type">
       <PillGroup
