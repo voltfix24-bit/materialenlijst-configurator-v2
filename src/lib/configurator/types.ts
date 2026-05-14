@@ -101,6 +101,7 @@ export interface MaterialenConfig {
   lsRekActie: LsRekActie;
   lsRekType: "8" | "12" | "";
   lsRekExtraStroken: number;
+  lsRekAanSluitenKabels: number;
   lsRekBeveiligingAanpassen: boolean;
   lsRekOvStuurpunt: boolean;
   lsRekSchroefpatroon: "35A" | "50A" | "";
