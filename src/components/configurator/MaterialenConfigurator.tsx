@@ -33,6 +33,7 @@ interface Props {
   caseId: string;
   caseType: string;
   initialConfig?: MaterialenConfig | null;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const SECTIONS = [
