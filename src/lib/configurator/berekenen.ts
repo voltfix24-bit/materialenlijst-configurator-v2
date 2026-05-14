@@ -241,6 +241,9 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
 
     const rollen = Math.ceil(trace.lengteMeters / 40);
     add(map, findArtNr("20018148"), rollen, `MS kabel beschermband trace ${idx}`);
+  }
+
+  // 5. LS moffen
   for (const lm of config.lsMoffen) {
     if (!lm.type || !lm.bestaand_type) continue;
     const lt = (sd.lsMofTypes.data ?? []).find(
