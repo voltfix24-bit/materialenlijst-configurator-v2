@@ -209,19 +209,25 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
   }
 
   // 4. MS moffen
-  for (const r of config.msRichtingen) {
-    if (r.zwaaien === false && r.mof_type_id) {
-      const mt = (sd.msMofTypes.data ?? []).find((m) => m.id === r.mof_type_id);
-      if (mt) {
-        add(map, (mt as ArtikelLike).artikel, 1, `MS mof ${mt.code}`);
-        const mats = (sd.msMofMaterialen.data ?? []).filter((m) => m.mof_type_id === mt.id);
-        for (const ma of mats) {
-          const qty = ma.hoeveelheid_formule
-            ? evaluateFormula(ma.hoeveelheid_formule, { N: 1 })
-            : Number(ma.hoeveelheid);
-          add(map, (ma as ArtikelLike).artikel, qty, `MS mof ${mt.code}`);
-        }
-      }
+  const isProvisorum = config.subType === "cs_met_prov" || config.subType === "renovatie_prov";
+  const addMofConfig = (mof: import("./types").MsMofConfig, label: string) => {
+    if (!mof.mofTypeId) return;
+    const mt = (sd.msMofTypes.data ?? []).find((m) => m.id === mof.mofTypeId);
+    if (!mt) return;
+    add(map, (mt as ArtikelLike).artikel, 1, label);
+    const mats = (sd.msMofMaterialen.data ?? []).filter((m) => m.mof_type_id === mt.id);
+    for (const ma of mats) {
+      const qty = ma.hoeveelheid_formule
+        ? evaluateFormula(ma.hoeveelheid_formule, { N: 1 })
+        : Number(ma.hoeveelheid);
+      add(map, (ma as ArtikelLike).artikel, qty, label);
+    }
+  };
+  for (let i = 0; i < config.msRichtingen.length; i++) {
+    const r = config.msRichtingen[i];
+    addMofConfig(r.mofTijdelijk, `MS verbinding ${i + 1}${isProvisorum ? " (tijdelijk)" : ""}`);
+    if (isProvisorum && r.kanZwaaien === false && r.mofDefinitief) {
+      addMofConfig(r.mofDefinitief, `MS verbinding ${i + 1} (definitief)`);
     }
   }
 

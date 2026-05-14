@@ -116,6 +116,7 @@ export function ExpandRow({ expanded, onToggle }: { expanded: boolean; onToggle:
 // === MS MOF TAB ===
 
 const BESTAAND_MS = ["GPLK", "XLPE", "XLPE_singel"];
+const NIEUW_MS = ["GPLK", "XLPE", "XLPE_singel", "beide"];
 
 type MsMof = {
   id: string;
@@ -123,6 +124,9 @@ type MsMof = {
   bestaand_type: string;
   bestaand_doorsnede_min: number | null;
   bestaand_doorsnede_max: number | null;
+  nieuwe_type: string | null;
+  nieuwe_doorsnede_min: number | null;
+  nieuwe_doorsnede_max: number | null;
   omschrijving: string | null;
   artikel_id: string | null;
   actief: boolean;
@@ -188,14 +192,14 @@ export function MsMofTab() {
         <table className="w-full text-sm">
           <thead className="bg-surface-2 text-muted-foreground">
             <tr>
-              {["", "Code", "Bestaand", "Min mm²", "Max mm²", "Mof artikel", "Actief", ""].map((h) => (
-                <th key={h} className="text-left px-3 py-2 font-mono text-[10px] uppercase tracking-wider">{h}</th>
+              {["", "Code", "Bestaand", "Min mm²", "Max mm²", "Nieuw", "Min mm²", "Max mm²", "Mof artikel", "Actief", ""].map((h, i) => (
+                <th key={i} className="text-left px-3 py-2 font-mono text-[10px] uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {(data as MsMof[]).length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-10 text-center">
+              <tr><td colSpan={11} className="px-3 py-10 text-center">
                 <div className="text-xs text-muted-foreground mb-3">Nog geen MS mof types.</div>
                 <Button onClick={() => { setEditing({ bestaand_type: "GPLK", actief: true }); setOpen(true); }}>
                   <Plus className="h-4 w-4 mr-1" /> Eerste mof type
@@ -210,13 +214,16 @@ export function MsMofTab() {
                   <td className="px-3 py-2">{m.bestaand_type}</td>
                   <td className="px-3 py-2">{m.bestaand_doorsnede_min ?? "—"}</td>
                   <td className="px-3 py-2">{m.bestaand_doorsnede_max ?? "—"}</td>
+                  <td className="px-3 py-2">{m.nieuwe_type ?? "—"}</td>
+                  <td className="px-3 py-2">{m.nieuwe_doorsnede_min ?? "—"}</td>
+                  <td className="px-3 py-2">{m.nieuwe_doorsnede_max ?? "—"}</td>
                   <td className="px-3 py-2"><ArtikelLabel id={m.artikel_id} /></td>
                   <td className="px-3 py-2">{m.actief ? "Ja" : "Nee"}</td>
                   <td className="px-3 py-2"><RowActions onEdit={() => { setEditing(m); setOpen(true); }} onDelete={() => setToDelete(m)} /></td>
                 </tr>
                 {expanded.has(m.id) && (
                   <tr key={m.id + "-exp"}>
-                    <td colSpan={8} className={cn("p-0 border-t border-border")}>
+                    <td colSpan={11} className={cn("p-0 border-t border-border")}>
                       <MofMaterialenSubtable mofTypeId={m.id} table="ms_mof_materialen" />
                     </td>
                   </tr>
@@ -248,6 +255,20 @@ export function MsMofTab() {
               </FormField>
               <FormField label="Max doorsnede mm²">
                 <Input type="number" value={editing.bestaand_doorsnede_max ?? ""} onChange={(e) => setEditing({ ...editing, bestaand_doorsnede_max: e.target.value ? Number(e.target.value) : null })} className="h-9" />
+              </FormField>
+            </FormRow>
+            <FormRow>
+              <FormField label="Nieuw kabeltype">
+                <select value={editing.nieuwe_type ?? ""} onChange={(e) => setEditing({ ...editing, nieuwe_type: e.target.value || null })} className="h-9 rounded-md border border-border bg-surface px-2 text-sm">
+                  <option value="">—</option>
+                  {NIEUW_MS.map((b) => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </FormField>
+              <FormField label="Nieuw min mm²">
+                <Input type="number" value={editing.nieuwe_doorsnede_min ?? ""} onChange={(e) => setEditing({ ...editing, nieuwe_doorsnede_min: e.target.value ? Number(e.target.value) : null })} className="h-9" />
+              </FormField>
+              <FormField label="Nieuw max mm²">
+                <Input type="number" value={editing.nieuwe_doorsnede_max ?? ""} onChange={(e) => setEditing({ ...editing, nieuwe_doorsnede_max: e.target.value ? Number(e.target.value) : null })} className="h-9" />
               </FormField>
             </FormRow>
             <FormField label="Mof artikel">
