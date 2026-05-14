@@ -201,7 +201,10 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
         if (error) throw error;
       }
     },
-    onSuccess: () => toast.success("Materiaallijst opgeslagen"),
+    onSuccess: () => {
+      onDirtyChange?.(false);
+      toast.success("Materiaallijst opgeslagen");
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
