@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PillGroup } from "@/components/ui-prim/PillGroup";
 import { Stepper } from "@/components/ui-prim/Stepper";
