@@ -110,9 +110,6 @@ export interface MaterialenConfig {
   rmuVelden: RmuVeldConfig[];
   iNetArtikelen: INetArtikel[];
 }
-  rmuVelden: RmuVeldConfig[];
-  iNetArtikelen: INetArtikel[];
-}
 
 export interface PreviewItem {
   artikel_id: string;
