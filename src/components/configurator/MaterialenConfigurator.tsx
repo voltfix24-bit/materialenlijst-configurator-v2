@@ -865,110 +865,202 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
   );
 }
 
+function MofFormulier({
+  label,
+  config: mof,
+  onChange,
+  msMofTypes,
+}: {
+  label: string;
+  config: import("@/lib/configurator/types").MsMofConfig;
+  onChange: (patch: Partial<import("@/lib/configurator/types").MsMofConfig>) => void;
+  msMofTypes: any[];
+}) {
+  const gevondenMoffen = useMemo(() => {
+    if (!mof.bestaandType || mof.bestaandDoorsnede == null ||
+        !mof.nieuwType || mof.nieuwDoorsnede == null) return [];
+    return msMofTypes.filter((mt) =>
+      mt.bestaand_type === mof.bestaandType &&
+      mof.bestaandDoorsnede! >= (mt.bestaand_doorsnede_min ?? 0) &&
+      mof.bestaandDoorsnede! <= (mt.bestaand_doorsnede_max ?? 9999) &&
+      (mt.nieuwe_type === mof.nieuwType || mt.nieuwe_type === "beide") &&
+      mof.nieuwDoorsnede! >= (mt.nieuwe_doorsnede_min ?? 0) &&
+      mof.nieuwDoorsnede! <= (mt.nieuwe_doorsnede_max ?? 9999),
+    );
+  }, [mof, msMofTypes]);
+
+  // Auto-select de unieke match
+  useEffect(() => {
+    if (gevondenMoffen.length === 1 && !mof.mofHandmatig && mof.mofTypeId !== gevondenMoffen[0].id) {
+      onChange({ mofTypeId: gevondenMoffen[0].id });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gevondenMoffen]);
+
+  const kabelOpties = [
+    { value: "GPLK", label: "GPLK" },
+    { value: "XLPE", label: "XLPE 3-aderig" },
+    { value: "XLPE_singel", label: "XLPE singel" },
+  ] as const;
+
+  return (
+    <div className="space-y-3 border-l-2 border-border pl-3">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</div>
+
+      <Field label="Bestaande kabel — type">
+        <PillGroup
+          value={mof.bestaandType}
+          onChange={(v) => onChange({ bestaandType: v as any, mofTypeId: null, mofHandmatig: false })}
+          options={kabelOpties.map((o) => ({ value: o.value, label: o.label }))}
+        />
+      </Field>
+      {mof.bestaandType && (
+        <Field label="Bestaande kabel — doorsnede (mm²)">
+          <Stepper
+            value={mof.bestaandDoorsnede ?? 0}
+            onChange={(v) => onChange({ bestaandDoorsnede: v, mofTypeId: null, mofHandmatig: false })}
+            min={0}
+            max={999}
+            suffix=" mm²"
+          />
+        </Field>
+      )}
+
+      <Field label="Nieuwe kabel — type">
+        <PillGroup
+          value={mof.nieuwType}
+          onChange={(v) => onChange({ nieuwType: v as any, mofTypeId: null, mofHandmatig: false })}
+          options={kabelOpties.map((o) => ({ value: o.value, label: o.label }))}
+        />
+      </Field>
+      {mof.nieuwType && (
+        <Field label="Nieuwe kabel — doorsnede (mm²)">
+          <Stepper
+            value={mof.nieuwDoorsnede ?? 0}
+            onChange={(v) => onChange({ nieuwDoorsnede: v, mofTypeId: null, mofHandmatig: false })}
+            min={0}
+            max={999}
+            suffix=" mm²"
+          />
+        </Field>
+      )}
+
+      {mof.bestaandType && mof.bestaandDoorsnede && mof.nieuwType && mof.nieuwDoorsnede ? (
+        <>
+          {gevondenMoffen.length === 1 && !mof.mofHandmatig && (
+            <InfoBox type="success">
+              ✓ Gevonden: <span className="font-mono">{gevondenMoffen[0].code}</span>
+              {gevondenMoffen[0].omschrijving ? ` — ${gevondenMoffen[0].omschrijving}` : ""}
+            </InfoBox>
+          )}
+          {gevondenMoffen.length > 1 && (
+            <Field label="Meerdere moffen passen — kies:">
+              <div className="flex flex-wrap gap-1.5">
+                {gevondenMoffen.map((mt) => (
+                  <button
+                    key={mt.id}
+                    type="button"
+                    data-active={mof.mofTypeId === mt.id}
+                    onClick={() => onChange({ mofTypeId: mt.id, mofHandmatig: false })}
+                    className="border border-border bg-surface rounded-md px-2.5 py-1 text-xs hover:bg-accent data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:border-primary"
+                  >
+                    {mt.code}
+                  </button>
+                ))}
+              </div>
+            </Field>
+          )}
+          {gevondenMoffen.length === 0 && (
+            <div className="space-y-2">
+              <InfoBox type="warning">⚠ Geen mof gevonden voor deze combinatie — kies handmatig:</InfoBox>
+              <select
+                className="w-full text-xs p-1.5 rounded border border-border bg-input text-foreground"
+                value={mof.mofTypeId ?? ""}
+                onChange={(e) => onChange({ mofTypeId: e.target.value || null, mofHandmatig: true })}
+              >
+                <option value="">Kies mof…</option>
+                {msMofTypes.map((mt) => (
+                  <option key={mt.id} value={mt.id}>
+                    {mt.code}{mt.omschrijving ? ` — ${mt.omschrijving}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 function MsSection({ config, update, sd }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata> }) {
-  const setRicht = (id: string, patch: Partial<MaterialenConfig["msRichtingen"][0]>) => {
-    update({ msRichtingen: config.msRichtingen.map((r) => (r.id === id ? { ...r, ...patch } : r)) });
-  };
+  const isProvisorum = config.subType === "cs_met_prov" || config.subType === "renovatie_prov";
   const removeRicht = (id: string) => update({ msRichtingen: config.msRichtingen.filter((r) => r.id !== id) });
   const addRicht = () => update({ msRichtingen: [...config.msRichtingen, newRichting()] });
   const updateTrace = (id: string, patch: Partial<MsKabelTrace>) => {
     update({ msKabelTraces: config.msKabelTraces.map((t) => (t.id === id ? { ...t, ...patch } : t)) });
   };
-
-  const findMof = (r: MaterialenConfig["msRichtingen"][0]) => {
-    if (!r.bestaand_type || r.doorsnede == null) return null;
-    return (sd.msMofTypes.data ?? []).find(
-      (m) =>
-        m.bestaand_type === r.bestaand_type &&
-        (m.bestaand_doorsnede_min ?? 0) <= r.doorsnede! &&
-        (m.bestaand_doorsnede_max ?? 9999) >= r.doorsnede!,
-    );
+  const updateMof = (id: string, fase: "tijdelijk" | "definitief", patch: Partial<import("@/lib/configurator/types").MsMofConfig>) => {
+    update({
+      msRichtingen: config.msRichtingen.map((r) => {
+        if (r.id !== id) return r;
+        if (fase === "tijdelijk") return { ...r, mofTijdelijk: { ...r.mofTijdelijk, ...patch } };
+        return { ...r, mofDefinitief: { ...(r.mofDefinitief ?? emptyMofConfig()), ...patch } };
+      }),
+    });
+  };
+  const setZwaaien = (id: string, kan: boolean) => {
+    update({
+      msRichtingen: config.msRichtingen.map((r) =>
+        r.id === id ? { ...r, kanZwaaien: kan, mofDefinitief: kan ? null : (r.mofDefinitief ?? emptyMofConfig()) } : r,
+      ),
+    });
   };
 
   return (
     <div className="space-y-3">
-      {config.msRichtingen.map((r, idx) => {
-        const auto = findMof(r);
-        const status = r.zwaaien === true
-          ? "Zwaaien"
-          : r.bestaand_type && r.doorsnede
-            ? `${r.bestaand_type} ${r.doorsnede}mm²`
-            : "Niet ingevuld";
-        return (
-          <div key={r.id} className="rounded-md border border-border bg-background/40 p-3">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">{idx + 1}</span>
-              <span className="text-xs text-muted-foreground">{status}</span>
-              {config.msRichtingen.length > 1 && (
-                <button onClick={() => removeRicht(r.id)} className="ml-auto text-muted-foreground hover:text-destructive">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <Field label="Optie">
+      {config.msRichtingen.map((r, idx) => (
+        <div key={r.id} className="rounded-md border border-border bg-background/40 p-3 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">{idx + 1}</span>
+            <span className="text-sm font-medium flex-1">MS-richting {idx + 1}</span>
+            {config.msRichtingen.length > 1 && (
+              <button onClick={() => removeRicht(r.id)} className="text-muted-foreground hover:text-destructive">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <MofFormulier
+            label={isProvisorum ? "Tijdelijke verbinding" : "MS verbinding"}
+            config={r.mofTijdelijk}
+            onChange={(p) => updateMof(r.id, "tijdelijk", p)}
+            msMofTypes={sd.msMofTypes.data ?? []}
+          />
+
+          {isProvisorum && (
+            <Field label="Kan kabel worden omgezwaaid?">
               <PillGroup
-                value={r.zwaaien === null ? "" : r.zwaaien ? "zwaaien" : "mof"}
-                onChange={(v) => setRicht(r.id, { zwaaien: v === "zwaaien", bestaand_type: v === "zwaaien" ? "" : r.bestaand_type, doorsnede: v === "zwaaien" ? null : r.doorsnede, mof_type_id: v === "zwaaien" ? null : r.mof_type_id })}
+                value={r.kanZwaaien === true ? "ja" : r.kanZwaaien === false ? "nee" : ""}
+                onChange={(v) => setZwaaien(r.id, v === "ja")}
                 options={[
-                  { value: "zwaaien", label: "Zwaaien mogelijk", color: "green" },
-                  { value: "mof", label: "Nieuwe mof nodig", color: "amber" },
+                  { value: "ja", label: "Ja — zwaaien (geen nieuwe mof)", color: "green" },
+                  { value: "nee", label: "Nee — nieuwe verbinding nodig", color: "amber" },
                 ]}
               />
             </Field>
-            {r.zwaaien === false && (
-              <div className="mt-3 space-y-3">
-                <Field label="Bestaand kabeltype">
-                  <PillGroup
-                    value={r.bestaand_type}
-                    onChange={(v) => {
-                      const next = { ...r, bestaand_type: v as "GPLK" | "XLPE" | "XLPE_singel" };
-                      const m = findMof(next);
-                      setRicht(r.id, { bestaand_type: next.bestaand_type, mof_type_id: m?.id ?? null, mof_handmatig: false });
-                    }}
-                    options={[
-                      { value: "GPLK", label: "GPLK" },
-                      { value: "XLPE", label: "XLPE 3-aderig" },
-                      { value: "XLPE_singel", label: "XLPE singels" },
-                    ]}
-                  />
-                </Field>
-                <Field label="Doorsnede (mm²)">
-                  <PillGroup
-                    value={r.doorsnede ? String(r.doorsnede) : ""}
-                    onChange={(v) => {
-                      const next = { ...r, doorsnede: Number(v) };
-                      const m = findMof(next);
-                      setRicht(r.id, { doorsnede: next.doorsnede, mof_type_id: m?.id ?? null, mof_handmatig: false });
-                    }}
-                    options={["50", "70", "95", "120", "150", "240"].map((d) => ({ value: d, label: d }))}
-                  />
-                </Field>
-                {r.bestaand_type && r.doorsnede && (
-                  auto ? (
-                    <InfoBox type="success">
-                      Mof gevonden: <span className="font-mono">{auto.code}</span>{auto.omschrijving ? ` — ${auto.omschrijving}` : ""}
-                    </InfoBox>
-                  ) : (
-                    <div className="space-y-2">
-                      <InfoBox type="warning">Geen automatische match. Kies handmatig:</InfoBox>
-                      <select
-                        value={r.mof_type_id ?? ""}
-                        onChange={(e) => setRicht(r.id, { mof_type_id: e.target.value || null, mof_handmatig: true })}
-                        className="bg-input border border-border rounded-md px-3 py-1.5 text-sm w-full"
-                      >
-                        <option value="">— kies mof —</option>
-                        {(sd.msMofTypes.data ?? []).map((m) => (
-                          <option key={m.id} value={m.id}>{m.code}{m.omschrijving ? ` — ${m.omschrijving}` : ""}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+          )}
+
+          {isProvisorum && r.kanZwaaien === false && r.mofDefinitief && (
+            <MofFormulier
+              label="Definitieve verbinding"
+              config={r.mofDefinitief}
+              onChange={(p) => updateMof(r.id, "definitief", p)}
+              msMofTypes={sd.msMofTypes.data ?? []}
+            />
+          )}
+        </div>
+      ))}
       <button onClick={addRicht} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <Plus className="w-4 h-4" /> MS-richting toevoegen
       </button>
