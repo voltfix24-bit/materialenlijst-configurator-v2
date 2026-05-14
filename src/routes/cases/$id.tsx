@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { MaterialenConfigurator } from "@/components/configurator/MaterialenConfigurator";
 import { PillGroup } from "@/components/ui-prim/PillGroup";
 import { exporteerNaarTemplate, downloadBlob } from "@/lib/assortiment/excel";
+import { emptyConfig, type MaterialenConfig, type RmuConfig } from "@/lib/configurator/types";
 
 export const Route = createFileRoute("/cases/$id")({
   component: CaseDetailPage,
