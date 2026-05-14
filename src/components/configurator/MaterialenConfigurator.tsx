@@ -50,12 +50,22 @@ type SectionKey = (typeof SECTIONS)[number]["key"];
 
 const RENOVATIE = (s: string) => s === "renovatie_prov" || s === "renovatie_nsa";
 
-export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Props) {
+export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirtyChange }: Props) {
   const [config, setConfig] = useState<MaterialenConfig>(initialConfig ?? emptyConfig());
   const [open, setOpen] = useState<Record<SectionKey, boolean>>({
     project: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true,
   });
   const [debounced, setDebounced] = useState(config);
+
+  // Dirty tracking — skip de eerste render (initialConfig hydratie)
+  const skipDirty = useRef(true);
+  useEffect(() => {
+    if (skipDirty.current) {
+      skipDirty.current = false;
+      return;
+    }
+    onDirtyChange?.(true);
+  }, [config, onDirtyChange]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(config), 300);
