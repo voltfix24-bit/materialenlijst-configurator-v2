@@ -257,6 +257,20 @@ export function MsMofTab() {
                 <Input type="number" value={editing.bestaand_doorsnede_max ?? ""} onChange={(e) => setEditing({ ...editing, bestaand_doorsnede_max: e.target.value ? Number(e.target.value) : null })} className="h-9" />
               </FormField>
             </FormRow>
+            <FormRow>
+              <FormField label="Nieuw kabeltype">
+                <select value={editing.nieuwe_type ?? ""} onChange={(e) => setEditing({ ...editing, nieuwe_type: e.target.value || null })} className="h-9 rounded-md border border-border bg-surface px-2 text-sm">
+                  <option value="">—</option>
+                  {NIEUW_MS.map((b) => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </FormField>
+              <FormField label="Nieuw min mm²">
+                <Input type="number" value={editing.nieuwe_doorsnede_min ?? ""} onChange={(e) => setEditing({ ...editing, nieuwe_doorsnede_min: e.target.value ? Number(e.target.value) : null })} className="h-9" />
+              </FormField>
+              <FormField label="Nieuw max mm²">
+                <Input type="number" value={editing.nieuwe_doorsnede_max ?? ""} onChange={(e) => setEditing({ ...editing, nieuwe_doorsnede_max: e.target.value ? Number(e.target.value) : null })} className="h-9" />
+              </FormField>
+            </FormRow>
             <FormField label="Mof artikel">
               <ArtikelZoeker value={editing.artikel_id ?? null} onChange={(id) => setEditing({ ...editing, artikel_id: id })} categorieSuggesties={["MS garnituren"]} />
             </FormField>
