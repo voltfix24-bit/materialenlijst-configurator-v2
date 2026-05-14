@@ -1483,11 +1483,15 @@ function LsMofKaart({
             max={999}
             suffix=" m"
           />
-          {mof.kabelLengteMeters > 0 && (
-            <span className="text-xs text-muted-foreground">
-              = {mof.kabelLengteMeters * mof.aantal}m kabel totaal
-            </span>
-          )}
+          {mof.kabelLengteMeters > 0 && (() => {
+            const fases = isProv && mof.kanZwaaien === false ? 2 : 1;
+            const totaal = mof.kabelLengteMeters * mof.aantal * fases;
+            return (
+              <span className="text-xs text-muted-foreground">
+                = {totaal}m kabel totaal{fases === 2 ? " (×2 fasen: tijdelijk + definitief)" : ""}
+              </span>
+            );
+          })()}
         </div>
       </Field>
 
