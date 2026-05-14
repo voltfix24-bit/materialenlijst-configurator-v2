@@ -71,12 +71,59 @@ export function emptyMofConfig(): MsMofConfig {
   };
 }
 
+export type LsMofType = "verbinding" | "aftakmof" | "eindmof" | "";
+export type LsKabelType = "GPLK" | "kunststof" | "";
+
+export interface RingklemSpec {
+  artikel_nummer: string;
+  omschrijving: string;
+  hoofdkabel_doorsnede_min: number;
+  hoofdkabel_doorsnede_max: number;
+  hoofdkabel_materiaal: "Al" | "Cu" | "beide";
+  aftakkabel_doorsnede_min: number;
+  aftakkabel_doorsnede_max: number;
+}
+
+export const RINGKLEM_SPECS: RingklemSpec[] = [
+  { artikel_nummer: "20041574", omschrijving: "Ringklem 4x25Cu / 4x6Cu-50Al",            hoofdkabel_doorsnede_min: 25,  hoofdkabel_doorsnede_max: 25,  hoofdkabel_materiaal: "Cu",    aftakkabel_doorsnede_min: 6,  aftakkabel_doorsnede_max: 50 },
+  { artikel_nummer: "20000996", omschrijving: "Ringklem 3x35+1x25Cu / 4x6Cu-50Al",       hoofdkabel_doorsnede_min: 35,  hoofdkabel_doorsnede_max: 35,  hoofdkabel_materiaal: "Cu",    aftakkabel_doorsnede_min: 6,  aftakkabel_doorsnede_max: 50 },
+  { artikel_nummer: "20017985", omschrijving: "Ringklem 3x50+1x35Cu / 4x6Cu-50Al",       hoofdkabel_doorsnede_min: 50,  hoofdkabel_doorsnede_max: 50,  hoofdkabel_materiaal: "Cu",    aftakkabel_doorsnede_min: 6,  aftakkabel_doorsnede_max: 50 },
+  { artikel_nummer: "20041571", omschrijving: "Ringklem 4x35-70Cu & 4x50Al /4x6Cu-50Al", hoofdkabel_doorsnede_min: 35,  hoofdkabel_doorsnede_max: 70,  hoofdkabel_materiaal: "beide", aftakkabel_doorsnede_min: 6,  aftakkabel_doorsnede_max: 50 },
+  { artikel_nummer: "20041575", omschrijving: "Ringklem 3x70-95+1x50-70 / 4x6Cu-50Al",   hoofdkabel_doorsnede_min: 70,  hoofdkabel_doorsnede_max: 95,  hoofdkabel_materiaal: "Cu",    aftakkabel_doorsnede_min: 6,  aftakkabel_doorsnede_max: 50 },
+  { artikel_nummer: "20041563", omschrijving: "Ringklem 4x150Cu / 4x6Cu-50Al",           hoofdkabel_doorsnede_min: 150, hoofdkabel_doorsnede_max: 150, hoofdkabel_materiaal: "Cu",    aftakkabel_doorsnede_min: 6,  aftakkabel_doorsnede_max: 50 },
+  { artikel_nummer: "20041459", omschrijving: "Ringklem 4x95-150Al / 4x6Cu-50Al",        hoofdkabel_doorsnede_min: 95,  hoofdkabel_doorsnede_max: 150, hoofdkabel_materiaal: "Al",    aftakkabel_doorsnede_min: 6,  aftakkabel_doorsnede_max: 50 },
+  { artikel_nummer: "20041564", omschrijving: "Ringklem 4x95Al / 4x95Al-150Al",          hoofdkabel_doorsnede_min: 95,  hoofdkabel_doorsnede_max: 95,  hoofdkabel_materiaal: "Al",    aftakkabel_doorsnede_min: 95, aftakkabel_doorsnede_max: 150 },
+  { artikel_nummer: "20041565", omschrijving: "Ringklem 4x150Al & 4x120Cu /4x95Al-150Al",hoofdkabel_doorsnede_min: 120, hoofdkabel_doorsnede_max: 150, hoofdkabel_materiaal: "Al",    aftakkabel_doorsnede_min: 95, aftakkabel_doorsnede_max: 150 },
+];
+
+export function zoekRingklem(
+  hoofdDoorsnede: number,
+  hoofdMateriaal: "Al" | "Cu",
+  aftakDoorsnede: number,
+): RingklemSpec[] {
+  return RINGKLEM_SPECS.filter(
+    (r) =>
+      hoofdDoorsnede >= r.hoofdkabel_doorsnede_min &&
+      hoofdDoorsnede <= r.hoofdkabel_doorsnede_max &&
+      (r.hoofdkabel_materiaal === "beide" || r.hoofdkabel_materiaal === hoofdMateriaal) &&
+      aftakDoorsnede >= r.aftakkabel_doorsnede_min &&
+      aftakDoorsnede <= r.aftakkabel_doorsnede_max,
+  );
+}
+
 export interface LsMof {
   id: string;
-  type: "verbinding" | "aftakmof" | "eindmof" | "";
-  bestaand_type: "GPLK" | "kunststof" | "";
+  type: LsMofType;
+  bestaandType: LsKabelType;
+  hoofdkabelDoorsnede: number | null;
+  hoofdkabelMateriaal: "Al" | "Cu" | "";
+  aantalAftakken: number;
+  aftakDoorsnede: number | null;
+  ringklemArtikelNummer: string | null;
+  ringklemHandmatig: boolean;
   aantal: number;
-  overzettingen: number;
+  kanZwaaien: boolean | null;
+  kabelLengteMeters: number;
 }
 
 export interface RmuVeldConfig {
@@ -136,6 +183,7 @@ export interface MaterialenConfig {
   lsRichtingen: number;
   msRichtingen: MsRichting[];
   msKabelTraces: MsKabelTrace[];
+  lsMoffenActief: boolean;
   lsMoffen: LsMof[];
   rmuVelden: RmuVeldConfig[];
   iNetArtikelen: INetArtikel[];
@@ -163,9 +211,16 @@ export const newRichting = (): MsRichting => ({
 export const newLsMof = (): LsMof => ({
   id: crypto.randomUUID(),
   type: "",
-  bestaand_type: "",
+  bestaandType: "",
+  hoofdkabelDoorsnede: null,
+  hoofdkabelMateriaal: "",
+  aantalAftakken: 1,
+  aftakDoorsnede: null,
+  ringklemArtikelNummer: null,
+  ringklemHandmatig: false,
   aantal: 1,
-  overzettingen: 0,
+  kanZwaaien: null,
+  kabelLengteMeters: 0,
 });
 
 export const emptyConfig = (): MaterialenConfig => ({
@@ -189,5 +244,6 @@ export const emptyConfig = (): MaterialenConfig => ({
   lsRichtingen: 0,
   msRichtingen: [newRichting()],
   msKabelTraces: [],
+  lsMoffenActief: false,
   lsMoffen: [],
 });

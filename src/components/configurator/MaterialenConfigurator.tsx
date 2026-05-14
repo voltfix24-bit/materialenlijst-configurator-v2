@@ -13,6 +13,11 @@ import {
   emptyMofConfig,
   newLsMof,
   newRichting,
+  RINGKLEM_SPECS,
+  zoekRingklem,
+  type LsKabelType,
+  type LsMof,
+  type LsMofType,
   type MaterialenConfig,
   type MsKabelTrace,
   type MsKabelType,
@@ -151,14 +156,14 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
 
       // ls moffen
       await supabase.from("case_ls_moffen").delete().eq("case_id", caseId);
-      if (config.lsMoffen.length > 0) {
+      if (config.lsMoffenActief && config.lsMoffen.length > 0) {
         const rows = config.lsMoffen.map((l, i) => ({
           case_id: caseId,
           positie: i + 1,
           type: l.type || "verbinding",
-          bestaand_type: l.bestaand_type || "GPLK",
+          bestaand_type: l.bestaandType || "GPLK",
           aantal: l.aantal,
-          overzettingen: l.overzettingen,
+          overzettingen: l.type === "aftakmof" ? l.aantalAftakken : 0,
         }));
         const { error } = await supabase.from("case_ls_moffen").insert(rows);
         if (error) throw error;
@@ -272,7 +277,8 @@ function sectionSummary(key: SectionKey, c: MaterialenConfig, sd: ReturnType<typ
       return `${n} richting${n === 1 ? "" : "en"}${ok ? "" : " — onvolledig"}`;
     }
     case "ls":
-      return c.lsMoffen.length === 0 ? "Geen LS moffen" : `${c.lsMoffen.length} LS mof${c.lsMoffen.length === 1 ? "" : "fen"}`;
+      if (!c.lsMoffenActief) return "Geen LS-moffen";
+      return c.lsMoffen.length === 0 ? "0 LS-moffen" : `${c.lsMoffen.length} LS-mof${c.lsMoffen.length === 1 ? "" : "fen"}`;
   }
 }
 
@@ -1171,54 +1177,268 @@ function kabelSamenvatting(trace: MsKabelTrace): string {
 }
 
 function LsSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
-  const setMof = (id: string, patch: Partial<MaterialenConfig["lsMoffen"][0]>) =>
+  const isProv = config.subType === "cs_met_prov" || config.subType === "renovatie_prov";
+  const setMof = (id: string, patch: Partial<LsMof>) =>
     update({ lsMoffen: config.lsMoffen.map((m) => (m.id === id ? { ...m, ...patch } : m)) });
   const removeMof = (id: string) => update({ lsMoffen: config.lsMoffen.filter((m) => m.id !== id) });
   const addMof = () => update({ lsMoffen: [...config.lsMoffen, newLsMof()] });
 
   return (
     <div className="space-y-3">
-      {config.lsMoffen.length === 0 && <p className="text-xs text-muted-foreground">Nog geen LS moffen toegevoegd.</p>}
-      {config.lsMoffen.map((m) => (
-        <div key={m.id} className="rounded-md border border-border bg-background/40 p-3 space-y-3">
-          <div className="flex justify-end">
-            <button onClick={() => removeMof(m.id)} className="text-muted-foreground hover:text-destructive">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-          <Field label="Type">
+      <Field label="Worden er LS-moffen gemaakt?">
+        <PillGroup
+          value={config.lsMoffenActief ? "ja" : "nee"}
+          onChange={(v) =>
+            update({
+              lsMoffenActief: v === "ja",
+              lsMoffen: v === "ja" ? config.lsMoffen : [],
+            })
+          }
+          options={[
+            { value: "ja", label: "Ja", color: "green" },
+            { value: "nee", label: "Nee", color: "amber" },
+          ]}
+        />
+      </Field>
+
+      {config.lsMoffenActief && (
+        <>
+          {config.lsMoffen.length === 0 && (
+            <p className="text-xs text-muted-foreground">Nog geen LS-moffen toegevoegd.</p>
+          )}
+          {config.lsMoffen.map((m, idx) => (
+            <LsMofKaart
+              key={m.id}
+              mof={m}
+              index={idx}
+              isProv={isProv}
+              onChange={(patch) => setMof(m.id, patch)}
+              onRemove={() => removeMof(m.id)}
+            />
+          ))}
+          <button
+            onClick={addMof}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <Plus className="w-4 h-4" /> LS-mof toevoegen
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function LsMofKaart({
+  mof,
+  index,
+  isProv,
+  onChange,
+  onRemove,
+}: {
+  mof: LsMof;
+  index: number;
+  isProv: boolean;
+  onChange: (patch: Partial<LsMof>) => void;
+  onRemove: () => void;
+}) {
+  const gevondenRingklemmen = useMemo(() => {
+    if (!mof.hoofdkabelDoorsnede || !mof.hoofdkabelMateriaal || !mof.aftakDoorsnede) return [];
+    return zoekRingklem(mof.hoofdkabelDoorsnede, mof.hoofdkabelMateriaal, mof.aftakDoorsnede);
+  }, [mof.hoofdkabelDoorsnede, mof.hoofdkabelMateriaal, mof.aftakDoorsnede]);
+
+  // auto-select als er exact 1 match is
+  useEffect(() => {
+    if (
+      mof.type === "aftakmof" &&
+      gevondenRingklemmen.length === 1 &&
+      !mof.ringklemHandmatig &&
+      mof.ringklemArtikelNummer !== gevondenRingklemmen[0].artikel_nummer
+    ) {
+      onChange({ ringklemArtikelNummer: gevondenRingklemmen[0].artikel_nummer });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gevondenRingklemmen.length, mof.type]);
+
+  return (
+    <div className="rounded-md border border-border bg-background/40 p-3 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="rounded bg-secondary text-xs font-mono px-1.5 py-0.5">{index + 1}</span>
+        <span className="text-sm font-medium flex-1">LS-mof {index + 1}</span>
+        <button onClick={onRemove} className="text-muted-foreground hover:text-destructive">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <Field label="Type mof">
+        <PillGroup
+          value={mof.type}
+          onChange={(v) => onChange({ type: v as LsMofType })}
+          options={[
+            { value: "verbinding", label: "Verbindingsmof" },
+            { value: "aftakmof", label: "Aftakmof" },
+            { value: "eindmof", label: "Eindmof" },
+          ]}
+        />
+      </Field>
+
+      {mof.type && (
+        <Field label="Bestaande kabel">
+          <PillGroup
+            value={mof.bestaandType}
+            onChange={(v) => onChange({ bestaandType: v as LsKabelType })}
+            options={[
+              { value: "GPLK", label: "GPLK" },
+              { value: "kunststof", label: "Kunststof" },
+            ]}
+          />
+        </Field>
+      )}
+
+      {mof.bestaandType && (
+        <FieldRow>
+          <Field label="Hoofdkabel doorsnede (mm²)">
+            <Stepper
+              value={mof.hoofdkabelDoorsnede ?? 0}
+              onChange={(v) =>
+                onChange({ hoofdkabelDoorsnede: v || null, ringklemArtikelNummer: null, ringklemHandmatig: false })
+              }
+              min={0}
+              max={999}
+              suffix=" mm²"
+            />
+          </Field>
+          <Field label="Materiaal">
             <PillGroup
-              value={m.type}
-              onChange={(v) => setMof(m.id, { type: v as "verbinding" | "aftakmof" | "eindmof" })}
+              value={mof.hoofdkabelMateriaal}
+              onChange={(v) =>
+                onChange({
+                  hoofdkabelMateriaal: v as "Al" | "Cu",
+                  ringklemArtikelNummer: null,
+                  ringklemHandmatig: false,
+                })
+              }
               options={[
-                { value: "verbinding", label: "Verbinding" },
-                { value: "aftakmof", label: "Aftakmof" },
-                { value: "eindmof", label: "Eindmof" },
+                { value: "Al", label: "Aluminium" },
+                { value: "Cu", label: "Koper" },
               ]}
             />
           </Field>
-          <Field label="Bestaande kabel">
-            <PillGroup
-              value={m.bestaand_type}
-              onChange={(v) => setMof(m.id, { bestaand_type: v as "GPLK" | "kunststof" })}
-              options={[{ value: "GPLK", label: "GPLK" }, { value: "kunststof", label: "Kunststof" }]}
-            />
-          </Field>
+        </FieldRow>
+      )}
+
+      {mof.type === "aftakmof" && mof.bestaandType && (
+        <>
           <FieldRow>
-            <Field label="Aantal moffen">
-              <Stepper value={m.aantal} onChange={(v) => setMof(m.id, { aantal: v })} min={1} max={20} />
+            <Field label="Aantal aftakken">
+              <Stepper
+                value={mof.aantalAftakken}
+                onChange={(v) => onChange({ aantalAftakken: v })}
+                min={1}
+                max={20}
+              />
             </Field>
-            {m.type === "aftakmof" && (
-              <Field label="Overzettingen">
-                <Stepper value={m.overzettingen} onChange={(v) => setMof(m.id, { overzettingen: v })} max={20} />
-              </Field>
-            )}
+            <Field label="Aftakkabel doorsnede (mm²)">
+              <Stepper
+                value={mof.aftakDoorsnede ?? 0}
+                onChange={(v) =>
+                  onChange({ aftakDoorsnede: v || null, ringklemArtikelNummer: null, ringklemHandmatig: false })
+                }
+                min={0}
+                max={999}
+                suffix=" mm²"
+              />
+            </Field>
           </FieldRow>
+
+          {mof.hoofdkabelDoorsnede && mof.aftakDoorsnede && mof.hoofdkabelMateriaal && (
+            <>
+              {gevondenRingklemmen.length === 1 && (
+                <InfoBox type="success">
+                  ✓ Ringklem: <span className="font-mono">{gevondenRingklemmen[0].artikel_nummer}</span>
+                  {" — "}
+                  {gevondenRingklemmen[0].omschrijving}
+                </InfoBox>
+              )}
+              {gevondenRingklemmen.length > 1 && (
+                <Field label="Meerdere ringklemmen passen — kies:">
+                  <div className="flex flex-wrap gap-1.5">
+                    {gevondenRingklemmen.map((r) => (
+                      <button
+                        key={r.artikel_nummer}
+                        onClick={() =>
+                          onChange({ ringklemArtikelNummer: r.artikel_nummer, ringklemHandmatig: true })
+                        }
+                        className={cn(
+                          "border px-2 py-1 rounded text-[11px] font-mono",
+                          mof.ringklemArtikelNummer === r.artikel_nummer
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-surface border-border hover:bg-accent",
+                        )}
+                        title={r.omschrijving}
+                      >
+                        {r.artikel_nummer}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+              )}
+              {gevondenRingklemmen.length === 0 && (
+                <InfoBox type="warning">
+                  ⚠ Geen ringklem gevonden — kies handmatig:
+                  <select
+                    className="mt-1 w-full text-[11px] p-1.5 rounded border border-border bg-muted"
+                    value={mof.ringklemArtikelNummer ?? ""}
+                    onChange={(e) =>
+                      onChange({ ringklemArtikelNummer: e.target.value || null, ringklemHandmatig: true })
+                    }
+                  >
+                    <option value="">Kies ringklem...</option>
+                    {RINGKLEM_SPECS.map((r) => (
+                      <option key={r.artikel_nummer} value={r.artikel_nummer}>
+                        {r.omschrijving}
+                      </option>
+                    ))}
+                  </select>
+                </InfoBox>
+              )}
+            </>
+          )}
+        </>
+      )}
+
+      <Field label="Aantal moffen">
+        <Stepper value={mof.aantal} onChange={(v) => onChange({ aantal: v })} min={1} max={99} />
+      </Field>
+
+      <Field label="LS-kabel lengte (meter)">
+        <div className="flex items-center gap-3">
+          <Stepper
+            value={mof.kabelLengteMeters}
+            onChange={(v) => onChange({ kabelLengteMeters: v })}
+            min={0}
+            max={999}
+            suffix=" m"
+          />
+          {mof.kabelLengteMeters > 0 && (
+            <span className="text-xs text-muted-foreground">
+              = {mof.kabelLengteMeters * mof.aantal}m kabel totaal
+            </span>
+          )}
         </div>
-      ))}
-      <button onClick={addMof} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <Plus className="w-4 h-4" /> LS-mof toevoegen
-      </button>
+      </Field>
+
+      {isProv && (
+        <Field label="Kan kabel worden omgezwaaid?">
+          <PillGroup
+            value={mof.kanZwaaien === true ? "ja" : mof.kanZwaaien === false ? "nee" : ""}
+            onChange={(v) => onChange({ kanZwaaien: v === "ja" })}
+            options={[
+              { value: "ja", label: "Ja — zwaaien", color: "green" },
+              { value: "nee", label: "Nee — opnieuw", color: "amber" },
+            ]}
+          />
+        </Field>
+      )}
     </div>
   );
 }

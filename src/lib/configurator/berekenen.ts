@@ -250,18 +250,37 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
   }
 
   // 5. LS moffen
-  for (const lm of config.lsMoffen) {
-    if (!lm.type || !lm.bestaand_type) continue;
-    const lt = (sd.lsMofTypes.data ?? []).find(
-      (t) => t.type === lm.type && (t.bestaand_type === lm.bestaand_type || t.bestaand_type === "beide"),
-    );
-    if (!lt) continue;
-    const mats = (sd.lsMofMaterialen.data ?? []).filter((m) => m.mof_type_id === lt.id);
-    for (const ma of mats) {
-      const base = Number(ma.hoeveelheid) * lm.aantal;
-      add(map, (ma as ArtikelLike).artikel, base, `LS mof ${lm.type}`);
-      if (lm.type === "aftakmof" && lm.overzettingen > 0) {
-        add(map, (ma as ArtikelLike).artikel, Number(ma.hoeveelheid) * lm.overzettingen, "LS overzettingen");
+  if (config.lsMoffenActief) {
+    const isProv = config.subType === "cs_met_prov" || config.subType === "renovatie_prov";
+    for (const lm of config.lsMoffen) {
+      if (!lm.type || !lm.bestaandType) continue;
+      const fases = isProv && lm.kanZwaaien === false ? 2 : 1;
+      const mult = lm.aantal * fases;
+
+      const lt = (sd.lsMofTypes.data ?? []).find(
+        (t) => t.type === lm.type && (t.bestaand_type === lm.bestaandType || t.bestaand_type === "beide"),
+      );
+      if (lt) {
+        const mats = (sd.lsMofMaterialen.data ?? []).filter((m) => m.mof_type_id === lt.id);
+        for (const ma of mats) {
+          add(map, (ma as ArtikelLike).artikel, Number(ma.hoeveelheid) * mult, `LS ${lm.type}`);
+        }
+      }
+
+      // Ringklem bij aftakmof
+      if (lm.type === "aftakmof" && lm.ringklemArtikelNummer) {
+        add(
+          map,
+          findArtNr(lm.ringklemArtikelNummer),
+          lm.aantalAftakken * mult,
+          "LS aftakmof ringklem",
+        );
+      }
+
+      // LS kabel
+      if (lm.kabelLengteMeters > 0) {
+        const totaal = lm.kabelLengteMeters * lm.aantal * fases;
+        add(map, findArtNr("20009692"), totaal, "LS kabel");
       }
     }
   }
