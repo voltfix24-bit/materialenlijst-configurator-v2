@@ -1494,7 +1494,7 @@ function LsMofKaart({
             const totaal = mof.kabelLengteMeters * mof.aantal * fases;
             return (
               <span className="text-xs text-muted-foreground">
-                = {totaal}m kabel totaal{fases === 2 ? " (×2 fasen: tijdelijk + definitief)" : ""}
+                = {totaal}m kabel totaal{fases === 2 ? " (tijdelijk + definitief)" : ""}
               </span>
             );
           })()}
