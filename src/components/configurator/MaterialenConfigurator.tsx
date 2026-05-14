@@ -5,7 +5,7 @@ import { PillGroup } from "@/components/ui-prim/PillGroup";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { Field, FieldRow, InfoBox } from "@/components/ui-prim/Field";
 import { useStamdata } from "@/lib/configurator/queries";
-import { berekenPreview } from "@/lib/configurator/berekenen";
+import { berekenPreview, VULT_KABEL_SPECS } from "@/lib/configurator/berekenen";
 import {
   buildRmuVelden,
   DEFAULT_INET_ARTIKELEN,
