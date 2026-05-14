@@ -34,6 +34,7 @@ function CaseDetailPage() {
   });
 
   const [naam, setNaam] = useState("");
+  const [isDirty, setIsDirty] = useState(false);
   useEffect(() => { if (caseRow?.station_naam) setNaam(caseRow.station_naam); }, [caseRow?.station_naam]);
 
   const updateCase = useMutation({
