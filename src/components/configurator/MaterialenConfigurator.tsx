@@ -155,6 +155,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
 
         {SECTIONS.map((sec) => {
           if (sec.key === "trafo" && !showTrafo) return null;
+          if (sec.key === "vultkabel" && !showTrafo) return null;
           if (sec.key === "lsrek" && !showLsRek) return null;
           return (
             <SectionCard
@@ -169,6 +170,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
               {sec.key === "project" && <ProjectSection config={config} update={update} />}
               {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} />}
               {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
+              {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
               {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
               {sec.key === "ms" && <MsSection config={config} update={update} sd={sd} />}
               {sec.key === "ls" && <LsSection config={config} update={update} />}
