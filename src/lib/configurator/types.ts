@@ -5,7 +5,7 @@ export type CaseType = "NSA" | "provisorium" | "compact" | "custom";
 export type RmuMerk = "ABB" | "Siemens" | "Magnefix" | "";
 export type TrafoActie = "nieuw" | "blijft" | "draaien" | "";
 export type TrafoKva = "250" | "400" | "630" | "1000" | "";
-export type LsRekActie = "nieuw" | "gehandhaafd" | "uitbreiding" | "";
+export type LsRekActie = "vervangen" | "gehandhaafd" | "";
 
 export interface Artikel {
   id: string;
