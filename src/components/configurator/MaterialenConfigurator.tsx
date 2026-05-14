@@ -663,23 +663,143 @@ function VultKabelSection({ config, update }: { config: MaterialenConfig; update
 }
 
 function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
+  const maxStroken = config.lsRekType === "8" ? 8 : config.lsRekType === "12" ? 12 : null;
   return (
     <div className="space-y-4">
-      <Field label="Actie">
+      <Field label="LS-rek">
         <PillGroup
           value={config.lsRekActie}
-          onChange={(v) => update({ lsRekActie: v as MaterialenConfig["lsRekActie"] })}
+          onChange={(v) =>
+            update({
+              lsRekActie: v as MaterialenConfig["lsRekActie"],
+              lsRekType: "",
+              lsRekExtraStroken: 0,
+              lsRekBeveiligingAanpassen: false,
+              lsRekOvStuurpunt: false,
+              lsRekSchroefpatroon: "",
+            })
+          }
           options={[
-            { value: "nieuw", label: "Nieuw" },
-            { value: "gehandhaafd", label: "Gehandhaafd" },
-            { value: "uitbreiding", label: "Uitbreiding" },
+            { value: "vervangen", label: "Vervangen", color: "green" },
+            { value: "gehandhaafd", label: "Gehandhaafd", color: "amber" },
           ]}
         />
       </Field>
-      {config.lsRekActie && config.lsRekActie !== "gehandhaafd" && (
-        <Field label="Aantal richtingen">
-          <Stepper value={config.lsRichtingen} onChange={(v) => update({ lsRichtingen: v })} min={1} max={24} />
-        </Field>
+
+      {config.lsRekActie === "vervangen" && (
+        <>
+          <Field label="Aantal richtingen">
+            <PillGroup
+              value={config.lsRekType}
+              onChange={(v) => update({ lsRekType: v as "8" | "12", lsRekExtraStroken: 0 })}
+              options={[
+                { value: "8", label: "8 richtingen — 20050813" },
+                { value: "12", label: "12 richtingen — 20050761" },
+              ]}
+            />
+          </Field>
+
+          {config.lsRekType && (
+            <Field label="Extra stroken benodigd?">
+              <div className="flex items-center gap-3">
+                <Stepper value={config.lsRekExtraStroken} onChange={(v) => update({ lsRekExtraStroken: v })} min={0} max={99} />
+                {config.lsRekExtraStroken > 0 && maxStroken && config.lsRekExtraStroken > maxStroken && (
+                  <InfoBox type="warning">
+                    ⚠ {config.lsRekExtraStroken} stroken overschrijdt de maximale capaciteit van dit rek ({maxStroken} richtingen)
+                  </InfoBox>
+                )}
+              </div>
+            </Field>
+          )}
+
+          {config.trafoKva ? (
+            <InfoBox type="info">
+              Beveiliging voedende strook: mespatroon voor {config.trafoKva} kVA wordt automatisch toegevoegd
+            </InfoBox>
+          ) : (
+            <InfoBox type="warning">⚠ Vul het trafo vermogen in bij de Trafo-sectie voor de juiste beveiliging</InfoBox>
+          )}
+
+          <Field label="OV-stuurpunt installeren?">
+            <PillGroup
+              value={config.lsRekOvStuurpunt ? "ja" : "nee"}
+              onChange={(v) =>
+                update({
+                  lsRekOvStuurpunt: v === "ja",
+                  lsRekSchroefpatroon: v === "nee" ? "" : config.lsRekSchroefpatroon,
+                })
+              }
+              options={[
+                { value: "ja", label: "Ja", color: "green" },
+                { value: "nee", label: "Nee", color: "amber" },
+              ]}
+            />
+          </Field>
+
+          {config.lsRekOvStuurpunt && (
+            <Field label="Schroefpatroon type">
+              <PillGroup
+                value={config.lsRekSchroefpatroon}
+                onChange={(v) => update({ lsRekSchroefpatroon: v as "35A" | "50A" })}
+                options={[
+                  { value: "35A", label: "35A (20001107)" },
+                  { value: "50A", label: "50A (20001108)" },
+                ]}
+              />
+            </Field>
+          )}
+        </>
+      )}
+
+      {config.lsRekActie === "gehandhaafd" && (
+        <>
+          <Field label="Beveiliging aanpassen?">
+            <PillGroup
+              value={config.lsRekBeveiligingAanpassen ? "ja" : "nee"}
+              onChange={(v) => update({ lsRekBeveiligingAanpassen: v === "ja" })}
+              options={[
+                { value: "ja", label: "Ja — nieuwe mespatronen", color: "green" },
+                { value: "nee", label: "Nee", color: "amber" },
+              ]}
+            />
+          </Field>
+
+          {config.lsRekBeveiligingAanpassen && !config.trafoKva && (
+            <InfoBox type="warning">⚠ Vul het trafo vermogen in bij de Trafo-sectie</InfoBox>
+          )}
+          {config.lsRekBeveiligingAanpassen && config.trafoKva && (
+            <InfoBox type="info">Mespatroon voor {config.trafoKva} kVA wordt toegevoegd</InfoBox>
+          )}
+
+          <Field label="OV-stuurpunt installeren?">
+            <PillGroup
+              value={config.lsRekOvStuurpunt ? "ja" : "nee"}
+              onChange={(v) =>
+                update({
+                  lsRekOvStuurpunt: v === "ja",
+                  lsRekSchroefpatroon: v === "nee" ? "" : config.lsRekSchroefpatroon,
+                })
+              }
+              options={[
+                { value: "ja", label: "Ja", color: "green" },
+                { value: "nee", label: "Nee", color: "amber" },
+              ]}
+            />
+          </Field>
+
+          {config.lsRekOvStuurpunt && (
+            <Field label="Schroefpatroon type">
+              <PillGroup
+                value={config.lsRekSchroefpatroon}
+                onChange={(v) => update({ lsRekSchroefpatroon: v as "35A" | "50A" })}
+                options={[
+                  { value: "35A", label: "35A (20001107)" },
+                  { value: "50A", label: "50A (20001108)" },
+                ]}
+              />
+            </Field>
+          )}
+        </>
       )}
     </div>
   );
