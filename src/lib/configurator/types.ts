@@ -99,9 +99,17 @@ export interface MaterialenConfig {
   trafoKabelLengte: "7.25" | "10" | "";
   vultKabelAfstand: number;
   lsRekActie: LsRekActie;
+  lsRekType: "8" | "12" | "";
+  lsRekExtraStroken: number;
+  lsRekBeveiligingAanpassen: boolean;
+  lsRekOvStuurpunt: boolean;
+  lsRekSchroefpatroon: "35A" | "50A" | "";
   lsRichtingen: number;
   msRichtingen: MsRichting[];
   lsMoffen: LsMof[];
+  rmuVelden: RmuVeldConfig[];
+  iNetArtikelen: INetArtikel[];
+}
   rmuVelden: RmuVeldConfig[];
   iNetArtikelen: INetArtikel[];
 }
