@@ -63,16 +63,18 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
   const showTrafo = RENOVATIE(config.subType);
   const showLsRek = RENOVATIE(config.subType);
 
-  const completion = {
+  const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
     rmu: !!config.rmuConfig,
     trafo: !showTrafo || (!!config.trafoActie && !!config.trafoKva),
+    vultkabel: !showTrafo || config.vultKabelAfstand >= 0,
     lsrek: !showLsRek || !!config.lsRekActie,
     ms: config.msRichtingen.every((r) => r.zwaaien === true || (r.zwaaien === false && !!r.mof_type_id)),
     ls: true,
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
     if (k === "trafo") return showTrafo;
+    if (k === "vultkabel") return showTrafo;
     if (k === "lsrek") return showLsRek;
     return true;
   });
