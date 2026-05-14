@@ -117,15 +117,33 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
       // ms moffen
       await supabase.from("case_ms_moffen").delete().eq("case_id", caseId);
       if (config.msRichtingen.length > 0) {
-        const rows = config.msRichtingen.map((r, i) => ({
-          case_id: caseId,
-          positie: i + 1,
-          zwaaien: r.zwaaien === true,
-          bestaand_type: r.bestaand_type || null,
-          doorsnede: r.doorsnede,
-          mof_type_id: r.mof_type_id,
-          mof_handmatig: r.mof_handmatig,
-        }));
+        const rows: Array<{
+          case_id: string; positie: number; zwaaien: boolean;
+          bestaand_type: string | null; doorsnede: number | null;
+          mof_type_id: string | null; mof_handmatig: boolean; fase: string;
+        }> = [];
+        config.msRichtingen.forEach((r, i) => {
+          rows.push({
+            case_id: caseId, positie: i + 1,
+            zwaaien: r.kanZwaaien === true,
+            bestaand_type: r.mofTijdelijk.bestaandType || null,
+            doorsnede: r.mofTijdelijk.bestaandDoorsnede,
+            mof_type_id: r.mofTijdelijk.mofTypeId,
+            mof_handmatig: r.mofTijdelijk.mofHandmatig,
+            fase: isProvisorum ? "tijdelijk" : "enkel",
+          });
+          if (isProvisorum && r.kanZwaaien === false && r.mofDefinitief) {
+            rows.push({
+              case_id: caseId, positie: i + 1,
+              zwaaien: false,
+              bestaand_type: r.mofDefinitief.bestaandType || null,
+              doorsnede: r.mofDefinitief.bestaandDoorsnede,
+              mof_type_id: r.mofDefinitief.mofTypeId,
+              mof_handmatig: r.mofDefinitief.mofHandmatig,
+              fase: "definitief",
+            });
+          }
+        });
         const { error } = await supabase.from("case_ms_moffen").insert(rows);
         if (error) throw error;
       }
