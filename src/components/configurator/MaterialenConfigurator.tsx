@@ -259,7 +259,15 @@ function sectionSummary(key: SectionKey, c: MaterialenConfig, sd: ReturnType<typ
       return c.lsRekActie ? c.lsRekActie : "Nog in te vullen";
     case "ms": {
       const n = c.msRichtingen.length;
-      const ok = c.msRichtingen.every((r) => r.zwaaien === true || (r.zwaaien === false && !!r.mof_type_id));
+      const isProv = c.subType === "cs_met_prov" || c.subType === "renovatie_prov";
+      const ok = c.msRichtingen.every((r) => {
+        if (!r.mofTijdelijk.mofTypeId) return false;
+        if (isProv) {
+          if (r.kanZwaaien === null) return false;
+          if (r.kanZwaaien === false && !r.mofDefinitief?.mofTypeId) return false;
+        }
+        return true;
+      });
       return `${n} richting${n === 1 ? "" : "en"}${ok ? "" : " — onvolledig"}`;
     }
     case "ls":
