@@ -225,7 +225,22 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     }
   }
 
-  // 5. LS moffen
+  // 4b. MS-kabel traces
+  for (const trace of config.msKabelTraces ?? []) {
+    if (!trace.kabelType || trace.lengteMeters <= 0) continue;
+    const idx = config.msKabelTraces.indexOf(trace) + 1;
+    const isSingel = trace.kabelType === "240AL_singel" || trace.kabelType === "630AL_singel";
+    const kabelMeters = isSingel ? trace.lengteMeters * 3 : trace.lengteMeters;
+
+    if (trace.kabelType === "240AL_singel")
+      add(map, findArtNr("20039484"), kabelMeters, `MS kabel trace ${idx}`);
+    else if (trace.kabelType === "630AL_singel")
+      add(map, findArtNr("20027992"), kabelMeters, `MS kabel trace ${idx}`);
+    else if (trace.kabelType === "3x240AL")
+      add(map, findArtNr("20027989"), kabelMeters, `MS kabel trace ${idx}`);
+
+    const rollen = Math.ceil(trace.lengteMeters / 40);
+    add(map, findArtNr("20018148"), rollen, `MS kabel beschermband trace ${idx}`);
   for (const lm of config.lsMoffen) {
     if (!lm.type || !lm.bestaand_type) continue;
     const lt = (sd.lsMofTypes.data ?? []).find(
