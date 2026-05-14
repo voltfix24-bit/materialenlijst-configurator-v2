@@ -568,6 +568,7 @@ function VeldKaart({
   update,
   isInet,
   merk,
+  isCompact,
 }: {
   veld: RmuVeldConfig;
   setVeld: (id: string, patch: Partial<RmuVeldConfig>) => void;
@@ -575,6 +576,7 @@ function VeldKaart({
   update: (p: Partial<MaterialenConfig>) => void;
   isInet: boolean;
   merk: string;
+  isCompact: boolean;
 }) {
   const reserveLocked = (veld.veldType === "C" || veld.veldType === "V") && veld.veldNummer <= 2;
   const kabelOpties = [
@@ -591,23 +593,25 @@ function VeldKaart({
           <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">{badge}</span>
           <span className="text-sm font-medium">{label}</span>
         </div>
-        <Field label="Trafo kabel lengte">
-          <PillGroup
-            value={config.trafoKabelLengte}
-            onChange={(v) => update({ trafoKabelLengte: v as MaterialenConfig["trafoKabelLengte"] })}
-            options={[
-              { value: "7.25", label: "7,25 m" },
-              { value: "10", label: "10 m" },
-            ]}
-          />
-        </Field>
+        {!isCompact && (
+          <Field label="Trafo kabel lengte">
+            <PillGroup
+              value={config.trafoKabelLengte}
+              onChange={(v) => update({ trafoKabelLengte: v as MaterialenConfig["trafoKabelLengte"] })}
+              options={[
+                { value: "7.25", label: "7,25 m" },
+                { value: "10", label: "10 m" },
+              ]}
+            />
+          </Field>
+        )}
         {config.trafoKva ? (
           <InfoBox type="info">
             Vermogen: {config.trafoKva} kVA — buispatroon wordt automatisch bepaald
           </InfoBox>
         ) : (
           <InfoBox type="warning">
-            ⚠ Vul het trafo vermogen in bij de Trafo-sectie
+            ⚠ Vul het trafo vermogen in {isCompact ? "hierboven" : "bij de Trafo-sectie"}
           </InfoBox>
         )}
       </div>
