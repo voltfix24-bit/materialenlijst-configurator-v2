@@ -168,5 +168,6 @@ export const emptyConfig = (): MaterialenConfig => ({
   lsRekSchroefpatroon: "",
   lsRichtingen: 0,
   msRichtingen: [newRichting()],
+  msKabelTraces: [],
   lsMoffen: [],
 });
