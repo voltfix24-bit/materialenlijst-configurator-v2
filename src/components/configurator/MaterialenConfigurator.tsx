@@ -84,10 +84,10 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
     project: !!config.subType,
     rmu: !!config.rmuConfig,
     trafo: !showTrafo || (!!config.trafoActie && !!config.trafoKva),
-    vultkabel: !showTrafo || config.vultKabelAfstand >= 0,
+    vultkabel: !showTrafo || config.vultKabelAfstand > 0,
     lsrek: !showLsRek || !!config.lsRekActie,
     ms: config.msRichtingen.every(richtingComplete),
-    ls: true,
+    ls: !config.lsMoffenActief || (config.lsMoffen.length > 0 && config.lsMoffen.every((m) => !!m.bestaandType && !!m.type)),
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
     if (k === "trafo") return showTrafo;
