@@ -249,4 +249,5 @@ export const emptyConfig = (): MaterialenConfig => ({
   msKabelTraces: [],
   lsMoffenActief: false,
   lsMoffen: [],
+  isCompactStation: false,
 });
