@@ -244,5 +244,6 @@ export const emptyConfig = (): MaterialenConfig => ({
   lsRichtingen: 0,
   msRichtingen: [newRichting()],
   msKabelTraces: [],
+  lsMoffenActief: false,
   lsMoffen: [],
 });
