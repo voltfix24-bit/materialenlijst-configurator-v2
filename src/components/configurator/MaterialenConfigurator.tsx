@@ -934,8 +934,100 @@ function MsSection({ config, update, sd }: { config: MaterialenConfig; update: (
       <button onClick={addRicht} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <Plus className="w-4 h-4" /> MS-richting toevoegen
       </button>
+
+      {/* MS-kabel traces */}
+      <div className="space-y-2 pt-2">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          MS-kabels
+        </div>
+
+        {config.msKabelTraces.map((trace, i) => (
+          <div key={trace.id} className="rounded-md border border-border bg-background/40 p-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">
+                Trace {i + 1}
+              </span>
+              <span className="flex-1 text-sm font-medium">
+                {trace.kabelType && trace.lengteMeters > 0
+                  ? `${KABEL_LABEL[trace.kabelType]} — ${trace.lengteMeters}m`
+                  : "Nog in te vullen"}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  update({ msKabelTraces: config.msKabelTraces.filter((t) => t.id !== trace.id) })
+                }
+                className="text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            <Field label="Kabeltype">
+              <PillGroup
+                value={trace.kabelType}
+                onChange={(v) => updateTrace(trace.id, { kabelType: v as MsKabelType })}
+                options={[
+                  { value: "240AL_singel", label: "3× 1x240AL singel (standaard)" },
+                  { value: "630AL_singel", label: "3× 1x630AL singel" },
+                  { value: "3x240AL", label: "1× 3x240AL (3-aderig)" },
+                ]}
+              />
+            </Field>
+
+            <Field label="Lengte trace (meter)">
+              <div className="flex items-center gap-3">
+                <Stepper
+                  value={trace.lengteMeters}
+                  onChange={(v) => updateTrace(trace.id, { lengteMeters: v })}
+                  min={0}
+                  max={999}
+                  suffix=" m"
+                />
+                {trace.kabelType && trace.lengteMeters > 0 && (
+                  <span className="text-xs text-muted-foreground">{kabelSamenvatting(trace)}</span>
+                )}
+              </div>
+            </Field>
+
+            {trace.kabelType && trace.lengteMeters > 0 && (
+              <InfoBox type="info">{kabelSamenvatting(trace)}</InfoBox>
+            )}
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={() =>
+            update({
+              msKabelTraces: [
+                ...config.msKabelTraces,
+                { id: crypto.randomUUID(), kabelType: "240AL_singel", lengteMeters: 0 },
+              ],
+            })
+          }
+          className="w-full py-2 flex items-center justify-center gap-1.5 border border-dashed border-border rounded-lg text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+        >
+          <Plus className="h-3 w-3" /> MS-kabel trace toevoegen
+        </button>
+      </div>
     </div>
   );
+}
+
+const KABEL_LABEL: Record<MsKabelType, string> = {
+  "240AL_singel": "3× 1x240AL singel",
+  "630AL_singel": "3× 1x630AL singel",
+  "3x240AL": "1× 3x240AL 3-aderig",
+  "": "",
+};
+
+function kabelSamenvatting(trace: MsKabelTrace): string {
+  if (!trace.kabelType || !trace.lengteMeters) return "";
+  const isSingel = trace.kabelType === "240AL_singel" || trace.kabelType === "630AL_singel";
+  const kabelMeters = isSingel ? trace.lengteMeters * 3 : trace.lengteMeters;
+  const rollen = Math.ceil(trace.lengteMeters / 40);
+  return `${kabelMeters}m kabel bestellen · ${rollen}× beschermband`;
 }
 
 function LsSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
