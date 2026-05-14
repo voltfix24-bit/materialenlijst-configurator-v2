@@ -41,13 +41,34 @@ export interface RmuConfig {
   bodemplaat_artikel?: Artikel | null;
 }
 
+export type KabelType = "GPLK" | "XLPE" | "XLPE_singel" | "";
+
+export interface MsMofConfig {
+  bestaandType: KabelType;
+  bestaandDoorsnede: number | null;
+  nieuwType: KabelType;
+  nieuwDoorsnede: number | null;
+  mofTypeId: string | null;
+  mofHandmatig: boolean;
+}
+
 export interface MsRichting {
   id: string;
-  zwaaien: boolean | null; // null = nog niet gekozen, true = zwaaien, false = mof nodig
-  bestaand_type: "GPLK" | "XLPE" | "XLPE_singel" | "";
-  doorsnede: number | null;
-  mof_type_id: string | null;
-  mof_handmatig: boolean;
+  kanZwaaien: boolean | null; // null = nog niet gekozen
+  mofTijdelijk: MsMofConfig; // bij niet-provisorium gebruikt als de enige mof
+  mofDefinitief: MsMofConfig | null; // alleen bij provisorium + niet zwaaien
+  kabelTraceId: string | null;
+}
+
+export function emptyMofConfig(): MsMofConfig {
+  return {
+    bestaandType: "",
+    bestaandDoorsnede: null,
+    nieuwType: "",
+    nieuwDoorsnede: null,
+    mofTypeId: null,
+    mofHandmatig: false,
+  };
 }
 
 export interface LsMof {
@@ -133,11 +154,10 @@ export interface PreviewItem {
 
 export const newRichting = (): MsRichting => ({
   id: crypto.randomUUID(),
-  zwaaien: null,
-  bestaand_type: "",
-  doorsnede: null,
-  mof_type_id: null,
-  mof_handmatig: false,
+  kanZwaaien: null,
+  mofTijdelijk: emptyMofConfig(),
+  mofDefinitief: null,
+  kabelTraceId: null,
 });
 
 export const newLsMof = (): LsMof => ({
