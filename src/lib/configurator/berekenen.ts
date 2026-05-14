@@ -227,12 +227,15 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     }
   }
 
-  // 6. Vult kabel perskabelschoenen
-  if (config.trafoActie && config.trafoActie !== "blijft" && config.trafoKva) {
-    const kva = Number(config.trafoKva);
-    const v = (sd.trafoVultKabel.data ?? []).find((x) => x.trafo_kva === kva);
-    if (v) {
-      add(map, (v as ArtikelLike).artikel, Number(v.aantal_perskabelschoenen), "Vult kabel");
+  // 6. VULT KABEL (alleen renovatie)
+  const isRenovatie = config.subType === "renovatie_prov" || config.subType === "renovatie_nsa";
+  if (isRenovatie && config.trafoKva && config.vultKabelAfstand > 0) {
+    const spec = VULT_KABEL_SPECS[config.trafoKva];
+    if (spec) {
+      const totaalMeters = Math.ceil(config.vultKabelAfstand * spec.aantalKabels);
+      add(map, findArtNr(spec.kabelArtNr), totaalMeters, "Vult kabel");
+      add(map, findArtNr(spec.persArtNr), spec.aantalPers, "Vult kabel perskabelschoenen");
+      add(map, findArtNr("20042739"), 1, "Vult kabel muurbeugel");
     }
   }
 
