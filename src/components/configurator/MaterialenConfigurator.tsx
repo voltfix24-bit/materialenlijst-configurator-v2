@@ -105,7 +105,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
     mutationFn: async () => {
       // Volledige config opslaan als JSON. rmuConfig wordt afgeslankt tot {id};
       // bij rehydratie wordt het volledige object opgezocht in de stamdata.
-      const configToSave: Record<string, unknown> = {
+      const configToSave = {
         ...config,
         rmuConfig: config.rmuConfig ? { id: config.rmuConfig.id } : null,
       };
@@ -114,7 +114,8 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
         .from("cases")
         .update({
           sub_type: config.subType || null,
-          config_json: configToSave,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          config_json: configToSave as any,
         })
         .eq("id", caseId);
       if (caseErr) throw caseErr;
