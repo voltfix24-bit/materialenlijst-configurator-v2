@@ -1337,7 +1337,13 @@ function LsMofKaart({
         </Field>
       )}
 
-      {mof.bestaandType && (
+      {mof.type === "eindmof" && mof.bestaandType && (
+        <InfoBox type="info">
+          Eindmof materialen worden automatisch toegevoegd incl. aftakklem aarde
+        </InfoBox>
+      )}
+
+      {mof.bestaandType && mof.type !== "eindmof" && (
         <FieldRow>
           <Field label="Hoofdkabel doorsnede (mm²)">
             <Stepper
