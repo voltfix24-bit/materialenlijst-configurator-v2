@@ -80,14 +80,20 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
     }
     return true;
   };
+  const isRenovatie = config.subType === "renovatie_prov" || config.subType === "renovatie_nsa";
   const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
     rmu: !!config.rmuConfig,
     trafo: !showTrafo || (!!config.trafoActie && !!config.trafoKva),
-    vultkabel: !showTrafo || config.vultKabelAfstand > 0,
-    lsrek: !showLsRek || !!config.lsRekActie,
+    vultkabel: !isRenovatie || config.vultKabelAfstand > 0,
+    lsrek:
+      !isRenovatie ||
+      (!!config.lsRekActie && (config.lsRekActie === "gehandhaafd" || !!config.lsRekType)),
     ms: config.msRichtingen.every(richtingComplete),
-    ls: !config.lsMoffenActief || (config.lsMoffen.length > 0 && config.lsMoffen.every((m) => !!m.bestaandType && !!m.type)),
+    ls:
+      !config.lsMoffenActief ||
+      (config.lsMoffen.length > 0 &&
+        config.lsMoffen.every((m) => !!m.type && !!m.bestaandType)),
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
     if (k === "trafo") return showTrafo;
