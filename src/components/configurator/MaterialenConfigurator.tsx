@@ -380,9 +380,11 @@ function ProjectSection({ config, update, isCompact }: { config: MaterialenConfi
   );
 }
 
-function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata> }) {
-  const merken = ["ABB", "Siemens", "Magnefix"];
-  const isInet = config.rmuInet === "ja";
+function RmuSection({ config, update, sd, isCompact }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata>; isCompact: boolean }) {
+  const merken = isCompact ? ["ABB", "Siemens"] : ["ABB", "Siemens", "Magnefix"];
+  // Bij compact: i-Net altijd "nee"
+  const effectiveInet = isCompact ? "nee" : config.rmuInet;
+  const isInet = effectiveInet === "ja";
   const filteredConfigs = (sd.rmuConfigs.data ?? []).filter(
     (c) =>
       c.merk === config.rmuMerk &&
@@ -406,17 +408,28 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
 
   const showVeldKaartjes = !!config.rmuConfig && config.rmuVelden.length > 0;
   const isMagnefix = config.rmuMerk === "Magnefix";
+  const showConfigPicker = !!config.rmuMerk && (isCompact || isMagnefix || !!config.rmuInet);
 
   return (
     <div className="space-y-4">
+      {isCompact && (
+        <InfoBox type="info">
+          RMU is aanwezig — wordt niet besteld. Keuze bepaalt buispatronen en eindsluitingen.
+        </InfoBox>
+      )}
       <Field label="Merk">
         <PillGroup
           value={config.rmuMerk}
-          onChange={(v) => update({ rmuMerk: v as MaterialenConfig["rmuMerk"], rmuConfig: null, rmuVelden: [], rmuInet: v === "Magnefix" ? "" : config.rmuInet })}
+          onChange={(v) => update({
+            rmuMerk: v as MaterialenConfig["rmuMerk"],
+            rmuConfig: null,
+            rmuVelden: [],
+            rmuInet: isCompact ? "nee" : (v === "Magnefix" ? "" : config.rmuInet),
+          })}
           options={merken.map((m) => ({ value: m, label: m }))}
         />
       </Field>
-      {config.rmuMerk && config.rmuMerk !== "Magnefix" && (
+      {!isCompact && config.rmuMerk && config.rmuMerk !== "Magnefix" && (
         <Field label="I-Net">
           <PillGroup
             value={config.rmuInet}
@@ -436,7 +449,7 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
           />
         </Field>
       )}
-      {config.rmuMerk && (config.rmuMerk === "Magnefix" || config.rmuInet) && (
+      {showConfigPicker && (
         <Field label="Configuratie">
           {filteredConfigs.length === 0 ? (
             <p className="text-xs text-muted-foreground">Geen configuraties gevonden voor deze combinatie.</p>
@@ -468,6 +481,41 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
         </InfoBox>
       )}
 
+      {isCompact && config.rmuConfig && (
+        <>
+          <Field label="Trafo vermogen (kVA) — bepaalt buispatronen en LS-rek beveiliging">
+            <PillGroup
+              value={config.trafoKva}
+              onChange={(v) => update({ trafoKva: v as MaterialenConfig["trafoKva"] })}
+              options={[
+                { value: "250", label: "250 kVA" },
+                { value: "400", label: "400 kVA" },
+                { value: "630", label: "630 kVA" },
+                { value: "1000", label: "1000 kVA" },
+              ]}
+            />
+          </Field>
+          {config.trafoKva && (
+            <InfoBox type="info">
+              LS-rek beveiliging: mespatroon {config.trafoKva} kVA wordt automatisch toegevoegd (3×)
+            </InfoBox>
+          )}
+          <Field label="Aantal aan te sluiten LS-kabels">
+            <Stepper
+              value={config.lsRekAanSluitenKabels}
+              onChange={(v) => update({ lsRekAanSluitenKabels: v })}
+              min={0}
+              max={99}
+            />
+          </Field>
+          {config.lsRekAanSluitenKabels > 0 && (
+            <InfoBox type="info">
+              K56 U bevestigingsklem ({config.lsRekAanSluitenKabels * 2}×) + kabelinlegklem ({config.lsRekAanSluitenKabels}×)
+            </InfoBox>
+          )}
+        </>
+      )}
+
       {showVeldKaartjes && (
         <div className="space-y-3 pt-2">
           <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Veldinstellingen</div>
@@ -483,6 +531,7 @@ function RmuSection({ config, update, sd }: { config: MaterialenConfig; update: 
                 update={update}
                 isInet={isInet}
                 merk={config.rmuMerk}
+                isCompact={isCompact}
               />
             ),
           )}
