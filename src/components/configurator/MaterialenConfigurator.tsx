@@ -480,7 +480,7 @@ function VeldKaart({
   isInet: boolean;
   merk: string;
 }) {
-  const reserveLocked = veld.veldNummer <= 2;
+  const reserveLocked = veld.veldType === "C" && veld.veldNummer <= 2;
   const kabelOpties = [
     { value: "240AL", label: "3x1x240AL singels" },
     { value: "630AL", label: "3x1x630AL singels" },
