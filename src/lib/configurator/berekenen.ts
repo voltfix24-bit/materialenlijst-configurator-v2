@@ -4,6 +4,14 @@ import { evaluateFormula } from "./formula";
 
 interface ArtikelLike { artikel?: Artikel | null }
 
+type LsMofTypeRow = { id: string; type: string; bestaand_type: string };
+
+function zoekLsMofType(lsMofTypes: LsMofTypeRow[], type: string, bestaandType: string) {
+  const exact = lsMofTypes.find((t) => t.type === type && t.bestaand_type === bestaandType);
+  if (exact) return exact;
+  return lsMofTypes.find((t) => t.type === type && t.bestaand_type === "beide");
+}
+
 export interface VultKabelSpec {
   kabelArtNr: string;
   aantalKabels: number;
