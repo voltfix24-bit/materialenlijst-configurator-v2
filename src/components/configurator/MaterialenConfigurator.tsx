@@ -291,7 +291,16 @@ function ProjectSection({ config, update }: { config: MaterialenConfig; update: 
     <Field label="Sub-type">
       <PillGroup
         value={config.subType}
-        onChange={(v) => update({ subType: v as SubType })}
+        onChange={(v) => {
+          const next = v as SubType;
+          const isProv = next === "cs_met_prov" || next === "renovatie_prov";
+          update({
+            subType: next,
+            msRichtingen: isProv
+              ? config.msRichtingen
+              : config.msRichtingen.map((r) => ({ ...r, kanZwaaien: null, mofDefinitief: null })),
+          });
+        }}
         options={[
           { value: "cs_zonder_prov", label: "CS direct" },
           { value: "cs_met_prov", label: "CS via provisorium" },
