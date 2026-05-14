@@ -160,6 +160,39 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     }
   }
 
+  // 3c. TRAFO
+  if (config.trafoActie && config.trafoKva) {
+    const kva = config.trafoKva;
+
+    if (config.trafoActie === "nieuw") {
+      const trafoArtNr: Record<string, string> = {
+        "250": "26001090",
+        "400": "26001120",
+        "630": "26001150",
+      };
+      const tNr = trafoArtNr[kva];
+      if (tNr) add(map, findArtNr(tNr), 1, "Trafo");
+
+      add(map, findArtNr("20019629"), 2, "Trafo U-profiel");
+      add(map, findArtNr("20011412"), 1, "Trafo afschermplaat");
+      add(map, findArtNr("20019614"), 3, "Trafo afschermkap");
+      add(map, findArtNr("20017534"), 1, "Trafo soepele verbinding");
+    }
+
+    if (config.trafoActie === "draaien" || config.trafoActie === "blijft") {
+      if (kva === "250" || kva === "400") {
+        add(map, findArtNr("20038832"), 1, "Aansluitvlag trafo");
+      } else if (kva === "630") {
+        add(map, findArtNr("20042706"), 1, "Aansluitvlag trafo");
+      }
+    }
+  }
+
+  // 3d. Telcon kabel bevestigingsklem
+  if (config.trafoKabelLengte === "7.25" || config.trafoKabelLengte === "10") {
+    add(map, findArtNr("20044290"), 8, "Telcon kabel bevestigingsklem");
+  }
+
   // 4. MS moffen
   for (const r of config.msRichtingen) {
     if (r.zwaaien === false && r.mof_type_id) {
