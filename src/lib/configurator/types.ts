@@ -183,6 +183,7 @@ export interface MaterialenConfig {
   lsRichtingen: number;
   msRichtingen: MsRichting[];
   msKabelTraces: MsKabelTrace[];
+  lsMoffenActief: boolean;
   lsMoffen: LsMof[];
   rmuVelden: RmuVeldConfig[];
   iNetArtikelen: INetArtikel[];
