@@ -277,7 +277,8 @@ function sectionSummary(key: SectionKey, c: MaterialenConfig, sd: ReturnType<typ
       return `${n} richting${n === 1 ? "" : "en"}${ok ? "" : " — onvolledig"}`;
     }
     case "ls":
-      return c.lsMoffen.length === 0 ? "Geen LS moffen" : `${c.lsMoffen.length} LS mof${c.lsMoffen.length === 1 ? "" : "fen"}`;
+      if (!c.lsMoffenActief) return "Geen LS-moffen";
+      return c.lsMoffen.length === 0 ? "0 LS-moffen" : `${c.lsMoffen.length} LS-mof${c.lsMoffen.length === 1 ? "" : "fen"}`;
   }
 }
 
