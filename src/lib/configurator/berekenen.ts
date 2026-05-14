@@ -50,6 +50,7 @@ function add(map: Map<string, PreviewItem>, artikel: Artikel | null | undefined,
 
 export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType: string | undefined): PreviewItem[] {
   const map = new Map<string, PreviewItem>();
+  const isCompact = config.isCompactStation;
 
   // 1. Standaard templates
   if (caseType) {
