@@ -199,6 +199,8 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
         add(map, findArtNr("20038832"), 1, "Aansluitvlag trafo");
       } else if (kva === "630") {
         add(map, findArtNr("20042706"), 1, "Aansluitvlag trafo");
+      } else if (kva === "1000") {
+        add(map, findArtNr("20042707"), 1, "Aansluitvlag trafo");
       }
     }
   }
