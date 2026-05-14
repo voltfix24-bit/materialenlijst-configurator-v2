@@ -10,6 +10,7 @@ import {
   buildRmuVelden,
   DEFAULT_INET_ARTIKELEN,
   emptyConfig,
+  emptyMofConfig,
   newLsMof,
   newRichting,
   type MaterialenConfig,
