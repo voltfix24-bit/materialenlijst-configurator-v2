@@ -355,6 +355,9 @@ export type Database = {
           bestaand_type: string
           code: string
           id: string
+          nieuwe_doorsnede_max: number | null
+          nieuwe_doorsnede_min: number | null
+          nieuwe_type: string | null
           omschrijving: string | null
         }
         Insert: {
@@ -365,6 +368,9 @@ export type Database = {
           bestaand_type: string
           code: string
           id?: string
+          nieuwe_doorsnede_max?: number | null
+          nieuwe_doorsnede_min?: number | null
+          nieuwe_type?: string | null
           omschrijving?: string | null
         }
         Update: {
@@ -375,6 +381,9 @@ export type Database = {
           bestaand_type?: string
           code?: string
           id?: string
+          nieuwe_doorsnede_max?: number | null
+          nieuwe_doorsnede_min?: number | null
+          nieuwe_type?: string | null
           omschrijving?: string | null
         }
         Relationships: [
