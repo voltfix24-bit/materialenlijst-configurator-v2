@@ -674,6 +674,7 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
               lsRekActie: v as MaterialenConfig["lsRekActie"],
               lsRekType: "",
               lsRekExtraStroken: 0,
+              lsRekAanSluitenKabels: 0,
               lsRekBeveiligingAanpassen: false,
               lsRekOvStuurpunt: false,
               lsRekSchroefpatroon: "",
@@ -711,6 +712,28 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
               </div>
             </Field>
           )}
+
+          <Field label="Aantal aan te sluiten LS-kabels">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Stepper
+                value={config.lsRekAanSluitenKabels}
+                onChange={(v) => update({ lsRekAanSluitenKabels: v })}
+                min={0}
+                max={99}
+              />
+              {config.lsRekAanSluitenKabels > 0 && config.lsRekType && (() => {
+                const max = config.lsRekType === "8" ? 8 : 12;
+                if (config.lsRekAanSluitenKabels > max) {
+                  return (
+                    <InfoBox type="warning">
+                      ⚠ {config.lsRekAanSluitenKabels} kabels op een {max}-richtingen rek — klopt dit? Maximum is {max} richtingen.
+                    </InfoBox>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+          </Field>
 
           {config.trafoKva ? (
             <InfoBox type="info">

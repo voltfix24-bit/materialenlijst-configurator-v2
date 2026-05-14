@@ -101,6 +101,7 @@ export interface MaterialenConfig {
   lsRekActie: LsRekActie;
   lsRekType: "8" | "12" | "";
   lsRekExtraStroken: number;
+  lsRekAanSluitenKabels: number;
   lsRekBeveiligingAanpassen: boolean;
   lsRekOvStuurpunt: boolean;
   lsRekSchroefpatroon: "35A" | "50A" | "";
@@ -153,6 +154,7 @@ export const emptyConfig = (): MaterialenConfig => ({
   lsRekActie: "",
   lsRekType: "",
   lsRekExtraStroken: 0,
+  lsRekAanSluitenKabels: 0,
   lsRekBeveiligingAanpassen: false,
   lsRekOvStuurpunt: false,
   lsRekSchroefpatroon: "",

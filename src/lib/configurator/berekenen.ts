@@ -270,6 +270,12 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
         add(map, findArtNr("20020042"), config.lsRekExtraStroken, "LS-rek extra stroken");
       }
 
+      if (config.lsRekAanSluitenKabels > 0) {
+        const n = config.lsRekAanSluitenKabels;
+        add(map, findArtNr("20042042"), n, "LS-rek kabelbevestigingsklem K56");
+        add(map, findArtNr("20018004"), n, "LS-rek kabelinlegklem");
+      }
+
       const mpNr = mespatroon[config.trafoKva ?? ""];
       if (mpNr) add(map, findArtNr(mpNr), 1, "LS-rek beveiliging voedende strook");
     }
