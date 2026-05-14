@@ -298,9 +298,9 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     }
   }
 
-  // 6. VULT KABEL (alleen renovatie)
+  // 6. VULT KABEL (alleen renovatie, niet bij compact)
   const isRenovatie = config.subType === "renovatie_prov" || config.subType === "renovatie_nsa";
-  if (isRenovatie && config.trafoKva && config.vultKabelAfstand > 0) {
+  if (!isCompact && isRenovatie && config.trafoKva && config.vultKabelAfstand > 0) {
     const spec = VULT_KABEL_SPECS[config.trafoKva];
     if (spec) {
       const totaalMeters = Math.ceil(config.vultKabelAfstand * spec.aantalKabels);
@@ -310,14 +310,14 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     }
   }
 
-  // 7. LS-REK (alleen renovatie)
-  if (config.lsRekActie && isRenovatie) {
-    const mespatroon: Record<string, string> = {
-      "250": "20036622",
-      "400": "20036623",
-      "630": "20036624",
-    };
+  // 7. LS-REK
+  const mespatroon: Record<string, string> = {
+    "250": "20036622",
+    "400": "20036623",
+    "630": "20036624",
+  };
 
+  if (!isCompact && config.lsRekActie && isRenovatie) {
     if (config.lsRekActie === "vervangen") {
       if (config.lsRekType === "8") add(map, findArtNr("20050813"), 1, "LS-rek 8 richtingen");
       else if (config.lsRekType === "12") add(map, findArtNr("20050761"), 1, "LS-rek 12 richtingen");
@@ -326,19 +326,13 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
         add(map, findArtNr("20020042"), config.lsRekExtraStroken, "LS-rek extra stroken");
       }
 
-      if (config.lsRekAanSluitenKabels > 0) {
-        const n = config.lsRekAanSluitenKabels;
-        add(map, findArtNr("20042042"), n, "LS-rek kabelbevestigingsklem K56");
-        add(map, findArtNr("20018004"), n, "LS-rek kabelinlegklem");
-      }
-
       const mpNr = mespatroon[config.trafoKva ?? ""];
-      if (mpNr) add(map, findArtNr(mpNr), 1, "LS-rek beveiliging voedende strook");
+      if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging voedende strook");
     }
 
     if (config.lsRekActie === "gehandhaafd" && config.lsRekBeveiligingAanpassen) {
       const mpNr = mespatroon[config.trafoKva ?? ""];
-      if (mpNr) add(map, findArtNr(mpNr), 1, "LS-rek beveiliging aanpassen");
+      if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging aanpassen");
     }
 
     if (config.lsRekOvStuurpunt) {
@@ -351,6 +345,23 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
       add(map, findArtNr("20039994"), 1, "OV-stuurpunt beugel FlexOV");
       add(map, findArtNr("20040149"), 1, "OV-stuurpunt kabel ethernet");
     }
+  }
+
+  // Mespatroon LS-rek bij compact: altijd 3×
+  if (isCompact) {
+    const mpNr = mespatroon[config.trafoKva ?? ""];
+    if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging voedende strook");
+  }
+
+  // LS-rek kabelbevestigingsklemmen — bij renovatie via lsRekActie=vervangen, of bij compact altijd
+  if (config.lsRekAanSluitenKabels > 0 && (isCompact || (config.lsRekActie === "vervangen" && isRenovatie))) {
+    const n = config.lsRekAanSluitenKabels;
+    if (isCompact) {
+      add(map, findArtNr("20042043"), n * 2, "LS-rek kabelbevestigingsklem K56 U");
+    } else {
+      add(map, findArtNr("20042042"), n, "LS-rek kabelbevestigingsklem K56");
+    }
+    add(map, findArtNr("20018004"), n, "LS-rek kabelinlegklem");
   }
 
   return Array.from(map.values()).sort((a, b) => a.categorie.localeCompare(b.categorie) || a.artikel_nummer.localeCompare(b.artikel_nummer));
