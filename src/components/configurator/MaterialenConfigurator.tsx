@@ -236,7 +236,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
 
         {SECTIONS.map((sec) => {
           if (sec.key === "trafo" && !showTrafo) return null;
-          if (sec.key === "vultkabel" && !showTrafo) return null;
+          if (sec.key === "vultkabel" && !showVultKabel) return null;
           if (sec.key === "lsrek" && !showLsRek) return null;
           return (
             <SectionCard
@@ -248,8 +248,8 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
               summary={sectionSummary(sec.key, config, sd)}
               onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
             >
-              {sec.key === "project" && <ProjectSection config={config} update={update} />}
-              {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} />}
+              {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
+              {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} isCompact={isCompact} />}
               {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
               {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
               {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
