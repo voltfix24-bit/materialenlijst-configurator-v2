@@ -151,14 +151,14 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
 
       // ls moffen
       await supabase.from("case_ls_moffen").delete().eq("case_id", caseId);
-      if (config.lsMoffen.length > 0) {
+      if (config.lsMoffenActief && config.lsMoffen.length > 0) {
         const rows = config.lsMoffen.map((l, i) => ({
           case_id: caseId,
           positie: i + 1,
           type: l.type || "verbinding",
-          bestaand_type: l.bestaand_type || "GPLK",
+          bestaand_type: l.bestaandType || "GPLK",
           aantal: l.aantal,
-          overzettingen: l.overzettingen,
+          overzettingen: l.type === "aftakmof" ? l.aantalAftakken : 0,
         }));
         const { error } = await supabase.from("case_ls_moffen").insert(rows);
         if (error) throw error;
