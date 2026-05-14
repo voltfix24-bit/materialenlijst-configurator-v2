@@ -192,14 +192,14 @@ export function MsMofTab() {
         <table className="w-full text-sm">
           <thead className="bg-surface-2 text-muted-foreground">
             <tr>
-              {["", "Code", "Bestaand", "Min mm²", "Max mm²", "Mof artikel", "Actief", ""].map((h) => (
-                <th key={h} className="text-left px-3 py-2 font-mono text-[10px] uppercase tracking-wider">{h}</th>
+              {["", "Code", "Bestaand", "Min mm²", "Max mm²", "Nieuw", "Min mm²", "Max mm²", "Mof artikel", "Actief", ""].map((h, i) => (
+                <th key={i} className="text-left px-3 py-2 font-mono text-[10px] uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {(data as MsMof[]).length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-10 text-center">
+              <tr><td colSpan={11} className="px-3 py-10 text-center">
                 <div className="text-xs text-muted-foreground mb-3">Nog geen MS mof types.</div>
                 <Button onClick={() => { setEditing({ bestaand_type: "GPLK", actief: true }); setOpen(true); }}>
                   <Plus className="h-4 w-4 mr-1" /> Eerste mof type
@@ -214,13 +214,16 @@ export function MsMofTab() {
                   <td className="px-3 py-2">{m.bestaand_type}</td>
                   <td className="px-3 py-2">{m.bestaand_doorsnede_min ?? "—"}</td>
                   <td className="px-3 py-2">{m.bestaand_doorsnede_max ?? "—"}</td>
+                  <td className="px-3 py-2">{m.nieuwe_type ?? "—"}</td>
+                  <td className="px-3 py-2">{m.nieuwe_doorsnede_min ?? "—"}</td>
+                  <td className="px-3 py-2">{m.nieuwe_doorsnede_max ?? "—"}</td>
                   <td className="px-3 py-2"><ArtikelLabel id={m.artikel_id} /></td>
                   <td className="px-3 py-2">{m.actief ? "Ja" : "Nee"}</td>
                   <td className="px-3 py-2"><RowActions onEdit={() => { setEditing(m); setOpen(true); }} onDelete={() => setToDelete(m)} /></td>
                 </tr>
                 {expanded.has(m.id) && (
                   <tr key={m.id + "-exp"}>
-                    <td colSpan={8} className={cn("p-0 border-t border-border")}>
+                    <td colSpan={11} className={cn("p-0 border-t border-border")}>
                       <MofMaterialenSubtable mofTypeId={m.id} table="ms_mof_materialen" />
                     </td>
                   </tr>
