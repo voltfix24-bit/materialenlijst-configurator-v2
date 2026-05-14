@@ -65,13 +65,22 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
   const showTrafo = RENOVATIE(config.subType);
   const showLsRek = RENOVATIE(config.subType);
 
+  const isProvisorum = config.subType === "cs_met_prov" || config.subType === "renovatie_prov";
+  const richtingComplete = (r: MaterialenConfig["msRichtingen"][number]): boolean => {
+    if (!r.mofTijdelijk.mofTypeId) return false;
+    if (isProvisorum) {
+      if (r.kanZwaaien === null) return false;
+      if (r.kanZwaaien === false && !r.mofDefinitief?.mofTypeId) return false;
+    }
+    return true;
+  };
   const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
     rmu: !!config.rmuConfig,
     trafo: !showTrafo || (!!config.trafoActie && !!config.trafoKva),
     vultkabel: !showTrafo || config.vultKabelAfstand >= 0,
     lsrek: !showLsRek || !!config.lsRekActie,
-    ms: config.msRichtingen.every((r) => r.zwaaien === true || (r.zwaaien === false && !!r.mof_type_id)),
+    ms: config.msRichtingen.every(richtingComplete),
     ls: true,
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
