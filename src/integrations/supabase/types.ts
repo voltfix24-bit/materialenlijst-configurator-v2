@@ -77,29 +77,53 @@ export type Database = {
       case_ls_moffen: {
         Row: {
           aantal: number
+          aantal_aftakken: number | null
+          aftak_doorsnede: number | null
           bestaand_type: string
           case_id: string
+          hoofdkabel_doorsnede: number | null
+          hoofdkabel_materiaal: string | null
           id: string
+          kabel_lengte_meters: number | null
+          kan_zwaaien: boolean | null
           overzettingen: number
           positie: number
+          ringklem_artikel_nummer: string | null
+          ringklem_handmatig: boolean | null
           type: string
         }
         Insert: {
           aantal?: number
+          aantal_aftakken?: number | null
+          aftak_doorsnede?: number | null
           bestaand_type: string
           case_id: string
+          hoofdkabel_doorsnede?: number | null
+          hoofdkabel_materiaal?: string | null
           id?: string
+          kabel_lengte_meters?: number | null
+          kan_zwaaien?: boolean | null
           overzettingen?: number
           positie: number
+          ringklem_artikel_nummer?: string | null
+          ringklem_handmatig?: boolean | null
           type: string
         }
         Update: {
           aantal?: number
+          aantal_aftakken?: number | null
+          aftak_doorsnede?: number | null
           bestaand_type?: string
           case_id?: string
+          hoofdkabel_doorsnede?: number | null
+          hoofdkabel_materiaal?: string | null
           id?: string
+          kabel_lengte_meters?: number | null
+          kan_zwaaien?: boolean | null
           overzettingen?: number
           positie?: number
+          ringklem_artikel_nummer?: string | null
+          ringklem_handmatig?: boolean | null
           type?: string
         }
         Relationships: [
@@ -161,33 +185,63 @@ export type Database = {
         Row: {
           bestaand_type: string | null
           case_id: string
+          def_bestaand_type: string | null
+          def_doorsnede: number | null
+          def_is_eindmof: boolean | null
+          def_mof_handmatig: boolean | null
+          def_nieuw_doorsnede: number | null
+          def_nieuw_type: string | null
           doorsnede: number | null
           fase: string | null
           id: string
+          is_eindmof: boolean | null
+          mof_definitief_type_id: string | null
           mof_handmatig: boolean
           mof_type_id: string | null
+          nieuw_doorsnede: number | null
+          nieuw_type: string | null
           positie: number
           zwaaien: boolean
         }
         Insert: {
           bestaand_type?: string | null
           case_id: string
+          def_bestaand_type?: string | null
+          def_doorsnede?: number | null
+          def_is_eindmof?: boolean | null
+          def_mof_handmatig?: boolean | null
+          def_nieuw_doorsnede?: number | null
+          def_nieuw_type?: string | null
           doorsnede?: number | null
           fase?: string | null
           id?: string
+          is_eindmof?: boolean | null
+          mof_definitief_type_id?: string | null
           mof_handmatig?: boolean
           mof_type_id?: string | null
+          nieuw_doorsnede?: number | null
+          nieuw_type?: string | null
           positie: number
           zwaaien?: boolean
         }
         Update: {
           bestaand_type?: string | null
           case_id?: string
+          def_bestaand_type?: string | null
+          def_doorsnede?: number | null
+          def_is_eindmof?: boolean | null
+          def_mof_handmatig?: boolean | null
+          def_nieuw_doorsnede?: number | null
+          def_nieuw_type?: string | null
           doorsnede?: number | null
           fase?: string | null
           id?: string
+          is_eindmof?: boolean | null
+          mof_definitief_type_id?: string | null
           mof_handmatig?: boolean
           mof_type_id?: string | null
+          nieuw_doorsnede?: number | null
+          nieuw_type?: string | null
           positie?: number
           zwaaien?: boolean
         }
@@ -197,6 +251,13 @@ export type Database = {
             columns: ["case_id"]
             isOneToOne: false
             referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_ms_moffen_mof_definitief_type_id_fkey"
+            columns: ["mof_definitief_type_id"]
+            isOneToOne: false
+            referencedRelation: "ms_mof_types"
             referencedColumns: ["id"]
           },
           {
@@ -212,6 +273,7 @@ export type Database = {
         Row: {
           case_nummer: string | null
           case_type: string
+          config_json: Json | null
           created_at: string
           id: string
           notities: string | null
@@ -223,6 +285,7 @@ export type Database = {
         Insert: {
           case_nummer?: string | null
           case_type: string
+          config_json?: Json | null
           created_at?: string
           id?: string
           notities?: string | null
@@ -234,6 +297,7 @@ export type Database = {
         Update: {
           case_nummer?: string | null
           case_type?: string
+          config_json?: Json | null
           created_at?: string
           id?: string
           notities?: string | null
