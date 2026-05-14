@@ -154,6 +154,7 @@ export const emptyConfig = (): MaterialenConfig => ({
   lsRekActie: "",
   lsRekType: "",
   lsRekExtraStroken: 0,
+  lsRekAanSluitenKabels: 0,
   lsRekBeveiligingAanpassen: false,
   lsRekOvStuurpunt: false,
   lsRekSchroefpatroon: "",
