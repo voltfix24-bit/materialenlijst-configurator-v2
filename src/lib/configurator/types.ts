@@ -50,6 +50,7 @@ export interface MsMofConfig {
   nieuwDoorsnede: number | null;
   mofTypeId: string | null;
   mofHandmatig: boolean;
+  isEindmof: boolean;
 }
 
 export interface MsRichting {
