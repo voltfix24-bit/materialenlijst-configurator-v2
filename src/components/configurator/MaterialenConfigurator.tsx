@@ -5,7 +5,7 @@ import { PillGroup } from "@/components/ui-prim/PillGroup";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { Field, FieldRow, InfoBox } from "@/components/ui-prim/Field";
 import { useStamdata } from "@/lib/configurator/queries";
-import { berekenPreview } from "@/lib/configurator/berekenen";
+import { berekenPreview, VULT_KABEL_SPECS } from "@/lib/configurator/berekenen";
 import {
   buildRmuVelden,
   DEFAULT_INET_ARTIKELEN,
@@ -31,6 +31,7 @@ const SECTIONS = [
   { key: "project", label: "Projecttype", color: "var(--color-section-project)" },
   { key: "rmu", label: "RMU configuratie", color: "var(--color-section-rmu)" },
   { key: "trafo", label: "Trafo", color: "var(--color-section-trafo)" },
+  { key: "vultkabel", label: "Vult kabel", color: "var(--color-section-vultkabel)" },
   { key: "lsrek", label: "LS-rek", color: "var(--color-section-lsrek)" },
   { key: "ms", label: "MS verbindingen", color: "var(--color-section-ms)" },
   { key: "ls", label: "LS verbindingen", color: "var(--color-section-ls)" },
@@ -43,7 +44,7 @@ const RENOVATIE = (s: string) => s === "renovatie_prov" || s === "renovatie_nsa"
 export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Props) {
   const [config, setConfig] = useState<MaterialenConfig>(initialConfig ?? emptyConfig());
   const [open, setOpen] = useState<Record<SectionKey, boolean>>({
-    project: true, rmu: true, trafo: true, lsrek: true, ms: true, ls: true,
+    project: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true,
   });
   const [debounced, setDebounced] = useState(config);
 
@@ -62,16 +63,18 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
   const showTrafo = RENOVATIE(config.subType);
   const showLsRek = RENOVATIE(config.subType);
 
-  const completion = {
+  const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
     rmu: !!config.rmuConfig,
     trafo: !showTrafo || (!!config.trafoActie && !!config.trafoKva),
+    vultkabel: !showTrafo || config.vultKabelAfstand >= 0,
     lsrek: !showLsRek || !!config.lsRekActie,
     ms: config.msRichtingen.every((r) => r.zwaaien === true || (r.zwaaien === false && !!r.mof_type_id)),
     ls: true,
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
     if (k === "trafo") return showTrafo;
+    if (k === "vultkabel") return showTrafo;
     if (k === "lsrek") return showLsRek;
     return true;
   });
@@ -152,6 +155,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
 
         {SECTIONS.map((sec) => {
           if (sec.key === "trafo" && !showTrafo) return null;
+          if (sec.key === "vultkabel" && !showTrafo) return null;
           if (sec.key === "lsrek" && !showLsRek) return null;
           return (
             <SectionCard
@@ -166,6 +170,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig }: Prop
               {sec.key === "project" && <ProjectSection config={config} update={update} />}
               {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} />}
               {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
+              {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
               {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
               {sec.key === "ms" && <MsSection config={config} update={update} sd={sd} />}
               {sec.key === "ls" && <LsSection config={config} update={update} />}
@@ -219,6 +224,8 @@ function sectionSummary(key: SectionKey, c: MaterialenConfig, sd: ReturnType<typ
       return c.rmuConfig ? `${c.rmuConfig.merk} ${c.rmuConfig.code} — ${c.rmuConfig.aantal_velden}-velds` : "Nog in te vullen";
     case "trafo":
       return c.trafoActie && c.trafoKva ? `${c.trafoActie} — ${c.trafoKva} kVA` : "Nog in te vullen";
+    case "vultkabel":
+      return c.vultKabelAfstand > 0 ? `${c.vultKabelAfstand} m afstand` : "Nog in te vullen";
     case "lsrek":
       return c.lsRekActie ? c.lsRekActie : "Nog in te vullen";
     case "ms": {
@@ -576,10 +583,7 @@ function INetArtikelenSection({
   );
 }
 
-function TrafoSection({ config, update, sd }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata> }) {
-  const vk = config.trafoKva
-    ? (sd.trafoVultKabel.data ?? []).find((v) => v.trafo_kva === Number(config.trafoKva))
-    : null;
+function TrafoSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata> }) {
   return (
     <div className="space-y-4">
       <Field label="Actie">
@@ -615,17 +619,44 @@ function TrafoSection({ config, update, sd }: { config: MaterialenConfig; update
           )}
         </InfoBox>
       )}
-      {config.trafoActie && config.trafoActie !== "blijft" && config.trafoKva && (
-        <FieldRow>
-          <Field label="Vult kabel (m)">
-            <Stepper value={config.vultKabelMeter} onChange={(v) => update({ vultKabelMeter: v })} max={500} suffix="m" />
-          </Field>
-          {vk && (
-            <InfoBox type="info">
-              {vk.aantal_kabels}× {vk.kabel_doorsnede}mm² · {vk.aantal_perskabelschoenen} perskabelschoenen
-            </InfoBox>
+    </div>
+  );
+}
+
+function VultKabelSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
+  const spec = config.trafoKva ? VULT_KABEL_SPECS[config.trafoKva] : null;
+  const totaalMeters = spec ? Math.ceil(config.vultKabelAfstand * spec.aantalKabels) : 0;
+  return (
+    <div className="space-y-4">
+      {!config.trafoKva && (
+        <InfoBox type="warning">⚠ Vul eerst het trafo vermogen in bij de Trafo-sectie</InfoBox>
+      )}
+      {spec && (
+        <InfoBox type="info">
+          {spec.omschrijving} · Afstand × {spec.aantalKabels} = totaal kabelmeters
+        </InfoBox>
+      )}
+      <Field label="Afstand trafo → LS-rek (meter)">
+        <div className="flex items-center gap-3">
+          <Stepper
+            value={config.vultKabelAfstand}
+            onChange={(v) => update({ vultKabelAfstand: v })}
+            min={0}
+            max={50}
+            suffix="m"
+          />
+          {spec && config.vultKabelAfstand > 0 && (
+            <span className="text-sm text-muted-foreground">
+              = {totaalMeters} m kabel totaal
+              {spec.aantalKabels >= 8 && " (dubbel uitgevoerd)"}
+            </span>
           )}
-        </FieldRow>
+        </div>
+      </Field>
+      {spec && config.vultKabelAfstand > 0 && (
+        <InfoBox type="success">
+          Wordt toegevoegd: {totaalMeters}m {spec.kabelArtNr} · {spec.aantalPers}× perskabelschoen · 1× muurbeugel
+        </InfoBox>
       )}
     </div>
   );

@@ -97,7 +97,7 @@ export interface MaterialenConfig {
   trafoActie: TrafoActie;
   trafoKva: TrafoKva;
   trafoKabelLengte: "7.25" | "10" | "";
-  vultKabelMeter: number;
+  vultKabelAfstand: number;
   lsRekActie: LsRekActie;
   lsRichtingen: number;
   msRichtingen: MsRichting[];
@@ -142,7 +142,7 @@ export const emptyConfig = (): MaterialenConfig => ({
   trafoActie: "",
   trafoKva: "",
   trafoKabelLengte: "",
-  vultKabelMeter: 0,
+  vultKabelAfstand: 0,
   rmuVelden: [],
   iNetArtikelen: [],
   lsRekActie: "",
