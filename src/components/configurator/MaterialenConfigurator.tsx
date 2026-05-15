@@ -65,7 +65,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
   }, [initialConfig, isCompact]);
   const [config, setConfig] = useState<MaterialenConfig>(initial);
   const [open, setOpen] = useState<Record<SectionKey, boolean>>({
-    project: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true,
+    project: true, provisorium: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true, ggi: true,
   });
   const [debounced, setDebounced] = useState(config);
 
