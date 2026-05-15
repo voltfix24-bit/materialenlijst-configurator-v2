@@ -146,6 +146,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
       const configToSave = {
         ...config,
         rmuConfig: config.rmuConfig ? { id: config.rmuConfig.id } : null,
+        provRmuConfig: config.provRmuConfig ? { id: config.provRmuConfig.id } : null,
       };
 
       const { error: caseErr } = await supabase
