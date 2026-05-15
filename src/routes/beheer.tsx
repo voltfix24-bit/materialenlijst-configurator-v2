@@ -19,7 +19,6 @@ const TABS = [
   { key: "ls_mof", label: "LS mof types" },
   { key: "standaard", label: "Standaard materialen" },
   { key: "vast", label: "Vaste artikelen per subtype" },
-  { key: "trafo", label: "Trafo vult kabel" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
