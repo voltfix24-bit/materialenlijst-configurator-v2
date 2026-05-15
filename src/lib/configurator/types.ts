@@ -283,4 +283,11 @@ export const emptyConfig = (): MaterialenConfig => ({
   lsMoffenActief: false,
   lsMoffen: [],
   isCompactStation: false,
+  ggiVervangen: false,
+  provRmuMerk: "",
+  provRmuConfig: null,
+  provRmuVelden: [],
+  provLsMoffenActief: false,
+  provLsMoffen: [],
+  provZekeringKva: "",
 });
