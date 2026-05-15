@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, ChevronDown, Info, Plus, Trash2, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ClipboardList, Info, Plus, Trash2, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { PillGroup } from "@/components/ui-prim/PillGroup";
