@@ -312,6 +312,39 @@ export function MaterialenConfigurator({
   }, [saveSignal]);
 
   // ---- Render ----
+  const stamErrors = [
+    sd.artikelen.error,
+    sd.rmuConfigs.error,
+    sd.msMofTypes.error,
+    sd.lsMofTypes.error,
+  ].filter(Boolean) as Error[];
+
+  if (stamErrors.length > 0) {
+    return (
+      <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-destructive">Stamdata kon niet worden geladen</div>
+          <div className="text-xs text-destructive/80 mt-1 break-words">
+            {stamErrors[0]?.message ?? "Onbekende fout"}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              sd.artikelen.refetch();
+              sd.rmuConfigs.refetch();
+              sd.msMofTypes.refetch();
+              sd.lsMofTypes.refetch();
+            }}
+            className="mt-2 text-xs underline hover:no-underline text-destructive"
+          >
+            Opnieuw proberen
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-6">
       <div className={cn("space-y-3", mobileTab === "preview" && "hidden lg:block")}>
