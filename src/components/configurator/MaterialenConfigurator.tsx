@@ -149,7 +149,7 @@ export function MaterialenConfigurator({
       ? true
       : (!isRenovatie ||
         (!!config.lsRekActie && (config.lsRekActie === "gehandhaafd" || !!config.lsRekType))),
-    ms: config.msRichtingen.every(richtingComplete),
+    ms: config.msRichtingen.length === 0 || config.msRichtingen.every(richtingComplete),
     ls:
       !config.lsMoffenActief ||
       (config.lsMoffen.length > 0 &&
