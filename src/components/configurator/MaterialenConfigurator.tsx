@@ -102,6 +102,7 @@ export function MaterialenConfigurator({
       skipDirty.current = false;
       return;
     }
+    autoFlowRef.current = true;
     onDirtyChange?.(true);
   }, [config, onDirtyChange]);
 
