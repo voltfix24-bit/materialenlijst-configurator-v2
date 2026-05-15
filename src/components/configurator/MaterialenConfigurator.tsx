@@ -1972,7 +1972,7 @@ interface SectieGroep {
 const HIGHLIGHT_MS = 1500;
 const REMOVED_MS = 2000;
 
-function PreviewPanel({ preview, canSave, onSave, saving }: { preview: PreviewItem[]; canSave: boolean; onSave: () => void; saving: boolean }) {
+function PreviewPanel({ preview, onSave, saving, hasSubType }: { preview: PreviewItem[]; onSave: () => void; saving: boolean; hasSubType: boolean }) {
   // Vorige snapshot van id → hoeveelheid voor diff
   const vorigeItemsRef = useRef<Map<string, { item: PreviewItem; hoeveelheid: number }>>(new Map());
   const bekendeSectiesRef = useRef<Set<PreviewSectie>>(new Set());
