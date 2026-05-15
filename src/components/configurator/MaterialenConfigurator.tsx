@@ -203,6 +203,11 @@ export function MaterialenConfigurator({
 
   const opslaan = useMutation({
     mutationFn: async () => {
+      // Waarschuw maar blokkeer niet bij onvolledige secties
+      if (!allComplete) {
+        const missing = totalVisible - completedCount;
+        toast.warning(`${missing} sectie${missing === 1 ? "" : "s"} nog niet volledig — toch opgeslagen`);
+      }
       // Volledige config opslaan als JSON. rmuConfig wordt afgeslankt tot {id};
       // bij rehydratie wordt het volledige object opgezocht in de stamdata.
       const configToSave = {
