@@ -225,6 +225,7 @@ export const PREVIEW_SECTIE_DEFS: PreviewSectieDef[] = [
   { key: "lsRek", label: "LS-rek", color: "#1D9E75" },
   { key: "msVerbindingen", label: "MS verbindingen", color: "#D85A30" },
   { key: "lsVerbindingen", label: "LS verbindingen", color: "#534AB7" },
+  { key: "ggi", label: "GGI", color: "#64748b" },
 ];
 
 export interface PreviewItem {
