@@ -2125,11 +2125,11 @@ function PreviewPanel({ preview, onSave, saving, hasSubType }: { preview: Previe
           <span className="font-mono font-semibold">{teBestellen}</span>
         </div>
         <button
-          disabled={!canSave || saving}
+          disabled={saving}
           onClick={onSave}
           className="w-full rounded-md bg-primary text-primary-foreground font-medium py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
         >
-          {saving ? "Opslaan..." : canSave ? "Lijst opslaan" : "Vul alle secties in"}
+          {saving ? "Opslaan..." : "Lijst opslaan"}
         </button>
       </div>
     </div>
