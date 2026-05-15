@@ -40,12 +40,14 @@ interface Props {
 
 const SECTIONS = [
   { key: "project", label: "Projecttype", color: "var(--color-section-project)" },
+  { key: "provisorium", label: "Provisorium", color: "#378ADD" },
   { key: "rmu", label: "RMU configuratie", color: "var(--color-section-rmu)" },
   { key: "trafo", label: "Trafo", color: "var(--color-section-trafo)" },
   { key: "vultkabel", label: "Vult kabel", color: "var(--color-section-vultkabel)" },
   { key: "lsrek", label: "LS-rek", color: "var(--color-section-lsrek)" },
   { key: "ms", label: "MS verbindingen", color: "var(--color-section-ms)" },
   { key: "ls", label: "LS verbindingen", color: "var(--color-section-ls)" },
+  { key: "ggi", label: "GGI — Gebouwgebonden installaties", color: "#64748b" },
 ] as const;
 
 type SectionKey = (typeof SECTIONS)[number]["key"];
@@ -63,7 +65,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
   }, [initialConfig, isCompact]);
   const [config, setConfig] = useState<MaterialenConfig>(initial);
   const [open, setOpen] = useState<Record<SectionKey, boolean>>({
-    project: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true,
+    project: true, provisorium: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true, ggi: true,
   });
   const [debounced, setDebounced] = useState(config);
 
@@ -106,6 +108,9 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
   const isRenovatie = config.subType === "renovatie_prov" || config.subType === "renovatie_nsa";
   const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
+    provisorium:
+      !isProvisorum ||
+      (!!config.provRmuMerk && !!config.provRmuConfig && !!config.provZekeringKva),
     rmu: !!config.rmuConfig && (!isCompact || !!config.trafoKva),
     trafo: isCompact ? true : (!showTrafo || (!!config.trafoActie && !!config.trafoKva)),
     vultkabel: isCompact ? true : (!isRenovatie || config.vultKabelAfstand > 0),
@@ -118,11 +123,14 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
       !config.lsMoffenActief ||
       (config.lsMoffen.length > 0 &&
         config.lsMoffen.every((m) => !!m.type && !!m.bestaandType)),
+    ggi: true,
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
+    if (k === "provisorium") return isProvisorum && !isCompact;
     if (k === "trafo") return showTrafo;
     if (k === "vultkabel") return showVultKabel;
     if (k === "lsrek") return showLsRek;
+    if (k === "ggi") return isRenovatie;
     return true;
   });
   const totalVisible = visibleKeys.length;
@@ -138,6 +146,7 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
       const configToSave = {
         ...config,
         rmuConfig: config.rmuConfig ? { id: config.rmuConfig.id } : null,
+        provRmuConfig: config.provRmuConfig ? { id: config.provRmuConfig.id } : null,
       };
 
       const { error: caseErr } = await supabase
@@ -237,9 +246,11 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
         </div>
 
         {SECTIONS.map((sec) => {
+          if (sec.key === "provisorium" && (!isProvisorum || isCompact)) return null;
           if (sec.key === "trafo" && !showTrafo) return null;
           if (sec.key === "vultkabel" && !showVultKabel) return null;
           if (sec.key === "lsrek" && !showLsRek) return null;
+          if (sec.key === "ggi" && !isRenovatie) return null;
           return (
             <SectionCard
               key={sec.key}
@@ -251,12 +262,14 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
               onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
             >
               {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
+              {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
               {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} isCompact={isCompact} />}
               {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
               {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
               {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
               {sec.key === "ms" && <MsSection config={config} update={update} sd={sd} />}
               {sec.key === "ls" && <LsSection config={config} update={update} />}
+              {sec.key === "ggi" && <GgiSection config={config} update={update} />}
             </SectionCard>
           );
         })}
@@ -327,6 +340,11 @@ function sectionSummary(key: SectionKey, c: MaterialenConfig, sd: ReturnType<typ
     case "ls":
       if (!c.lsMoffenActief) return "Geen LS-moffen";
       return c.lsMoffen.length === 0 ? "0 LS-moffen" : `${c.lsMoffen.length} LS-mof${c.lsMoffen.length === 1 ? "" : "fen"}`;
+    case "provisorium":
+      if (!c.provRmuConfig) return "Nog in te vullen";
+      return `${c.provRmuMerk} ${c.provRmuConfig.code}${c.provZekeringKva ? ` — ${c.provZekeringKva} kVA` : ""}`;
+    case "ggi":
+      return c.ggiVervangen ? "GGI wordt vervangen" : "Geen GGI vervangen";
   }
 }
 
@@ -1608,6 +1626,241 @@ function LsMofKaart({
             ]}
           />
         </Field>
+      )}
+    </div>
+  );
+}
+
+// ---------- Provisorium ----------
+
+function ProvisoriumSection({
+  config,
+  update,
+  sd,
+}: {
+  config: MaterialenConfig;
+  update: (p: Partial<MaterialenConfig>) => void;
+  sd: ReturnType<typeof useStamdata>;
+}) {
+  const filtered = (sd.rmuConfigs.data ?? []).filter(
+    (c) => c.merk === config.provRmuMerk && c.is_inet === false,
+  );
+  const setVeld = (id: string, patch: Partial<RmuVeldConfig>) => {
+    update({ provRmuVelden: config.provRmuVelden.map((v) => (v.id === id ? { ...v, ...patch } : v)) });
+  };
+  const setMof = (id: string, patch: Partial<LsMof>) =>
+    update({ provLsMoffen: config.provLsMoffen.map((m) => (m.id === id ? { ...m, ...patch } : m)) });
+  const removeMof = (id: string) =>
+    update({ provLsMoffen: config.provLsMoffen.filter((m) => m.id !== id) });
+  const addMof = () => update({ provLsMoffen: [...config.provLsMoffen, newLsMof()] });
+
+  return (
+    <div className="space-y-4">
+      <InfoBox type="info">
+        De provisorium zorgt voor spanning tijdens de renovatie. Vul hieronder de RMU en zekeringen
+        van de provisorium in. RMU, frame en bodemplaat worden niet besteld.
+      </InfoBox>
+
+      <Field label="Provisorium RMU merk">
+        <PillGroup
+          value={config.provRmuMerk}
+          onChange={(v) =>
+            update({
+              provRmuMerk: v as MaterialenConfig["provRmuMerk"],
+              provRmuConfig: null,
+              provRmuVelden: [],
+            })
+          }
+          options={[
+            { value: "ABB", label: "ABB" },
+            { value: "Siemens", label: "Siemens" },
+            { value: "Magnefix", label: "Magnefix" },
+          ]}
+        />
+      </Field>
+
+      {config.provRmuMerk && (
+        <Field label="Provisorium RMU configuratie">
+          {filtered.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Geen configuraties gevonden.</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {filtered.map((c) => {
+                const active = config.provRmuConfig?.id === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    data-active={active}
+                    onClick={() => update({ provRmuConfig: c, provRmuVelden: buildRmuVelden(c) })}
+                    className="border border-border bg-surface rounded-md px-3 py-1.5 text-sm hover:bg-accent data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:border-primary"
+                  >
+                    {c.code}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </Field>
+      )}
+
+      {config.provRmuConfig && (
+        <InfoBox type="info">
+          <span className="font-mono text-xs">
+            {config.provRmuConfig.aantal_velden} velden · {config.provRmuConfig.aantal_f}F /{" "}
+            {config.provRmuConfig.aantal_c}C / {config.provRmuConfig.aantal_v}V
+          </span>
+        </InfoBox>
+      )}
+
+      {config.provRmuConfig && config.provRmuVelden.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            Provisorium veldinstellingen
+          </div>
+          {config.provRmuVelden.map((veld) => (
+            <ProvVeldKaart key={veld.id} veld={veld} merk={config.provRmuMerk} setVeld={setVeld} />
+          ))}
+        </div>
+      )}
+
+      <Field label="Provisorium trafo vermogen (kVA)">
+        <PillGroup
+          value={config.provZekeringKva}
+          onChange={(v) => update({ provZekeringKva: v as MaterialenConfig["provZekeringKva"] })}
+          options={[
+            { value: "250", label: "250 kVA" },
+            { value: "400", label: "400 kVA" },
+            { value: "630", label: "630 kVA" },
+            { value: "1000", label: "1000 kVA" },
+          ]}
+        />
+      </Field>
+
+      <Field label="LS-moffen op provisorium?">
+        <PillGroup
+          value={config.provLsMoffenActief ? "ja" : "nee"}
+          onChange={(v) =>
+            update({
+              provLsMoffenActief: v === "ja",
+              provLsMoffen: v === "ja" ? config.provLsMoffen : [],
+            })
+          }
+          options={[
+            { value: "ja", label: "Ja", color: "green" },
+            { value: "nee", label: "Nee", color: "amber" },
+          ]}
+        />
+      </Field>
+
+      {config.provLsMoffenActief && (
+        <div className="space-y-3">
+          {config.provLsMoffen.length === 0 && (
+            <p className="text-xs text-muted-foreground">Nog geen provisorium LS-moffen toegevoegd.</p>
+          )}
+          {config.provLsMoffen.map((m, idx) => (
+            <LsMofKaart
+              key={m.id}
+              mof={m}
+              index={idx}
+              isProv={false}
+              onChange={(patch) => setMof(m.id, patch)}
+              onRemove={() => removeMof(m.id)}
+            />
+          ))}
+          <button
+            onClick={addMof}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <Plus className="w-4 h-4" /> Provisorium LS-mof toevoegen
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProvVeldKaart({
+  veld,
+  merk,
+  setVeld,
+}: {
+  veld: RmuVeldConfig;
+  merk: string;
+  setVeld: (id: string, patch: Partial<RmuVeldConfig>) => void;
+}) {
+  const badge = veldBadge(merk, veld.veldType);
+  const label = veldLabel(merk, veld.veldType, veld.veldNummer);
+  const isMagnefix = merk === "Magnefix";
+
+  if (veld.veldType === "F") {
+    return (
+      <div className="rounded-md border border-border bg-background/40 p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">{badge}</span>
+          <span className="text-sm font-medium">{label}</span>
+        </div>
+        <InfoBox type="info">
+          Provisorium eindsluiting + buispatroon (3×) worden automatisch toegevoegd op basis van het provisorium kVA.
+        </InfoBox>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-border bg-background/40 p-3 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="rounded bg-secondary text-secondary-foreground text-xs font-mono px-1.5 py-0.5">{badge}</span>
+        <span className="text-sm font-medium">{label}</span>
+        <span className="text-[10px] text-muted-foreground ml-auto">altijd aangesloten</span>
+      </div>
+      {!isMagnefix && (
+        <Field label="Kabeltype">
+          <PillGroup
+            value={veld.kabelType}
+            onChange={(v) => setVeld(veld.id, { kabelType: v as RmuVeldConfig["kabelType"] })}
+            options={[
+              { value: "240AL", label: "3x1x240AL singels" },
+              { value: "630AL", label: "3x1x630AL singels" },
+            ]}
+          />
+        </Field>
+      )}
+      {isMagnefix && (
+        <InfoBox type="info">
+          K-veld eindsluiting + afschermset worden automatisch toegevoegd
+        </InfoBox>
+      )}
+    </div>
+  );
+}
+
+// ---------- GGI ----------
+
+function GgiSection({
+  config,
+  update,
+}: {
+  config: MaterialenConfig;
+  update: (p: Partial<MaterialenConfig>) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <Field label="Wordt GGI vervangen?">
+        <PillGroup
+          value={config.ggiVervangen ? "ja" : "nee"}
+          onChange={(v) => update({ ggiVervangen: v === "ja" })}
+          options={[
+            { value: "ja", label: "Ja", color: "green" },
+            { value: "nee", label: "Nee", color: "amber" },
+          ]}
+        />
+      </Field>
+      {config.ggiVervangen && (
+        <InfoBox type="info">
+          Vaste GGI materialen worden automatisch toegevoegd: armatuur LED-TL (2×), TL-buizen (4×),
+          installatiebuis (4×), klemzadels (100×), kabellasdozen (4×), YMvK kabel (10m) en lasklemmen.
+        </InfoBox>
       )}
     </div>
   );

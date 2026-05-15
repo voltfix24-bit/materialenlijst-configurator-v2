@@ -190,16 +190,25 @@ export interface MaterialenConfig {
   rmuVelden: RmuVeldConfig[];
   iNetArtikelen: INetArtikel[];
   isCompactStation: boolean;
+  ggiVervangen: boolean;
+  provRmuMerk: RmuMerk;
+  provRmuConfig: RmuConfig | null;
+  provRmuVelden: RmuVeldConfig[];
+  provLsMoffenActief: boolean;
+  provLsMoffen: LsMof[];
+  provZekeringKva: TrafoKva;
 }
 
 export type PreviewSectie =
   | "standaard"
+  | "provisorium"
   | "rmu"
   | "trafo"
   | "vultKabel"
   | "lsRek"
   | "msVerbindingen"
-  | "lsVerbindingen";
+  | "lsVerbindingen"
+  | "ggi";
 
 export interface PreviewSectieDef {
   key: PreviewSectie;
@@ -209,12 +218,14 @@ export interface PreviewSectieDef {
 
 export const PREVIEW_SECTIE_DEFS: PreviewSectieDef[] = [
   { key: "standaard", label: "Standaard materialen", color: "#7C8089" },
+  { key: "provisorium", label: "Provisorium", color: "#378ADD" },
   { key: "rmu", label: "RMU", color: "#7F77DD" },
   { key: "trafo", label: "Trafo", color: "#BA7517" },
   { key: "vultKabel", label: "Vult kabel", color: "#2A7A6F" },
   { key: "lsRek", label: "LS-rek", color: "#1D9E75" },
   { key: "msVerbindingen", label: "MS verbindingen", color: "#D85A30" },
   { key: "lsVerbindingen", label: "LS verbindingen", color: "#534AB7" },
+  { key: "ggi", label: "GGI", color: "#64748b" },
 ];
 
 export interface PreviewItem {
@@ -276,4 +287,11 @@ export const emptyConfig = (): MaterialenConfig => ({
   lsMoffenActief: false,
   lsMoffen: [],
   isCompactStation: false,
+  ggiVervangen: false,
+  provRmuMerk: "",
+  provRmuConfig: null,
+  provRmuVelden: [],
+  provLsMoffenActief: false,
+  provLsMoffen: [],
+  provZekeringKva: "",
 });

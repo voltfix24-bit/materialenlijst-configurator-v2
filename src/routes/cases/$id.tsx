@@ -99,6 +99,10 @@ function CaseDetailPage() {
     base.rmuConfig = savedRmuId
       ? ((rmuConfigs.find((c) => c.id === savedRmuId) as RmuConfig | undefined) ?? null)
       : null;
+    const savedProvId = (raw.provRmuConfig as { id?: string } | null | undefined)?.id ?? null;
+    base.provRmuConfig = savedProvId
+      ? ((rmuConfigs.find((c) => c.id === savedProvId) as RmuConfig | undefined) ?? null)
+      : null;
     return base;
   }, [caseRow, rmuConfigs]);
 

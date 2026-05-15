@@ -373,5 +373,83 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     add(map, findArtNr("20018004"), n, "LS-rek kabelinlegklem", "lsRek");
   }
 
+  // 8. PROVISORIUM
+  if (isProvisorum && config.provRmuConfig) {
+    const buispatroonProv: Record<string, Record<string, string>> = {
+      ABB:      { "250": "20041591", "400": "20041593", "630": "20041651" },
+      Siemens:  { "250": "20041591", "400": "20041593", "630": "20041651" },
+      Magnefix: { "250": "20019483", "400": "20019484", "630": "20019485" },
+    };
+    for (const veld of config.provRmuVelden ?? []) {
+      if (veld.veldType === "F") {
+        if (config.provRmuMerk === "Magnefix") {
+          add(map, findArtNr("20039303"), 1, "Provisorium T-veld eindsluiting", "provisorium");
+        } else {
+          add(map, findArtNr("20041682"), 1, "Provisorium F-veld eindsluiting", "provisorium");
+        }
+        const bpNr = buispatroonProv[config.provRmuMerk]?.[config.provZekeringKva ?? ""];
+        if (bpNr) add(map, findArtNr(bpNr), 3, "Provisorium buispatroon", "provisorium");
+      }
+      if (veld.veldType === "C" || veld.veldType === "V") {
+        if (config.provRmuMerk === "Magnefix") {
+          add(map, findArtNr("20039648"), 1, `Provisorium K-veld ${veld.veldNummer} eindsluiting`, "provisorium");
+          add(map, findArtNr("20018032"), 1, `Provisorium K-veld ${veld.veldNummer} afschermset`, "provisorium");
+        } else {
+          if (veld.kabelType === "240AL")
+            add(map, findArtNr("20040681"), 1, `Provisorium ${veld.veldType}-veld eindsluiting`, "provisorium");
+          else if (veld.kabelType === "630AL")
+            add(map, findArtNr("20040678"), 1, `Provisorium ${veld.veldType}-veld eindsluiting`, "provisorium");
+        }
+      }
+    }
+    if (config.provRmuMerk === "Magnefix") {
+      const aantalK = (config.provRmuVelden ?? []).filter(
+        (v) => v.veldType === "C" || v.veldType === "V",
+      ).length;
+      const doosNr = aantalK <= 2 ? "20029904" : "20029905";
+      add(map, findArtNr(doosNr), 1, "Provisorium doos onderdelen", "provisorium");
+    }
+
+    if (config.provLsMoffenActief) {
+      for (const lm of config.provLsMoffen) {
+        if (!lm.type || !lm.bestaandType) continue;
+        const lt = zoekLsMofType(
+          (sd.lsMofTypes.data ?? []) as LsMofTypeRow[],
+          lm.type,
+          lm.bestaandType,
+        );
+        if (lt) {
+          const mats = (sd.lsMofMaterialen.data ?? []).filter((m) => m.mof_type_id === lt.id);
+          for (const ma of mats) {
+            add(map, (ma as ArtikelLike).artikel, Number(ma.hoeveelheid) * lm.aantal, `Provisorium LS ${lm.type}`, "provisorium");
+          }
+        }
+        if (lm.type === "aftakmof" && lm.ringklemArtikelNummer) {
+          add(map, findArtNr(lm.ringklemArtikelNummer), lm.aantalAftakken * lm.aantal, "Provisorium LS aftakmof ringklem", "provisorium");
+        }
+        if (lm.kabelLengteMeters > 0) {
+          add(map, findArtNr("20009692"), lm.kabelLengteMeters * lm.aantal, "Provisorium LS kabel", "provisorium");
+        }
+      }
+    }
+  }
+
+  // 9. GGI
+  if (isRenovatie && config.ggiVervangen) {
+    const ggiArtikelen: Array<{ nr: string; qty: number }> = [
+      { nr: "20039090", qty: 2 },
+      { nr: "20041319", qty: 4 },
+      { nr: "20005450", qty: 4 },
+      { nr: "20019149", qty: 100 },
+      { nr: "20019177", qty: 4 },
+      { nr: "20029657", qty: 10 },
+      { nr: "20050552", qty: 5 },
+      { nr: "20038289", qty: 5 },
+    ];
+    for (const g of ggiArtikelen) {
+      add(map, findArtNr(g.nr), g.qty, "GGI", "ggi");
+    }
+  }
+
   return Array.from(map.values()).sort((a, b) => a.categorie.localeCompare(b.categorie) || a.artikel_nummer.localeCompare(b.artikel_nummer));
 }
