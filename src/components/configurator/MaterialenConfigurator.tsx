@@ -36,6 +36,12 @@ interface Props {
   caseType: string;
   initialConfig?: MaterialenConfig | null;
   onDirtyChange?: (isDirty: boolean) => void;
+  onProgressChange?: (completed: number, total: number) => void;
+  onSavingChange?: (saving: boolean) => void;
+  onCanSaveChange?: (canSave: boolean) => void;
+  onPreviewCountChange?: (count: number) => void;
+  saveSignal?: number;
+  mobileTab?: "config" | "preview";
 }
 
 const SECTIONS = [
