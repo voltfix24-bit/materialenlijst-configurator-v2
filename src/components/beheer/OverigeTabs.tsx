@@ -188,6 +188,7 @@ export function VasteArtikelenTab() {
           v.actief ? "Ja" : "Nee",
           <RowActions onEdit={() => { setEditing(v); setOpen(true); }} onDelete={() => setToDelete(v)} />,
         ])}
+        emptyIcon={Anchor}
         emptyMessage="Nog geen vaste artikelen"
         emptyDescription="Configureer station-vaste artikelen per case type."
         emptyAction={
