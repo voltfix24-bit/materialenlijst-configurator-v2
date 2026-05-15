@@ -38,6 +38,7 @@ const CASE_TYPE_LABELS: Record<string, string> = {
 function CaseDetailPage() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: caseRow, isLoading } = useQuery({
     queryKey: ["case", id],
@@ -52,11 +53,28 @@ function CaseDetailPage() {
   const [isDirty, setIsDirty] = useState(false);
   const [completed, setCompleted] = useState(0);
   const [total, setTotal] = useState(1);
-  const [canSave, setCanSave] = useState(false);
   const [saving, setSaving] = useState(false);
   const [previewCount, setPreviewCount] = useState(0);
   const [saveSignal, setSaveSignal] = useState(0);
   const [mobileTab, setMobileTab] = useState<"config" | "preview">("config");
+
+  // Waarschuw bij tab sluiten / herladen met onopgeslagen wijzigingen
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  const goBack = () => {
+    if (isDirty && !confirm("Je hebt niet-opgeslagen wijzigingen. Weet je zeker dat je wilt teruggaan?")) {
+      return;
+    }
+    navigate({ to: "/cases" });
+  };
 
   useEffect(() => { if (caseRow?.station_naam) setNaam(caseRow.station_naam); }, [caseRow?.station_naam]);
 
