@@ -108,9 +108,14 @@ export function MaterialenConfigurator({
   }, [config, onDirtyChange]);
 
   useEffect(() => {
+    // SubType direct doorrekenen (geen debounce) — andere wijzigingen wel debouncen
+    if (config.subType !== debounced.subType) {
+      setDebounced(config);
+      return;
+    }
     const t = setTimeout(() => setDebounced(config), 300);
     return () => clearTimeout(t);
-  }, [config]);
+  }, [config, debounced.subType]);
 
   const sd = useStamdata(caseType);
   const preview = useMemo<PreviewItem[]>(
