@@ -366,13 +366,16 @@ function SectionCard({
 }) {
   return (
     <div className="rounded-lg border border-border bg-surface overflow-hidden">
-      <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/30 transition-colors">
+      <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/30 transition-colors text-left">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
-        <span className="font-medium">{title}</span>
-        <span className={cn("text-xs ml-2 truncate", isComplete ? "text-success" : "text-muted-foreground")}>
-          {isComplete ? "✓ " : ""}{summary}
-        </span>
-        <ChevronDown className={cn("ml-auto w-4 h-4 transition-transform text-muted-foreground", isOpen && "rotate-180")} />
+        <span className="font-medium flex-1 truncate">{title}</span>
+        {isComplete && !isOpen && (
+          <span className="text-xs text-muted-foreground truncate max-w-[18rem]">{summary}</span>
+        )}
+        {isComplete && (
+          <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+        )}
+        <ChevronDown className={cn("w-4 h-4 transition-transform text-muted-foreground", isOpen && "rotate-180")} />
       </button>
       {isOpen && <div className="px-4 pb-4 pt-1 border-t border-border">{children}</div>}
     </div>
