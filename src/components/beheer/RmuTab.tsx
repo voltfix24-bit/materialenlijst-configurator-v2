@@ -444,6 +444,7 @@ function ZekeringenTable() {
           z.hoeveelheid,
           <RowActions onEdit={() => { setEditing(z); setOpen(true); }} onDelete={() => setToDelete(z)} />,
         ])}
+        emptyIcon={Shield}
         emptyMessage="Nog geen zekeringen"
         emptyDescription="Voeg zekeringtypes toe per kVA voor automatische selectie."
         emptyAction={
