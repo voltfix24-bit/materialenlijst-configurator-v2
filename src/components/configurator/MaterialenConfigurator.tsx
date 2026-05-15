@@ -119,7 +119,7 @@ export function MaterialenConfigurator({
   const preview = useMemo<PreviewItem[]>(
     () => (sd.isLoading ? [] : berekenPreview(debounced, sd, caseType)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [debounced, sd.isLoading, caseType, sd.artikelen.data, sd.rmuConfigs.data, sd.rmuVeldArtikelen.data, sd.rmuZekeringen.data, sd.trafoVultKabel.data, sd.msMofTypes.data, sd.msMofMaterialen.data, sd.lsMofTypes.data, sd.lsMofMaterialen.data, sd.standaardTemplates.data, sd.stationVaste.data],
+    [debounced, sd.isLoading, caseType, sd.artikelen.data, sd.rmuConfigs.data, sd.rmuVeldArtikelen.data, sd.rmuZekeringen.data, sd.msMofTypes.data, sd.msMofMaterialen.data, sd.lsMofTypes.data, sd.lsMofMaterialen.data, sd.standaardTemplates.data, sd.stationVaste.data],
   );
 
   const showTrafo = !isCompact && RENOVATIE(config.subType);
