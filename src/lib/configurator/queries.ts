@@ -41,14 +41,7 @@ export function useStamdata(caseType: string | undefined) {
     },
   });
 
-  const trafoVultKabel = useQuery({
-    queryKey: ["trafo_vult_kabel"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("trafo_vult_kabel").select("*, artikel:perskabelschoen_artikel_id(*)");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+
 
   const msMofTypes = useQuery({
     queryKey: ["ms_mof_types"],
