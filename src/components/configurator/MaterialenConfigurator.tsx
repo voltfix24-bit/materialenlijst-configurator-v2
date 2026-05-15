@@ -40,12 +40,14 @@ interface Props {
 
 const SECTIONS = [
   { key: "project", label: "Projecttype", color: "var(--color-section-project)" },
+  { key: "provisorium", label: "Provisorium", color: "#378ADD" },
   { key: "rmu", label: "RMU configuratie", color: "var(--color-section-rmu)" },
   { key: "trafo", label: "Trafo", color: "var(--color-section-trafo)" },
   { key: "vultkabel", label: "Vult kabel", color: "var(--color-section-vultkabel)" },
   { key: "lsrek", label: "LS-rek", color: "var(--color-section-lsrek)" },
   { key: "ms", label: "MS verbindingen", color: "var(--color-section-ms)" },
   { key: "ls", label: "LS verbindingen", color: "var(--color-section-ls)" },
+  { key: "ggi", label: "GGI — Gebouwgebonden installaties", color: "#64748b" },
 ] as const;
 
 type SectionKey = (typeof SECTIONS)[number]["key"];
