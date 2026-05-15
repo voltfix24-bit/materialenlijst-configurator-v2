@@ -108,6 +108,9 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
   const isRenovatie = config.subType === "renovatie_prov" || config.subType === "renovatie_nsa";
   const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
+    provisorium:
+      !isProvisorum ||
+      (!!config.provRmuMerk && !!config.provRmuConfig && !!config.provZekeringKva),
     rmu: !!config.rmuConfig && (!isCompact || !!config.trafoKva),
     trafo: isCompact ? true : (!showTrafo || (!!config.trafoActie && !!config.trafoKva)),
     vultkabel: isCompact ? true : (!isRenovatie || config.vultKabelAfstand > 0),
@@ -120,11 +123,14 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
       !config.lsMoffenActief ||
       (config.lsMoffen.length > 0 &&
         config.lsMoffen.every((m) => !!m.type && !!m.bestaandType)),
+    ggi: true,
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
+    if (k === "provisorium") return isProvisorum && !isCompact;
     if (k === "trafo") return showTrafo;
     if (k === "vultkabel") return showVultKabel;
     if (k === "lsrek") return showLsRek;
+    if (k === "ggi") return isRenovatie;
     return true;
   });
   const totalVisible = visibleKeys.length;
