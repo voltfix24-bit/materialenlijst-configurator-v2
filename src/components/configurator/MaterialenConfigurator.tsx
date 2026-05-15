@@ -13,6 +13,7 @@ import {
   emptyMofConfig,
   newLsMof,
   newRichting,
+  PREVIEW_SECTIE_DEFS,
   RINGKLEM_SPECS,
   zoekRingklem,
   type LsKabelType,
@@ -22,6 +23,7 @@ import {
   type MsKabelTrace,
   type MsKabelType,
   type PreviewItem,
+  type PreviewSectie,
   type RmuVeldConfig,
   type SubType,
 } from "@/lib/configurator/types";
