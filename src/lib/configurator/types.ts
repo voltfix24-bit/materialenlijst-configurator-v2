@@ -201,12 +201,14 @@ export interface MaterialenConfig {
 
 export type PreviewSectie =
   | "standaard"
+  | "provisorium"
   | "rmu"
   | "trafo"
   | "vultKabel"
   | "lsRek"
   | "msVerbindingen"
-  | "lsVerbindingen";
+  | "lsVerbindingen"
+  | "ggi";
 
 export interface PreviewSectieDef {
   key: PreviewSectie;
@@ -216,6 +218,7 @@ export interface PreviewSectieDef {
 
 export const PREVIEW_SECTIE_DEFS: PreviewSectieDef[] = [
   { key: "standaard", label: "Standaard materialen", color: "#7C8089" },
+  { key: "provisorium", label: "Provisorium", color: "#378ADD" },
   { key: "rmu", label: "RMU", color: "#7F77DD" },
   { key: "trafo", label: "Trafo", color: "#BA7517" },
   { key: "vultKabel", label: "Vult kabel", color: "#2A7A6F" },
