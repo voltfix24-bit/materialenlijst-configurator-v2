@@ -193,8 +193,7 @@ function CasesPage() {
           return (
             <div
               key={c.id}
-              onClick={() => navigate({ to: "/cases/$id", params: { id: c.id } })}
-              className="group relative rounded-xl border border-border bg-surface p-4 hover:border-border/80 hover:bg-accent/30 transition-all cursor-pointer"
+              className="group relative rounded-xl border border-border bg-surface p-4 hover:border-border/80 hover:bg-accent/30 transition-all"
             >
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0 flex-1">
