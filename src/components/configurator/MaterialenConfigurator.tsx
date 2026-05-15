@@ -2074,9 +2074,14 @@ function PreviewPanel({ preview, onSave, saving, hasSubType }: { preview: Previe
       <div className="flex-1 overflow-y-auto px-2 py-2 space-y-3">
         {sectieGroepen.length === 0 && (
           <div className="px-4 py-12 text-center">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Begin met invullen —<br />
-              de materiaallijst bouwt zich automatisch op.
+            <div className="mx-auto w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center mb-3">
+              <ClipboardList className="w-6 h-6 text-muted-foreground/60" />
+            </div>
+            <p className="text-sm font-medium text-foreground mb-1">Nog geen materialen</p>
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-[220px] mx-auto">
+              {hasSubType
+                ? "Vul de configuratie in — de materiaallijst bouwt zich automatisch op."
+                : "Kies eerst het projecttype om de materiaallijst op te bouwen."}
             </p>
           </div>
         )}
