@@ -1615,7 +1615,7 @@ function LsMofKaart({
 
 // ---------- Preview ----------
 
-import { PREVIEW_SECTIE_DEFS, type PreviewSectie } from "@/lib/configurator/types";
+
 
 interface SectieGroep {
   key: PreviewSectie;
