@@ -59,6 +59,12 @@ function CaseDetailPage() {
   const [saveSignal, setSaveSignal] = useState(0);
   const [mobileTab, setMobileTab] = useState<"config" | "preview">("config");
 
+  // Sync naar globale dirty state (sidebar leest dit) en reset bij unmount
+  useEffect(() => {
+    setGlobalDirty(isDirty);
+  }, [isDirty]);
+  useEffect(() => () => setGlobalDirty(false), []);
+
   // Waarschuw bij tab sluiten / herladen met onopgeslagen wijzigingen
   useEffect(() => {
     if (!isDirty) return;
