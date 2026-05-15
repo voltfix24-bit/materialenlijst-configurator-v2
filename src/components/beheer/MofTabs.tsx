@@ -72,6 +72,7 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
           m.hoeveelheid_formule ?? "—",
           <RowActions onEdit={() => { setEditing(m); setOpen(true); }} onDelete={() => setToDelete(m)} />,
         ])}
+        emptyIcon={Cable}
         emptyMessage="Nog geen mof types"
         emptyDescription="Voeg types toe om de auto-lookup in cases te activeren."
       />
