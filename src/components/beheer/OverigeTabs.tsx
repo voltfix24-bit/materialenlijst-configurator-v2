@@ -309,6 +309,7 @@ export function TrafoVultKabelTab() {
           <ArtikelLabel id={t.perskabelschoen_artikel_id} />,
           <RowActions onEdit={() => { setEditing(t); setOpen(true); }} onDelete={() => setToDelete(t)} />,
         ])}
+        emptyIcon={Plug}
         emptyMessage="Nog geen trafo vult kabel configuraties"
         emptyDescription="Voeg kabelspecs toe per trafo type."
         emptyAction={
