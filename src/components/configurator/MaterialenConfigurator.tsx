@@ -380,8 +380,17 @@ function SectionCard({
       <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/30 transition-colors text-left">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
         <span className="font-medium flex-1 truncate">{title}</span>
-        {isComplete && !isOpen && (
-          <span className="text-xs text-muted-foreground truncate max-w-[18rem]">{summary}</span>
+        {!isOpen && summary && summary !== "Nog in te vullen" && (
+          <span
+            className={cn(
+              "text-xs truncate max-w-[18rem] px-2 py-0.5 rounded",
+              isComplete
+                ? "text-success bg-success/10 font-medium"
+                : "text-muted-foreground",
+            )}
+          >
+            {isComplete ? `✓ ${summary}` : summary}
+          </span>
         )}
         {isComplete && (
           <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
