@@ -109,7 +109,7 @@ export function useStamdata(caseType: string | undefined) {
     rmuConfigs,
     rmuVeldArtikelen,
     rmuZekeringen,
-    trafoVultKabel,
+    
     msMofTypes,
     msMofMaterialen,
     lsMofTypes,
