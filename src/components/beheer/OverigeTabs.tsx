@@ -73,6 +73,7 @@ export function StandaardMaterialenTab() {
           s.standaard_hoeveelheid,
           <RowActions onEdit={() => { setEditing(s); setOpen(true); }} onDelete={() => setToDelete(s)} />,
         ])}
+        emptyIcon={ClipboardList}
         emptyMessage="Nog geen standaard materialen"
         emptyDescription="Materialen die altijd op de bestellijst komen, ongeacht configuratie."
         emptyAction={
