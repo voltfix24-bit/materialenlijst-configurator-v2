@@ -192,6 +192,31 @@ export interface MaterialenConfig {
   isCompactStation: boolean;
 }
 
+export type PreviewSectie =
+  | "standaard"
+  | "rmu"
+  | "trafo"
+  | "vultKabel"
+  | "lsRek"
+  | "msVerbindingen"
+  | "lsVerbindingen";
+
+export interface PreviewSectieDef {
+  key: PreviewSectie;
+  label: string;
+  color: string;
+}
+
+export const PREVIEW_SECTIE_DEFS: PreviewSectieDef[] = [
+  { key: "standaard", label: "Standaard materialen", color: "#7C8089" },
+  { key: "rmu", label: "RMU", color: "#7F77DD" },
+  { key: "trafo", label: "Trafo", color: "#BA7517" },
+  { key: "vultKabel", label: "Vult kabel", color: "#2A7A6F" },
+  { key: "lsRek", label: "LS-rek", color: "#1D9E75" },
+  { key: "msVerbindingen", label: "MS verbindingen", color: "#D85A30" },
+  { key: "lsVerbindingen", label: "LS verbindingen", color: "#534AB7" },
+];
+
 export interface PreviewItem {
   artikel_id: string;
   artikel_nummer: string;
@@ -201,6 +226,7 @@ export interface PreviewItem {
   hoeveelheid: number;
   niet_bestellen: boolean;
   herkomst: string[];
+  sectie: PreviewSectie;
 }
 
 export const newRichting = (): MsRichting => ({
