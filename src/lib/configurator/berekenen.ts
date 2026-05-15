@@ -1,4 +1,4 @@
-import type { MaterialenConfig, PreviewItem, Artikel } from "./types";
+import type { MaterialenConfig, PreviewItem, Artikel, PreviewSectie } from "./types";
 import type { Stamdata } from "./queries";
 import { evaluateFormula } from "./formula";
 
@@ -27,7 +27,14 @@ export const VULT_KABEL_SPECS: Record<string, VultKabelSpec> = {
   "1000": { kabelArtNr: "20030300", aantalKabels: 8, persArtNr: "20017790", aantalPers: 16, omschrijving: "8× 1x300mm² Cu (dubbel uitgevoerd)" },
 };
 
-function add(map: Map<string, PreviewItem>, artikel: Artikel | null | undefined, qty: number, herkomst: string, nietBestellen = false) {
+function add(
+  map: Map<string, PreviewItem>,
+  artikel: Artikel | null | undefined,
+  qty: number,
+  herkomst: string,
+  sectie: PreviewSectie,
+  nietBestellen = false,
+) {
   if (!artikel || qty <= 0) return;
   const ex = map.get(artikel.id);
   if (ex) {
@@ -44,6 +51,7 @@ function add(map: Map<string, PreviewItem>, artikel: Artikel | null | undefined,
       hoeveelheid: qty,
       niet_bestellen: nietBestellen,
       herkomst: [herkomst],
+      sectie,
     });
   }
 }
@@ -56,7 +64,7 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
   if (caseType) {
     for (const t of sd.standaardTemplates.data ?? []) {
       const a = (t as ArtikelLike).artikel;
-      add(map, a, Number(t.standaard_hoeveelheid), "Standaard container");
+      add(map, a, Number(t.standaard_hoeveelheid), "Standaard container", "standaard");
     }
   }
 
@@ -64,7 +72,7 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
   if (config.subType) {
     for (const s of sd.stationVaste.data ?? []) {
       if ((s.van_toepassing_bij ?? []).includes(config.subType)) {
-        add(map, (s as ArtikelLike).artikel, Number(s.hoeveelheid), `Station (${s.groep ?? "vast"})`);
+        add(map, (s as ArtikelLike).artikel, Number(s.hoeveelheid), `Station (${s.groep ?? "vast"})`, "standaard");
       }
     }
   }
@@ -73,9 +81,9 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
   if (config.rmuConfig) {
     const rmu = config.rmuConfig;
     if (!isCompact) {
-      add(map, rmu.rmu_artikel, 1, "RMU");
-      add(map, rmu.frame_artikel, 1, "RMU frame");
-      add(map, rmu.bodemplaat_artikel, 1, `Bodemplaat ${rmu.merk} ${rmu.code}`);
+      add(map, rmu.rmu_artikel, 1, "RMU", "rmu");
+      add(map, rmu.frame_artikel, 1, "RMU frame", "rmu");
+      add(map, rmu.bodemplaat_artikel, 1, `Bodemplaat ${rmu.merk} ${rmu.code}`, "rmu");
 
       const isInet = rmu.is_inet;
       const merk = rmu.merk;
@@ -95,14 +103,14 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
         const qty = va.hoeveelheid_formule
           ? evaluateFormula(va.hoeveelheid_formule, { N: n })
           : Number(va.hoeveelheid) * n;
-        add(map, (va as ArtikelLike).artikel, qty, `RMU velden ${va.veld_type}`);
+        add(map, (va as ArtikelLike).artikel, qty, `RMU velden ${va.veld_type}`, "rmu");
       }
 
       // Zekeringen op basis van trafoKva
       if (config.trafoKva) {
         const kva = Number(config.trafoKva);
         const z = (sd.rmuZekeringen.data ?? []).find((x) => x.merk === rmu.merk && x.trafo_kva === kva);
-        if (z) add(map, (z as ArtikelLike).artikel, Number(z.hoeveelheid), `RMU zekering ${kva}kVA`);
+        if (z) add(map, (z as ArtikelLike).artikel, Number(z.hoeveelheid), `RMU zekering ${kva}kVA`, "rmu");
       }
     }
   }
@@ -118,11 +126,11 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
       // ── MAGNEFIX ─────────────────────────────────────────
       if (isMagnefix) {
         if (veld.veldType === "F") {
-          add(map, findArtNr("20039303"), 1, "Magnefix T-veld eindsluiting");
+          add(map, findArtNr("20039303"), 1, "Magnefix T-veld eindsluiting", "rmu");
           if (config.trafoKabelLengte === "7.25") {
-            add(map, findArtNr("20032539"), 1, "Trafo kabel 7,25m");
+            add(map, findArtNr("20032539"), 1, "Trafo kabel 7,25m", "trafo");
           } else if (config.trafoKabelLengte === "10") {
-            add(map, findArtNr("20032541"), 1, "Trafo kabel 10m");
+            add(map, findArtNr("20032541"), 1, "Trafo kabel 10m", "trafo");
           }
           const magnefixPatroon: Record<string, string> = {
             "250": "20019483",
@@ -130,29 +138,29 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
             "630": "20019485",
           };
           const mpNr = magnefixPatroon[config.trafoKva ?? ""];
-          if (mpNr) add(map, findArtNr(mpNr), 3, "Magnefix buispatroon");
+          if (mpNr) add(map, findArtNr(mpNr), 3, "Magnefix buispatroon", "rmu");
         }
         if (veld.veldType === "C" || veld.veldType === "V") {
-          add(map, findArtNr("20039648"), 1, `Magnefix K-veld ${veld.veldNummer} eindsluiting`);
-          add(map, findArtNr("20018032"), 1, `Magnefix K-veld ${veld.veldNummer} afschermset`);
+          add(map, findArtNr("20039648"), 1, `Magnefix K-veld ${veld.veldNummer} eindsluiting`, "rmu");
+          add(map, findArtNr("20018032"), 1, `Magnefix K-veld ${veld.veldNummer} afschermset`, "rmu");
         }
         if (veld.veldType === "C" && veld.veldNummer === 1) {
           const aantalK = (config.rmuVelden ?? []).filter(
             (v) => v.veldType === "C" || v.veldType === "V",
           ).length;
           const doosNr = aantalK <= 2 ? "20029904" : "20029905";
-          add(map, findArtNr(doosNr), 1, "Magnefix doos met onderdelen");
+          add(map, findArtNr(doosNr), 1, "Magnefix doos met onderdelen", "rmu");
         }
         continue;
       }
 
       // ── ABB / SIEMENS ────────────────────────────────────
       if (veld.veldType === "F") {
-        add(map, findArtNr("20041682"), 1, "RMU F-veld eindsluiting");
+        add(map, findArtNr("20041682"), 1, "RMU F-veld eindsluiting", "rmu");
         if (config.trafoKabelLengte === "7.25") {
-          add(map, findArtNr("20032539"), 1, "Trafo kabel 7,25m");
+          add(map, findArtNr("20032539"), 1, "Trafo kabel 7,25m", "trafo");
         } else if (config.trafoKabelLengte === "10") {
-          add(map, findArtNr("20032541"), 1, "Trafo kabel 10m");
+          add(map, findArtNr("20032541"), 1, "Trafo kabel 10m", "trafo");
         }
         const buispatroon: Record<string, string> = {
           "250": "20041591",
@@ -160,17 +168,17 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
           "630": "20041651",
         };
         const bpNr = buispatroon[config.trafoKva ?? ""];
-        if (bpNr) add(map, findArtNr(bpNr), 3, "RMU buispatroon");
+        if (bpNr) add(map, findArtNr(bpNr), 3, "RMU buispatroon", "rmu");
       }
 
       if ((veld.veldType === "C" || veld.veldType === "V") && !veld.isReserve) {
         if (veld.kabelType === "240AL") {
-          add(map, findArtNr("20040681"), 1, `RMU ${veld.veldType}-veld eindsluiting`);
+          add(map, findArtNr("20040681"), 1, `RMU ${veld.veldType}-veld eindsluiting`, "rmu");
         } else if (veld.kabelType === "630AL") {
-          add(map, findArtNr("20040678"), 1, `RMU ${veld.veldType}-veld eindsluiting`);
+          add(map, findArtNr("20040678"), 1, `RMU ${veld.veldType}-veld eindsluiting`, "rmu");
           if (veld.veldType === "V") {
             const ombouw = isInetCfg ? "20043486" : "20043756";
-            add(map, findArtNr(ombouw), 1, "Ombouwset CT 630AL V-veld");
+            add(map, findArtNr(ombouw), 1, "Ombouwset CT 630AL V-veld", "rmu");
           }
         }
       }
@@ -180,7 +188,7 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     if (isInetCfg) {
       for (const ia of config.iNetArtikelen ?? []) {
         if (ia.hoeveelheid > 0) {
-          add(map, findArtNr(ia.artikel_nummer), ia.hoeveelheid, "I-Net");
+          add(map, findArtNr(ia.artikel_nummer), ia.hoeveelheid, "I-Net", "rmu");
         }
       }
     }
@@ -197,26 +205,26 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
         "630": "26001150",
       };
       const tNr = trafoArtNr[kva];
-      if (tNr) add(map, findArtNr(tNr), 1, "Trafo");
+      if (tNr) add(map, findArtNr(tNr), 1, "Trafo", "trafo");
 
-      add(map, findArtNr("20019629"), 2, "Trafo U-profiel");
-      add(map, findArtNr("20011412"), 1, "Trafo afschermplaat");
-      add(map, findArtNr("20019614"), 3, "Trafo afschermkap");
-      add(map, findArtNr("20017534"), 1, "Trafo soepele verbinding");
+      add(map, findArtNr("20019629"), 2, "Trafo U-profiel", "trafo");
+      add(map, findArtNr("20011412"), 1, "Trafo afschermplaat", "trafo");
+      add(map, findArtNr("20019614"), 3, "Trafo afschermkap", "trafo");
+      add(map, findArtNr("20017534"), 1, "Trafo soepele verbinding", "trafo");
     }
 
     if (config.trafoActie === "draaien" || config.trafoActie === "blijft") {
       if (kva === "250" || kva === "400") {
-        add(map, findArtNr("20038832"), 1, "Aansluitvlag trafo");
+        add(map, findArtNr("20038832"), 1, "Aansluitvlag trafo", "trafo");
       } else if (kva === "630" || kva === "1000") {
-        add(map, findArtNr("20042706"), 1, "Aansluitvlag trafo");
+        add(map, findArtNr("20042706"), 1, "Aansluitvlag trafo", "trafo");
       }
     }
   }
 
   // 3d. Telcon kabel bevestigingsklem — niet bij compact
   if (!isCompact && (config.trafoKabelLengte === "7.25" || config.trafoKabelLengte === "10")) {
-    add(map, findArtNr("20044290"), 8, "Telcon kabel bevestigingsklem");
+    add(map, findArtNr("20044290"), 8, "Telcon kabel bevestigingsklem", "trafo");
   }
 
   // 4. MS moffen
@@ -225,13 +233,13 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     if (!mof.mofTypeId) return;
     const mt = (sd.msMofTypes.data ?? []).find((m) => m.id === mof.mofTypeId);
     if (!mt) return;
-    add(map, (mt as ArtikelLike).artikel, 1, label);
+    add(map, (mt as ArtikelLike).artikel, 1, label, "msVerbindingen");
     const mats = (sd.msMofMaterialen.data ?? []).filter((m) => m.mof_type_id === mt.id);
     for (const ma of mats) {
       const qty = ma.hoeveelheid_formule
         ? evaluateFormula(ma.hoeveelheid_formule, { N: 1 })
         : Number(ma.hoeveelheid);
-      add(map, (ma as ArtikelLike).artikel, qty, label);
+      add(map, (ma as ArtikelLike).artikel, qty, label, "msVerbindingen");
     }
   };
   for (let i = 0; i < config.msRichtingen.length; i++) {
@@ -250,14 +258,14 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     const kabelMeters = isSingel ? trace.lengteMeters * 3 : trace.lengteMeters;
 
     if (trace.kabelType === "240AL_singel")
-      add(map, findArtNr("20039484"), kabelMeters, `MS kabel trace ${idx}`);
+      add(map, findArtNr("20039484"), kabelMeters, `MS kabel trace ${idx}`, "msVerbindingen");
     else if (trace.kabelType === "630AL_singel")
-      add(map, findArtNr("20027992"), kabelMeters, `MS kabel trace ${idx}`);
+      add(map, findArtNr("20027992"), kabelMeters, `MS kabel trace ${idx}`, "msVerbindingen");
     else if (trace.kabelType === "3x240AL")
-      add(map, findArtNr("20027989"), kabelMeters, `MS kabel trace ${idx}`);
+      add(map, findArtNr("20027989"), kabelMeters, `MS kabel trace ${idx}`, "msVerbindingen");
 
     const rollen = Math.ceil(trace.lengteMeters / 40);
-    add(map, findArtNr("20018148"), rollen, `MS kabel beschermband trace ${idx}`);
+    add(map, findArtNr("20018148"), rollen, `MS kabel beschermband trace ${idx}`, "msVerbindingen");
   }
 
   // 5. LS moffen
@@ -276,7 +284,7 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
       if (lt) {
         const mats = (sd.lsMofMaterialen.data ?? []).filter((m) => m.mof_type_id === lt.id);
         for (const ma of mats) {
-          add(map, (ma as ArtikelLike).artikel, Number(ma.hoeveelheid) * mult, `LS ${lm.type}`);
+          add(map, (ma as ArtikelLike).artikel, Number(ma.hoeveelheid) * mult, `LS ${lm.type}`, "lsVerbindingen");
         }
       }
 
@@ -287,13 +295,14 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
           findArtNr(lm.ringklemArtikelNummer),
           lm.aantalAftakken * mult,
           "LS aftakmof ringklem",
+          "lsVerbindingen",
         );
       }
 
       // LS kabel
       if (lm.kabelLengteMeters > 0) {
         const totaal = lm.kabelLengteMeters * lm.aantal * fases;
-        add(map, findArtNr("20009692"), totaal, "LS kabel");
+        add(map, findArtNr("20009692"), totaal, "LS kabel", "lsVerbindingen");
       }
     }
   }
@@ -304,9 +313,9 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     const spec = VULT_KABEL_SPECS[config.trafoKva];
     if (spec) {
       const totaalMeters = Math.ceil(config.vultKabelAfstand * spec.aantalKabels);
-      add(map, findArtNr(spec.kabelArtNr), totaalMeters, "Vult kabel");
-      add(map, findArtNr(spec.persArtNr), spec.aantalPers, "Vult kabel perskabelschoenen");
-      add(map, findArtNr("20042739"), 1, "Vult kabel muurbeugel");
+      add(map, findArtNr(spec.kabelArtNr), totaalMeters, "Vult kabel", "vultKabel");
+      add(map, findArtNr(spec.persArtNr), spec.aantalPers, "Vult kabel perskabelschoenen", "vultKabel");
+      add(map, findArtNr("20042739"), 1, "Vult kabel muurbeugel", "vultKabel");
     }
   }
 
@@ -319,49 +328,49 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
 
   if (!isCompact && config.lsRekActie && isRenovatie) {
     if (config.lsRekActie === "vervangen") {
-      if (config.lsRekType === "8") add(map, findArtNr("20050813"), 1, "LS-rek 8 richtingen");
-      else if (config.lsRekType === "12") add(map, findArtNr("20050761"), 1, "LS-rek 12 richtingen");
+      if (config.lsRekType === "8") add(map, findArtNr("20050813"), 1, "LS-rek 8 richtingen", "lsRek");
+      else if (config.lsRekType === "12") add(map, findArtNr("20050761"), 1, "LS-rek 12 richtingen", "lsRek");
 
       if (config.lsRekExtraStroken > 0) {
-        add(map, findArtNr("20020042"), config.lsRekExtraStroken, "LS-rek extra stroken");
+        add(map, findArtNr("20020042"), config.lsRekExtraStroken, "LS-rek extra stroken", "lsRek");
       }
 
       const mpNr = mespatroon[config.trafoKva ?? ""];
-      if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging voedende strook");
+      if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging voedende strook", "lsRek");
     }
 
     if (config.lsRekActie === "gehandhaafd" && config.lsRekBeveiligingAanpassen) {
       const mpNr = mespatroon[config.trafoKva ?? ""];
-      if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging aanpassen");
+      if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging aanpassen", "lsRek");
     }
 
     if (config.lsRekOvStuurpunt) {
-      if (config.lsRekSchroefpatroon === "35A") add(map, findArtNr("20001107"), 3, "OV-stuurpunt schroefpatroon");
-      else if (config.lsRekSchroefpatroon === "50A") add(map, findArtNr("20001108"), 3, "OV-stuurpunt schroefpatroon");
+      if (config.lsRekSchroefpatroon === "35A") add(map, findArtNr("20001107"), 3, "OV-stuurpunt schroefpatroon", "lsRek");
+      else if (config.lsRekSchroefpatroon === "50A") add(map, findArtNr("20001108"), 3, "OV-stuurpunt schroefpatroon", "lsRek");
 
-      add(map, findArtNr("20040148"), 1, "OV-stuurpunt router");
-      add(map, findArtNr("20040188"), 1, "OV-stuurpunt beugel router");
-      add(map, findArtNr("20039993"), 1, "OV-stuurpunt FlexOV device");
-      add(map, findArtNr("20039994"), 1, "OV-stuurpunt beugel FlexOV");
-      add(map, findArtNr("20040149"), 1, "OV-stuurpunt kabel ethernet");
+      add(map, findArtNr("20040148"), 1, "OV-stuurpunt router", "lsRek");
+      add(map, findArtNr("20040188"), 1, "OV-stuurpunt beugel router", "lsRek");
+      add(map, findArtNr("20039993"), 1, "OV-stuurpunt FlexOV device", "lsRek");
+      add(map, findArtNr("20039994"), 1, "OV-stuurpunt beugel FlexOV", "lsRek");
+      add(map, findArtNr("20040149"), 1, "OV-stuurpunt kabel ethernet", "lsRek");
     }
   }
 
   // Mespatroon LS-rek bij compact: altijd 3×
   if (isCompact) {
     const mpNr = mespatroon[config.trafoKva ?? ""];
-    if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging voedende strook");
+    if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging voedende strook", "lsRek");
   }
 
   // LS-rek kabelbevestigingsklemmen — bij renovatie via lsRekActie=vervangen, of bij compact altijd
   if (config.lsRekAanSluitenKabels > 0 && (isCompact || (config.lsRekActie === "vervangen" && isRenovatie))) {
     const n = config.lsRekAanSluitenKabels;
     if (isCompact) {
-      add(map, findArtNr("20042043"), n * 2, "LS-rek kabelbevestigingsklem K56 U");
+      add(map, findArtNr("20042043"), n * 2, "LS-rek kabelbevestigingsklem K56 U", "lsRek");
     } else {
-      add(map, findArtNr("20042042"), n, "LS-rek kabelbevestigingsklem K56");
+      add(map, findArtNr("20042042"), n, "LS-rek kabelbevestigingsklem K56", "lsRek");
     }
-    add(map, findArtNr("20018004"), n, "LS-rek kabelinlegklem");
+    add(map, findArtNr("20018004"), n, "LS-rek kabelinlegklem", "lsRek");
   }
 
   return Array.from(map.values()).sort((a, b) => a.categorie.localeCompare(b.categorie) || a.artikel_nummer.localeCompare(b.artikel_nummer));

@@ -13,6 +13,7 @@ import {
   emptyMofConfig,
   newLsMof,
   newRichting,
+  PREVIEW_SECTIE_DEFS,
   RINGKLEM_SPECS,
   zoekRingklem,
   type LsKabelType,
@@ -22,6 +23,7 @@ import {
   type MsKabelTrace,
   type MsKabelType,
   type PreviewItem,
+  type PreviewSectie,
   type RmuVeldConfig,
   type SubType,
 } from "@/lib/configurator/types";
@@ -1613,65 +1615,167 @@ function LsMofKaart({
 
 // ---------- Preview ----------
 
+
+
+interface SectieGroep {
+  key: PreviewSectie;
+  label: string;
+  color: string;
+  items: PreviewItem[];
+  verwijderdeItems: PreviewItem[];
+  isNieuw: boolean;
+}
+
+const HIGHLIGHT_MS = 1500;
+const REMOVED_MS = 2000;
+
 function PreviewPanel({ preview, canSave, onSave, saving }: { preview: PreviewItem[]; canSave: boolean; onSave: () => void; saving: boolean }) {
-  const grouped = useMemo(() => {
-    const m = new Map<string, PreviewItem[]>();
-    for (const p of preview) {
-      const arr = m.get(p.categorie) ?? [];
-      arr.push(p);
-      m.set(p.categorie, arr);
+  // Vorige snapshot van id → hoeveelheid voor diff
+  const vorigeItemsRef = useRef<Map<string, { item: PreviewItem; hoeveelheid: number }>>(new Map());
+  const bekendeSectiesRef = useRef<Set<PreviewSectie>>(new Set());
+  const eersteRunRef = useRef(true);
+
+  const [nieuwIds, setNieuwIds] = useState<Set<string>>(new Set());
+  const [verwijderdItems, setVerwijderdItems] = useState<PreviewItem[]>([]);
+  const [nieuweSecties, setNieuweSecties] = useState<Set<PreviewSectie>>(new Set());
+
+  // Diff bij elke nieuwe preview-berekening (na debounce)
+  useEffect(() => {
+    const huidig = new Map<string, { item: PreviewItem; hoeveelheid: number }>();
+    for (const p of preview) huidig.set(p.artikel_id, { item: p, hoeveelheid: p.hoeveelheid });
+
+    const eersteRun = eersteRunRef.current;
+    eersteRunRef.current = false;
+
+    // Nieuwe / gewijzigde items
+    const nIds = new Set<string>();
+    if (!eersteRun) {
+      for (const [id, { hoeveelheid }] of huidig) {
+        const vorig = vorigeItemsRef.current.get(id);
+        if (vorig === undefined || vorig.hoeveelheid !== hoeveelheid) nIds.add(id);
+      }
     }
-    return Array.from(m.entries());
+
+    // Verwijderde items
+    const verwijderd: PreviewItem[] = [];
+    for (const [id, { item }] of vorigeItemsRef.current) {
+      if (!huidig.has(id)) verwijderd.push(item);
+    }
+
+    // Nieuwe secties (die nu items hebben en eerder niet)
+    const huidigeSecties = new Set<PreviewSectie>();
+    for (const p of preview) huidigeSecties.add(p.sectie);
+    const nieuwS = new Set<PreviewSectie>();
+    if (!eersteRun) {
+      for (const s of huidigeSecties) {
+        if (!bekendeSectiesRef.current.has(s)) nieuwS.add(s);
+      }
+    }
+    bekendeSectiesRef.current = huidigeSecties;
+
+    vorigeItemsRef.current = huidig;
+    setNieuwIds(nIds);
+    setVerwijderdItems(verwijderd);
+    if (nieuwS.size > 0) setNieuweSecties(nieuwS);
+
+    const t1 = nIds.size > 0 ? setTimeout(() => setNieuwIds(new Set()), HIGHLIGHT_MS) : null;
+    const t2 = verwijderd.length > 0 ? setTimeout(() => setVerwijderdItems([]), REMOVED_MS) : null;
+    const t3 = nieuwS.size > 0 ? setTimeout(() => setNieuweSecties(new Set()), 400) : null;
+    return () => {
+      if (t1) clearTimeout(t1);
+      if (t2) clearTimeout(t2);
+      if (t3) clearTimeout(t3);
+    };
   }, [preview]);
 
+  // Groeperen op sectie in vaste volgorde
+  const sectieGroepen: SectieGroep[] = useMemo(() => {
+    const map = new Map<PreviewSectie, PreviewItem[]>();
+    for (const p of preview) {
+      const arr = map.get(p.sectie) ?? [];
+      arr.push(p);
+      map.set(p.sectie, arr);
+    }
+    const verwijderdPerSectie = new Map<PreviewSectie, PreviewItem[]>();
+    for (const v of verwijderdItems) {
+      const arr = verwijderdPerSectie.get(v.sectie) ?? [];
+      arr.push(v);
+      verwijderdPerSectie.set(v.sectie, arr);
+    }
+    return PREVIEW_SECTIE_DEFS
+      .map((def) => ({
+        key: def.key,
+        label: def.label,
+        color: def.color,
+        items: map.get(def.key) ?? [],
+        verwijderdeItems: verwijderdPerSectie.get(def.key) ?? [],
+        isNieuw: nieuweSecties.has(def.key),
+      }))
+      .filter((g) => g.items.length > 0 || g.verwijderdeItems.length > 0);
+  }, [preview, verwijderdItems, nieuweSecties]);
+
   const teBestellen = preview.filter((p) => !p.niet_bestellen).length;
-  const informatief = preview.length - teBestellen;
+  const totaalArtikelen = preview.length;
 
   return (
     <div className="rounded-lg border border-border bg-surface flex flex-col h-fit lg:sticky lg:top-4 max-h-[calc(100vh-2rem)]">
       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
         <div>
           <h2 className="font-semibold">Live materiaallijst</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{preview.length} artikelen</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {totaalArtikelen === 0 ? "Nog leeg" : `${totaalArtikelen} artikelen · ${sectieGroepen.length} secties`}
+          </p>
         </div>
       </div>
+
       <div className="flex-1 overflow-y-auto px-2 py-2 space-y-3">
-        {grouped.length === 0 && (
-          <p className="px-2 py-8 text-center text-xs text-muted-foreground">Nog niets te tonen.</p>
+        {sectieGroepen.length === 0 && (
+          <div className="px-4 py-12 text-center">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Begin met invullen —<br />
+              de materiaallijst bouwt zich automatisch op.
+            </p>
+          </div>
         )}
-        {grouped.map(([cat, items]) => (
-          <div key={cat}>
-            <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{cat}</div>
+
+        {sectieGroepen.map((sec) => (
+          <div
+            key={sec.key}
+            className={cn("animate-fade-in", sec.isNieuw && "preview-sectie-nieuw")}
+          >
+            <div className="flex items-center gap-2 px-2 py-1.5">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: sec.color }} />
+              <span className="text-[11px] font-mono uppercase tracking-wider text-foreground/80">{sec.label}</span>
+              <span className="text-[10px] font-mono text-muted-foreground ml-auto">{sec.items.length} art.</span>
+            </div>
             <div className="space-y-0.5">
-              {items.map((it) => (
-                <div
-                  key={it.artikel_id}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-accent/40",
-                    it.niet_bestellen && "opacity-50 line-through",
-                  )}
-                  title={it.herkomst.join(", ")}
-                >
-                  <span className="font-mono text-xs text-muted-foreground w-20 shrink-0 truncate">{it.artikel_nummer}</span>
-                  <span className="flex-1 truncate">{it.korte_omschrijving}</span>
-                  <span className="font-mono text-xs tabular-nums">{it.hoeveelheid}{it.eenheid}</span>
-                </div>
+              {sec.items.map((it) => (
+                <PreviewRij key={it.artikel_id} item={it} isNieuw={nieuwIds.has(it.artikel_id)} isVerwijderd={false} />
+              ))}
+              {sec.verwijderdeItems.map((it) => (
+                <PreviewRij key={`del-${it.artikel_id}`} item={it} isNieuw={false} isVerwijderd={true} />
               ))}
             </div>
           </div>
         ))}
       </div>
+
       <div className="border-t border-border px-4 py-3 space-y-2">
-        <div className="flex justify-between text-xs">
-          <span className="text-muted-foreground">Te bestellen</span>
-          <span className="font-mono">{teBestellen}</span>
-        </div>
-        {informatief > 0 && (
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Informatief</span>
-            <span className="font-mono">{informatief}</span>
+        {sectieGroepen.length > 0 && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1 pb-1">
+            {sectieGroepen.map((s) => (
+              <div key={s.key} className="flex items-center gap-1.5 text-[11px]">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
+                <span className="text-muted-foreground">{s.label}</span>
+                <span className="font-mono text-foreground/80">{s.items.length}</span>
+              </div>
+            ))}
           </div>
         )}
+        <div className="flex justify-between text-sm pt-1 border-t border-border/60">
+          <span className="font-medium">Totaal te bestellen</span>
+          <span className="font-mono font-semibold">{teBestellen}</span>
+        </div>
         <button
           disabled={!canSave || saving}
           onClick={onSave}
@@ -1680,6 +1784,37 @@ function PreviewPanel({ preview, canSave, onSave, saving }: { preview: PreviewIt
           {saving ? "Opslaan..." : canSave ? "Lijst opslaan" : "Vul alle secties in"}
         </button>
       </div>
+    </div>
+  );
+}
+
+function PreviewRij({ item, isNieuw, isVerwijderd }: {
+  item: PreviewItem;
+  isNieuw: boolean;
+  isVerwijderd: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors duration-300",
+        !isVerwijderd && "hover:bg-accent/40",
+        item.niet_bestellen && !isVerwijderd && "opacity-50 line-through",
+        isNieuw && !isVerwijderd && "bg-success/10 ring-1 ring-success/30",
+        isVerwijderd && "bg-destructive/10 ring-1 ring-destructive/30 line-through opacity-70 animate-fade-out",
+      )}
+      title={item.herkomst.join(", ")}
+    >
+      <span
+        className={cn(
+          "w-3 text-center text-[11px] font-bold shrink-0",
+          isNieuw && !isVerwijderd ? "text-success" : isVerwijderd ? "text-destructive" : "text-transparent",
+        )}
+      >
+        {isVerwijderd ? "−" : isNieuw ? "+" : ""}
+      </span>
+      <span className="font-mono text-xs text-muted-foreground w-20 shrink-0 truncate">{item.artikel_nummer}</span>
+      <span className="flex-1 truncate">{item.korte_omschrijving}</span>
+      <span className="font-mono text-xs tabular-nums">{item.hoeveelheid}{item.eenheid}</span>
     </div>
   );
 }
