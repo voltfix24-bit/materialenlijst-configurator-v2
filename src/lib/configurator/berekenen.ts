@@ -62,7 +62,7 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
   const isCompact = config.isCompactStation;
 
   // 1. Standaard templates
-  if (caseType) {
+  if (caseType && config.subType) {
     for (const t of sd.standaardTemplates.data ?? []) {
       const a = (t as ArtikelLike).artikel;
       add(map, a, Number(t.standaard_hoeveelheid), "Standaard container", "standaard");
