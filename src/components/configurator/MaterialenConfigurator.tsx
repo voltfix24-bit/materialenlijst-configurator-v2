@@ -60,7 +60,18 @@ type SectionKey = (typeof SECTIONS)[number]["key"];
 
 const RENOVATIE = (s: string) => s === "renovatie_prov" || s === "renovatie_nsa";
 
-export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirtyChange }: Props) {
+export function MaterialenConfigurator({
+  caseId,
+  caseType,
+  initialConfig,
+  onDirtyChange,
+  onProgressChange,
+  onSavingChange,
+  onCanSaveChange,
+  onPreviewCountChange,
+  saveSignal,
+  mobileTab = "config",
+}: Props) {
   const isCompact = caseType === "compact";
   const initial = useMemo(() => {
     const base = initialConfig ?? emptyConfig();
@@ -70,9 +81,16 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
     return { ...base, isCompactStation: false };
   }, [initialConfig, isCompact]);
   const [config, setConfig] = useState<MaterialenConfig>(initial);
-  const [open, setOpen] = useState<Record<SectionKey, boolean>>({
-    project: true, provisorium: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true, ggi: true,
-  });
+
+  // Nieuwe lege case → gestuurde flow: alleen eerste sectie open. Bestaande config → alles open.
+  const isNewCase = !initialConfig || !initialConfig.subType;
+  const autoFlowRef = useRef(isNewCase);
+  const [open, setOpen] = useState<Record<SectionKey, boolean>>(() =>
+    isNewCase
+      ? { project: true, provisorium: false, rmu: false, trafo: false, vultkabel: false, lsrek: false, ms: false, ls: false, ggi: false }
+      : { project: true, provisorium: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true, ggi: true },
+  );
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [debounced, setDebounced] = useState(config);
 
   // Dirty tracking — skip de eerste render (initialConfig hydratie)
