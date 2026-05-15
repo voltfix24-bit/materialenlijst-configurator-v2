@@ -26,7 +26,7 @@ function makeStamdata(): Stamdata {
     rmuConfigs: empty,
     rmuVeldArtikelen: empty,
     rmuZekeringen: empty,
-    trafoVultKabel: empty,
+    
     msMofTypes: empty,
     msMofMaterialen: empty,
     lsMofTypes: empty,

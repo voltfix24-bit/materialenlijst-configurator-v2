@@ -182,7 +182,7 @@ export interface MaterialenConfig {
   lsRekBeveiligingAanpassen: boolean;
   lsRekOvStuurpunt: boolean;
   lsRekSchroefpatroon: "35A" | "50A" | "";
-  lsRichtingen: number;
+  
   msRichtingen: MsRichting[];
   msKabelTraces: MsKabelTrace[];
   lsMoffenActief: boolean;
@@ -281,8 +281,7 @@ export const emptyConfig = (): MaterialenConfig => ({
   lsRekBeveiligingAanpassen: false,
   lsRekOvStuurpunt: false,
   lsRekSchroefpatroon: "",
-  lsRichtingen: 0,
-  msRichtingen: [newRichting()],
+  msRichtingen: [],
   msKabelTraces: [],
   lsMoffenActief: false,
   lsMoffen: [],

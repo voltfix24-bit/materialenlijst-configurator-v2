@@ -5,7 +5,7 @@ import { AssortimentTab } from "@/components/beheer/AssortimentTab";
 import { ArtikelenTab } from "@/components/beheer/ArtikelenTab";
 import { RmuTab } from "@/components/beheer/RmuTab";
 import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
-import { StandaardMaterialenTab, VasteArtikelenTab, TrafoVultKabelTab } from "@/components/beheer/OverigeTabs";
+import { StandaardMaterialenTab, VasteArtikelenTab } from "@/components/beheer/OverigeTabs";
 
 export const Route = createFileRoute("/beheer")({
   component: BeheerPage,
@@ -19,7 +19,6 @@ const TABS = [
   { key: "ls_mof", label: "LS mof types" },
   { key: "standaard", label: "Standaard materialen" },
   { key: "vast", label: "Vaste artikelen per subtype" },
-  { key: "trafo", label: "Trafo vult kabel" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -55,7 +54,7 @@ function BeheerPage() {
       {tab === "ls_mof" && <LsMofTab />}
       {tab === "standaard" && <StandaardMaterialenTab />}
       {tab === "vast" && <VasteArtikelenTab />}
-      {tab === "trafo" && <TrafoVultKabelTab />}
+      
     </div>
   );
 }

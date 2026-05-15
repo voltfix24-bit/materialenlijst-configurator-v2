@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MaterialenConfigurator } from "@/components/configurator/MaterialenConfigurator";
 import { exporteerNaarTemplate, downloadBlob } from "@/lib/assortiment/excel";
 import { emptyConfig, type MaterialenConfig, type RmuConfig } from "@/lib/configurator/types";
+import { setGlobalDirty } from "@/lib/dirty-state";
 
 export const Route = createFileRoute("/cases/$id")({
   component: CaseDetailPage,
@@ -57,6 +58,12 @@ function CaseDetailPage() {
   const [previewCount, setPreviewCount] = useState(0);
   const [saveSignal, setSaveSignal] = useState(0);
   const [mobileTab, setMobileTab] = useState<"config" | "preview">("config");
+
+  // Sync naar globale dirty state (sidebar leest dit) en reset bij unmount
+  useEffect(() => {
+    setGlobalDirty(isDirty);
+  }, [isDirty]);
+  useEffect(() => () => setGlobalDirty(false), []);
 
   // Waarschuw bij tab sluiten / herladen met onopgeslagen wijzigingen
   useEffect(() => {
