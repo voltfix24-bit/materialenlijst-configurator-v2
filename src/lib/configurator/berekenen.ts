@@ -440,7 +440,7 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     const ggiArtikelen: Array<{ nr: string; qty: number }> = [
       { nr: "20039090", qty: 2 },
       { nr: "20041319", qty: 4 },
-      { nr: "20005450", qty: 4 },
+      
       { nr: "20019149", qty: 100 },
       { nr: "20019177", qty: 4 },
       { nr: "20029657", qty: 10 },
