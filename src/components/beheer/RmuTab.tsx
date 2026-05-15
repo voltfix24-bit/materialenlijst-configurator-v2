@@ -335,6 +335,7 @@ function VeldenTable() {
           v.hoeveelheid_formule ?? "—",
           <RowActions onEdit={() => { setEditing(v); setOpen(true); }} onDelete={() => setToDelete(v)} />,
         ])}
+        emptyIcon={Grid3x3}
         emptyMessage="Nog geen veldartikelen"
         emptyDescription="Koppel artikelen aan velden om automatische berekening te activeren."
         emptyAction={
