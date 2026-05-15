@@ -2142,6 +2142,38 @@ function PreviewRij({ item, isNieuw, isVerwijderd }: {
       <span className="font-mono text-xs text-muted-foreground w-20 shrink-0 truncate">{item.artikel_nummer}</span>
       <span className="flex-1 truncate">{item.korte_omschrijving}</span>
       <span className="font-mono text-xs tabular-nums">{item.hoeveelheid}{item.eenheid}</span>
+      {item.herkomst.length > 0 && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "shrink-0 inline-flex items-center justify-center rounded-full w-5 h-5 text-[10px] font-semibold transition-colors",
+                item.herkomst.length > 1
+                  ? "bg-primary/15 text-primary hover:bg-primary/25"
+                  : "text-muted-foreground/60 hover:text-foreground hover:bg-accent",
+              )}
+              aria-label={`Toon ${item.herkomst.length} herkomst${item.herkomst.length > 1 ? "en" : ""}`}
+            >
+              {item.herkomst.length > 1 ? item.herkomst.length : <Info className="w-3 h-3" />}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="left" align="start" className="w-72 p-3">
+            <div className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide">
+              Herkomst ({item.herkomst.length})
+            </div>
+            <ul className="space-y-1.5">
+              {item.herkomst.map((h, i) => (
+                <li key={i} className="text-sm flex gap-2">
+                  <span className="text-muted-foreground font-mono text-xs shrink-0 mt-0.5">{i + 1}.</span>
+                  <span className="break-words">{h}</span>
+                </li>
+              ))}
+            </ul>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }
