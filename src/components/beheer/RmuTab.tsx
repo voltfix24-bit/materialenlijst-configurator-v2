@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Zap, Grid3x3, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDelete, DataTable, FormDialog, FormField, FormRow, RowActions } from "./shared";
@@ -173,6 +173,7 @@ function ConfigsTable() {
             onDelete={() => setToDelete(c)}
           />,
         ])}
+        emptyIcon={Zap}
         emptyMessage="Nog geen RMU configuraties"
         emptyDescription="Voeg de eerste toe om RMU keuzes in cases te activeren."
         emptyAction={
@@ -334,6 +335,7 @@ function VeldenTable() {
           v.hoeveelheid_formule ?? "—",
           <RowActions onEdit={() => { setEditing(v); setOpen(true); }} onDelete={() => setToDelete(v)} />,
         ])}
+        emptyIcon={Grid3x3}
         emptyMessage="Nog geen veldartikelen"
         emptyDescription="Koppel artikelen aan velden om automatische berekening te activeren."
         emptyAction={
@@ -442,6 +444,7 @@ function ZekeringenTable() {
           z.hoeveelheid,
           <RowActions onEdit={() => { setEditing(z); setOpen(true); }} onDelete={() => setToDelete(z)} />,
         ])}
+        emptyIcon={Shield}
         emptyMessage="Nog geen zekeringen"
         emptyDescription="Voeg zekeringtypes toe per kVA voor automatische selectie."
         emptyAction={

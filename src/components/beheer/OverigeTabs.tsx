@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, ClipboardList, Anchor, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDelete, DataTable, FormDialog, FormField, FormRow, RowActions } from "./shared";
@@ -73,6 +73,7 @@ export function StandaardMaterialenTab() {
           s.standaard_hoeveelheid,
           <RowActions onEdit={() => { setEditing(s); setOpen(true); }} onDelete={() => setToDelete(s)} />,
         ])}
+        emptyIcon={ClipboardList}
         emptyMessage="Nog geen standaard materialen"
         emptyDescription="Materialen die altijd op de bestellijst komen, ongeacht configuratie."
         emptyAction={
@@ -187,6 +188,7 @@ export function VasteArtikelenTab() {
           v.actief ? "Ja" : "Nee",
           <RowActions onEdit={() => { setEditing(v); setOpen(true); }} onDelete={() => setToDelete(v)} />,
         ])}
+        emptyIcon={Anchor}
         emptyMessage="Nog geen vaste artikelen"
         emptyDescription="Configureer station-vaste artikelen per case type."
         emptyAction={
@@ -307,6 +309,7 @@ export function TrafoVultKabelTab() {
           <ArtikelLabel id={t.perskabelschoen_artikel_id} />,
           <RowActions onEdit={() => { setEditing(t); setOpen(true); }} onDelete={() => setToDelete(t)} />,
         ])}
+        emptyIcon={Plug}
         emptyMessage="Nog geen trafo vult kabel configuraties"
         emptyDescription="Voeg kabelspecs toe per trafo type."
         emptyAction={

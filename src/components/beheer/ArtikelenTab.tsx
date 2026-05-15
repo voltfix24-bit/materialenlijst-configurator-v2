@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDelete, DataTable, FormDialog, FormField, FormRow, RowActions } from "./shared";
@@ -170,6 +170,7 @@ export function ArtikelenTab() {
             onDelete={() => setToDelete(a)}
           />,
         ])}
+        emptyIcon={Package}
         emptyMessage={isLoading ? "Laden..." : "Nog geen artikelen"}
         emptyDescription={isLoading ? undefined : "Upload eerst de assortimentslijst via de Assortiment tab."}
         emptyAction={

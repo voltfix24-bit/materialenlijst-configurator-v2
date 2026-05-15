@@ -3,7 +3,7 @@ import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, Cable } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDelete, DataTable, FormDialog, FormField, FormRow, RowActions } from "./shared";
@@ -72,6 +72,7 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
           m.hoeveelheid_formule ?? "—",
           <RowActions onEdit={() => { setEditing(m); setOpen(true); }} onDelete={() => setToDelete(m)} />,
         ])}
+        emptyIcon={Cable}
         emptyMessage="Nog geen mof types"
         emptyDescription="Voeg types toe om de auto-lookup in cases te activeren."
       />

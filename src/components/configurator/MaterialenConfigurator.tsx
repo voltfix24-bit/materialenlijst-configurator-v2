@@ -84,7 +84,9 @@ export function MaterialenConfigurator({
 
   // Nieuwe lege case → gestuurde flow: alleen eerste sectie open. Bestaande config → alles open.
   const isNewCase = !initialConfig || !initialConfig.subType;
-  const autoFlowRef = useRef(isNewCase);
+  // autoFlow start uit — pas actief na eerste echte gebruikersinteractie (zelfde timing als skipDirty).
+  // Voorkomt dat secties van een gehydrateerde bestaande case als gedimd verschijnen.
+  const autoFlowRef = useRef(false);
   const [open, setOpen] = useState<Record<SectionKey, boolean>>(() =>
     isNewCase
       ? { project: true, provisorium: false, rmu: false, trafo: false, vultkabel: false, lsrek: false, ms: false, ls: false, ggi: false }
@@ -100,6 +102,7 @@ export function MaterialenConfigurator({
       skipDirty.current = false;
       return;
     }
+    autoFlowRef.current = true;
     onDirtyChange?.(true);
   }, [config, onDirtyChange]);
 
