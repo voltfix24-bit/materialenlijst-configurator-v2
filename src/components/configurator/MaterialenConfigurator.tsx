@@ -286,6 +286,20 @@ export function MaterialenConfigurator({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Saving status doorgeven
+  useEffect(() => { onSavingChange?.(opslaan.isPending); }, [opslaan.isPending, onSavingChange]);
+
+  // Save trigger vanuit de header
+  const lastSaveSignalRef = useRef(saveSignal ?? 0);
+  useEffect(() => {
+    if (saveSignal === undefined) return;
+    if (saveSignal !== lastSaveSignalRef.current) {
+      lastSaveSignalRef.current = saveSignal;
+      if (allComplete && !opslaan.isPending) opslaan.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saveSignal]);
+
   // ---- Render ----
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-6">
