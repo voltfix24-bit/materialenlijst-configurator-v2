@@ -21,6 +21,13 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const STATUS_OPTIONS = ["concept", "gepland", "in_uitvoering", "afgerond"] as const;
 
+const STATUS_COLORS_ACTIVE: Record<string, string> = {
+  concept: "bg-muted text-foreground",
+  gepland: "bg-blue-500/15 text-blue-500 dark:text-blue-400",
+  in_uitvoering: "bg-amber-500/15 text-amber-500 dark:text-amber-400",
+  afgerond: "bg-emerald-500/15 text-emerald-500 dark:text-emerald-400",
+};
+
 const CASE_TYPE_LABELS: Record<string, string> = {
   NSA: "NSA",
   provisorium: "Provisorium",
