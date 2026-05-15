@@ -335,6 +335,11 @@ function sectionSummary(key: SectionKey, c: MaterialenConfig, sd: ReturnType<typ
     case "ls":
       if (!c.lsMoffenActief) return "Geen LS-moffen";
       return c.lsMoffen.length === 0 ? "0 LS-moffen" : `${c.lsMoffen.length} LS-mof${c.lsMoffen.length === 1 ? "" : "fen"}`;
+    case "provisorium":
+      if (!c.provRmuConfig) return "Nog in te vullen";
+      return `${c.provRmuMerk} ${c.provRmuConfig.code}${c.provZekeringKva ? ` — ${c.provZekeringKva} kVA` : ""}`;
+    case "ggi":
+      return c.ggiVervangen ? "GGI wordt vervangen" : "Geen GGI vervangen";
   }
 }
 
