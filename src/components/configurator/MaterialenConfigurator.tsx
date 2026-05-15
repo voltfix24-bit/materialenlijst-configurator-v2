@@ -199,7 +199,6 @@ export function MaterialenConfigurator({
 
   // State doorgeven aan parent (header)
   useEffect(() => { onProgressChange?.(completedCount, totalVisible); }, [completedCount, totalVisible, onProgressChange]);
-  useEffect(() => { onCanSaveChange?.(allComplete); }, [allComplete, onCanSaveChange]);
   useEffect(() => { onPreviewCountChange?.(preview.length); }, [preview.length, onPreviewCountChange]);
 
   const opslaan = useMutation({
