@@ -54,7 +54,7 @@ function BeheerPage() {
       {tab === "ls_mof" && <LsMofTab />}
       {tab === "standaard" && <StandaardMaterialenTab />}
       {tab === "vast" && <VasteArtikelenTab />}
-      {tab === "trafo" && <TrafoVultKabelTab />}
+      
     </div>
   );
 }
