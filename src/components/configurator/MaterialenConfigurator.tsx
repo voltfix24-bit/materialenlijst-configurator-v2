@@ -67,7 +67,6 @@ export function MaterialenConfigurator({
   onDirtyChange,
   onProgressChange,
   onSavingChange,
-  onCanSaveChange,
   onPreviewCountChange,
   saveSignal,
   mobileTab = "config",
