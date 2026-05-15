@@ -245,9 +245,11 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
         </div>
 
         {SECTIONS.map((sec) => {
+          if (sec.key === "provisorium" && (!isProvisorum || isCompact)) return null;
           if (sec.key === "trafo" && !showTrafo) return null;
           if (sec.key === "vultkabel" && !showVultKabel) return null;
           if (sec.key === "lsrek" && !showLsRek) return null;
+          if (sec.key === "ggi" && !isRenovatie) return null;
           return (
             <SectionCard
               key={sec.key}
@@ -259,12 +261,14 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
               onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
             >
               {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
+              {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
               {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} isCompact={isCompact} />}
               {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
               {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
               {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
               {sec.key === "ms" && <MsSection config={config} update={update} sd={sd} />}
               {sec.key === "ls" && <LsSection config={config} update={update} />}
+              {sec.key === "ggi" && <GgiSection config={config} update={update} />}
             </SectionCard>
           );
         })}
