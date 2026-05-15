@@ -303,55 +303,52 @@ export function MaterialenConfigurator({
   // ---- Render ----
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-6">
-      <div className="space-y-3">
-        {/* Voortgang */}
-        <div className="rounded-lg border border-border bg-surface p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Voortgang</span>
-            <span className="text-xs font-mono">{completedCount}/{totalVisible} ingevuld</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-            <div className="h-full bg-primary transition-all" style={{ width: `${(completedCount / totalVisible) * 100}%` }} />
-          </div>
-        </div>
-
+      <div className={cn("space-y-3", mobileTab === "preview" && "hidden lg:block")}>
         {SECTIONS.map((sec) => {
           if (sec.key === "provisorium" && (!isProvisorum || isCompact)) return null;
           if (sec.key === "trafo" && !showTrafo) return null;
           if (sec.key === "vultkabel" && !showVultKabel) return null;
           if (sec.key === "lsrek" && !showLsRek) return null;
           if (sec.key === "ggi" && !isRenovatie) return null;
+          const dimmed = autoFlowRef.current && !open[sec.key] && !completion[sec.key];
           return (
-            <SectionCard
+            <div
               key={sec.key}
-              color={sec.color}
-              title={sec.label}
-              isOpen={open[sec.key]}
-              isComplete={completion[sec.key]}
-              summary={sectionSummary(sec.key, config, sd)}
-              onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
+              ref={(el) => { sectionRefs.current[sec.key] = el; }}
+              className={cn("scroll-mt-20 transition-opacity", dimmed && "opacity-60")}
             >
-              {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
-              {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
-              {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} isCompact={isCompact} />}
-              {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
-              {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
-              {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
-              {sec.key === "ms" && <MsSection config={config} update={update} sd={sd} />}
-              {sec.key === "ls" && <LsSection config={config} update={update} />}
-              {sec.key === "ggi" && <GgiSection config={config} update={update} />}
-            </SectionCard>
+              <SectionCard
+                color={sec.color}
+                title={sec.label}
+                isOpen={open[sec.key]}
+                isComplete={completion[sec.key]}
+                summary={sectionSummary(sec.key, config, sd)}
+                onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
+              >
+                {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
+                {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
+                {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} isCompact={isCompact} />}
+                {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
+                {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
+                {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
+                {sec.key === "ms" && <MsSection config={config} update={update} sd={sd} />}
+                {sec.key === "ls" && <LsSection config={config} update={update} />}
+                {sec.key === "ggi" && <GgiSection config={config} update={update} />}
+              </SectionCard>
+            </div>
           );
         })}
       </div>
 
       {/* Live preview */}
-      <PreviewPanel
-        preview={preview}
-        canSave={allComplete}
-        onSave={() => opslaan.mutate()}
-        saving={opslaan.isPending}
-      />
+      <div className={cn(mobileTab === "config" && "hidden lg:block")}>
+        <PreviewPanel
+          preview={preview}
+          canSave={allComplete}
+          onSave={() => opslaan.mutate()}
+          saving={opslaan.isPending}
+        />
+      </div>
     </div>
   );
 }
