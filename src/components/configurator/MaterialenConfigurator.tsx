@@ -39,7 +39,6 @@ interface Props {
   onDirtyChange?: (isDirty: boolean) => void;
   onProgressChange?: (completed: number, total: number) => void;
   onSavingChange?: (saving: boolean) => void;
-  onCanSaveChange?: (canSave: boolean) => void;
   onPreviewCountChange?: (count: number) => void;
   saveSignal?: number;
   mobileTab?: "config" | "preview";
