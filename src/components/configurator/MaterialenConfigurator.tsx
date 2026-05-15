@@ -163,6 +163,38 @@ export function MaterialenConfigurator({
 
   const update = (patch: Partial<MaterialenConfig>) => setConfig((c) => ({ ...c, ...patch }));
 
+  // Auto-flow: bij completion-transitie volgende sectie openen + scrollen, huidige inklappen
+  const prevCompletionRef = useRef<Record<SectionKey, boolean>>(completion);
+  useEffect(() => {
+    if (!autoFlowRef.current) {
+      prevCompletionRef.current = completion;
+      return;
+    }
+    for (let i = 0; i < visibleKeys.length; i++) {
+      const k = visibleKeys[i];
+      const wasComplete = prevCompletionRef.current[k];
+      if (!wasComplete && completion[k]) {
+        const next = visibleKeys[i + 1];
+        if (next && !open[next]) {
+          setOpen((o) => ({ ...o, [k]: false, [next]: true }));
+          // smooth scroll naar volgende sectie
+          requestAnimationFrame(() => {
+            const el = sectionRefs.current[next];
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+        break;
+      }
+    }
+    prevCompletionRef.current = completion;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completion]);
+
+  // State doorgeven aan parent (header)
+  useEffect(() => { onProgressChange?.(completedCount, totalVisible); }, [completedCount, totalVisible, onProgressChange]);
+  useEffect(() => { onCanSaveChange?.(allComplete); }, [allComplete, onCanSaveChange]);
+  useEffect(() => { onPreviewCountChange?.(preview.length); }, [preview.length, onPreviewCountChange]);
+
   const opslaan = useMutation({
     mutationFn: async () => {
       // Volledige config opslaan als JSON. rmuConfig wordt afgeslankt tot {id};
