@@ -173,6 +173,7 @@ function ConfigsTable() {
             onDelete={() => setToDelete(c)}
           />,
         ])}
+        emptyIcon={Zap}
         emptyMessage="Nog geen RMU configuraties"
         emptyDescription="Voeg de eerste toe om RMU keuzes in cases te activeren."
         emptyAction={
