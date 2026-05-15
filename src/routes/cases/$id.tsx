@@ -161,13 +161,13 @@ function CaseDetailPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-border bg-card flex-shrink-0">
-        <Link to="/cases" className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+      {/* Header — rij 1: terug | identiteit | acties */}
+      <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 border-b border-border bg-card flex-shrink-0">
+        <button onClick={goBack} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex-shrink-0">
           <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-        </Link>
+        </button>
 
-        <div className="w-px h-5 bg-border" />
+        <div className="w-px h-5 bg-border hidden sm:block" />
 
         <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
           <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wider">
@@ -181,69 +181,87 @@ function CaseDetailPage() {
             onChange={(e) => setNaam(e.target.value)}
             onBlur={() => naam !== caseRow.station_naam && updateCase.mutate({ station_naam: naam || null })}
             placeholder="Stationsnaam"
-            className="bg-transparent text-sm font-semibold focus:outline-none focus:bg-input rounded-md px-2 py-0.5 min-w-0 flex-1"
+            className="bg-transparent text-sm font-semibold focus:outline-none focus:bg-input rounded-md px-2 py-0.5 min-w-0 flex-1 max-w-64"
           />
         </div>
 
-        {/* Voortgang */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div className="text-xs text-muted-foreground font-mono tabular-nums">
-            {completed}/{total}
-          </div>
-          <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="w-px h-5 bg-border" />
-
-        {/* Status pills */}
-        <div className="flex items-center gap-1">
-          {STATUS_OPTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => updateCase.mutate({ status: s })}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all",
-                caseRow.status === s
-                  ? "bg-primary/15 text-primary"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              {STATUS_LABELS[s]}
-            </button>
-          ))}
-        </div>
-
         {/* Acties */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {isDirty && (
-            <span className="text-[11px] text-amber-500 dark:text-amber-400 flex items-center gap-1">
+            <span className="text-[11px] text-amber-500 dark:text-amber-400 hidden md:flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
               Niet opgeslagen
             </span>
           )}
           <button
             onClick={() => setSaveSignal((c) => c + 1)}
-            disabled={saving || !canSave}
-            title={!canSave ? "Vul alle secties in" : "Opslaan"}
-            className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+            disabled={saving}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-50",
+              isDirty
+                ? "bg-primary text-primary-foreground hover:opacity-90"
+                : "bg-muted text-muted-foreground hover:bg-accent",
+            )}
           >
             <Save className="h-3.5 w-3.5" />
-            {saving ? "Opslaan…" : "Opslaan"}
+            <span className="hidden sm:inline">{saving ? "Opslaan…" : "Opslaan"}</span>
           </button>
           <button
-            onClick={() => exporteer.mutate()}
-            disabled={isDirty || !heeftMateriaal || exporteer.isPending}
-            title={isDirty ? "Sla eerst op voor je exporteert" : heeftMateriaal ? "Exporteren naar Excel" : "Sla eerst de materiaallijst op"}
-            className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+            onClick={() => {
+              if (isDirty) {
+                toast.warning("Je hebt niet-opgeslagen wijzigingen. Sla eerst op voor je exporteert.");
+                return;
+              }
+              if (!heeftMateriaal) {
+                toast.warning("Sla eerst de materiaallijst op voor je exporteert.");
+                return;
+              }
+              exporteer.mutate();
+            }}
+            disabled={exporteer.isPending}
+            className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
             {exporteer.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-            Export
+            <span className="hidden sm:inline">Export</span>
           </button>
+        </div>
+      </div>
+
+      {/* Header — rij 2: status pills + voortgang */}
+      <div className="flex items-center gap-3 px-3 sm:px-5 py-2 border-b border-border bg-card/60 flex-shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Status</span>
+          <div className="flex items-center gap-0.5">
+            {STATUS_OPTIONS.map((s) => (
+              <button
+                key={s}
+                onClick={() => updateCase.mutate({ status: s })}
+                className={cn(
+                  "px-2 py-0.5 rounded text-[11px] font-medium transition-all whitespace-nowrap",
+                  caseRow.status === s
+                    ? STATUS_COLORS_ACTIVE[s]
+                    : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/50",
+                )}
+              >
+                {STATUS_LABELS[s]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+          {isDirty && (
+            <span className="md:hidden w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
+          )}
+          <span className="text-[11px] text-muted-foreground font-mono tabular-nums">
+            {completed}/{total} secties
+          </span>
+          <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -265,7 +283,7 @@ function CaseDetailPage() {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-5">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-3 sm:py-5">
         <div className="max-w-[1500px] mx-auto">
           {showRehydrationError && (
             <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -285,7 +303,6 @@ function CaseDetailPage() {
               initialConfig={initialConfig}
               onDirtyChange={setIsDirty}
               onProgressChange={(c, t) => { setCompleted(c); setTotal(t); }}
-              onCanSaveChange={setCanSave}
               onSavingChange={setSaving}
               onPreviewCountChange={setPreviewCount}
               saveSignal={saveSignal}
