@@ -241,9 +241,8 @@ function CasesPage() {
               <Link
                 to="/cases/$id"
                 params={{ id: c.id }}
-                className="absolute inset-0"
+                className="absolute inset-0 rounded-xl"
                 aria-label={`Open ${c.station_naam ?? "case"}`}
-                onClick={(e) => e.stopPropagation()}
               />
             </div>
           );
