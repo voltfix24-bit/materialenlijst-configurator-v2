@@ -170,7 +170,8 @@ export function ArtikelenTab() {
             onDelete={() => setToDelete(a)}
           />,
         ])}
-        emptyMessage={isLoading ? "Laden..." : "Geen artikelen gevonden."}
+        emptyMessage={isLoading ? "Laden..." : "Nog geen artikelen"}
+        emptyDescription={isLoading ? undefined : "Upload eerst de assortimentslijst via de Assortiment tab."}
         emptyAction={
           <Button
             onClick={() => {

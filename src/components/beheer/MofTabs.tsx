@@ -72,7 +72,8 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
           m.hoeveelheid_formule ?? "—",
           <RowActions onEdit={() => { setEditing(m); setOpen(true); }} onDelete={() => setToDelete(m)} />,
         ])}
-        emptyMessage="Nog geen materialen gekoppeld."
+        emptyMessage="Nog geen mof types"
+        emptyDescription="Voeg types toe om de auto-lookup in cases te activeren."
       />
       <FormDialog open={open} onOpenChange={setOpen} title={editing?.id ? "Materiaal bewerken" : "Materiaal toevoegen"}>
         {editing && (
