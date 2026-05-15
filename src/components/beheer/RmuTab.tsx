@@ -173,7 +173,8 @@ function ConfigsTable() {
             onDelete={() => setToDelete(c)}
           />,
         ])}
-        emptyMessage="Nog geen configuraties."
+        emptyMessage="Nog geen RMU configuraties"
+        emptyDescription="Voeg de eerste toe om RMU keuzes in cases te activeren."
         emptyAction={
           <Button
             onClick={() => {
@@ -333,7 +334,8 @@ function VeldenTable() {
           v.hoeveelheid_formule ?? "—",
           <RowActions onEdit={() => { setEditing(v); setOpen(true); }} onDelete={() => setToDelete(v)} />,
         ])}
-        emptyMessage="Nog geen veldartikelen."
+        emptyMessage="Nog geen veldartikelen"
+        emptyDescription="Koppel artikelen aan velden om automatische berekening te activeren."
         emptyAction={
           <Button onClick={() => { setEditing({ merk: "ABB", is_inet: false, veld_type: "F", hoeveelheid: 1 }); setOpen(true); }}>
             <Plus className="h-4 w-4 mr-1" /> Eerste veldartikel
@@ -440,7 +442,8 @@ function ZekeringenTable() {
           z.hoeveelheid,
           <RowActions onEdit={() => { setEditing(z); setOpen(true); }} onDelete={() => setToDelete(z)} />,
         ])}
-        emptyMessage="Nog geen zekeringen."
+        emptyMessage="Nog geen zekeringen"
+        emptyDescription="Voeg zekeringtypes toe per kVA voor automatische selectie."
         emptyAction={
           <Button onClick={() => { setEditing({ merk: "ABB", trafo_kva: 400, hoeveelheid: 3 }); setOpen(true); }}>
             <Plus className="h-4 w-4 mr-1" /> Eerste zekering

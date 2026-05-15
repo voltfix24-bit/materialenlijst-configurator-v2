@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, type LucideIcon, Database } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,16 +13,56 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+export function LegeStaat({
+  icon: Icon = Database,
+  titel,
+  beschrijving,
+  actieLabel,
+  onActie,
+}: {
+  icon?: LucideIcon;
+  titel: string;
+  beschrijving?: string;
+  actieLabel?: string;
+  onActie?: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+        <Icon className="h-6 w-6 text-muted-foreground/60" />
+      </div>
+      <div>
+        <p className="text-sm font-medium">{titel}</p>
+        {beschrijving && (
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm">{beschrijving}</p>
+        )}
+      </div>
+      {actieLabel && onActie && (
+        <button
+          onClick={onActie}
+          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90"
+        >
+          {actieLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function DataTable({
   headers,
   rows,
   emptyMessage = "Geen data.",
   emptyAction,
+  emptyIcon,
+  emptyDescription,
 }: {
   headers: string[];
   rows: React.ReactNode[][];
   emptyMessage?: string;
   emptyAction?: React.ReactNode;
+  emptyIcon?: LucideIcon;
+  emptyDescription?: string;
 }) {
   return (
     <div className="rounded-lg border border-border bg-surface overflow-hidden">
@@ -39,9 +79,13 @@ export function DataTable({
         <tbody className="divide-y divide-border">
           {rows.length === 0 && (
             <tr>
-              <td colSpan={headers.length} className="px-3 py-10 text-center">
-                <div className="text-xs text-muted-foreground mb-3">{emptyMessage}</div>
-                {emptyAction}
+              <td colSpan={headers.length} className="px-3 py-0">
+                <LegeStaat
+                  icon={emptyIcon}
+                  titel={emptyMessage}
+                  beschrijving={emptyDescription}
+                />
+                {emptyAction && <div className="pb-6 flex justify-center">{emptyAction}</div>}
               </td>
             </tr>
           )}

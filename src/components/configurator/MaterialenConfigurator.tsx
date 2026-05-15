@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PillGroup } from "@/components/ui-prim/PillGroup";
 import { Stepper } from "@/components/ui-prim/Stepper";
@@ -36,6 +36,12 @@ interface Props {
   caseType: string;
   initialConfig?: MaterialenConfig | null;
   onDirtyChange?: (isDirty: boolean) => void;
+  onProgressChange?: (completed: number, total: number) => void;
+  onSavingChange?: (saving: boolean) => void;
+  onCanSaveChange?: (canSave: boolean) => void;
+  onPreviewCountChange?: (count: number) => void;
+  saveSignal?: number;
+  mobileTab?: "config" | "preview";
 }
 
 const SECTIONS = [
@@ -54,7 +60,18 @@ type SectionKey = (typeof SECTIONS)[number]["key"];
 
 const RENOVATIE = (s: string) => s === "renovatie_prov" || s === "renovatie_nsa";
 
-export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirtyChange }: Props) {
+export function MaterialenConfigurator({
+  caseId,
+  caseType,
+  initialConfig,
+  onDirtyChange,
+  onProgressChange,
+  onSavingChange,
+  onCanSaveChange,
+  onPreviewCountChange,
+  saveSignal,
+  mobileTab = "config",
+}: Props) {
   const isCompact = caseType === "compact";
   const initial = useMemo(() => {
     const base = initialConfig ?? emptyConfig();
@@ -64,9 +81,16 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
     return { ...base, isCompactStation: false };
   }, [initialConfig, isCompact]);
   const [config, setConfig] = useState<MaterialenConfig>(initial);
-  const [open, setOpen] = useState<Record<SectionKey, boolean>>({
-    project: true, provisorium: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true, ggi: true,
-  });
+
+  // Nieuwe lege case → gestuurde flow: alleen eerste sectie open. Bestaande config → alles open.
+  const isNewCase = !initialConfig || !initialConfig.subType;
+  const autoFlowRef = useRef(isNewCase);
+  const [open, setOpen] = useState<Record<SectionKey, boolean>>(() =>
+    isNewCase
+      ? { project: true, provisorium: false, rmu: false, trafo: false, vultkabel: false, lsrek: false, ms: false, ls: false, ggi: false }
+      : { project: true, provisorium: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true, ggi: true },
+  );
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [debounced, setDebounced] = useState(config);
 
   // Dirty tracking — skip de eerste render (initialConfig hydratie)
@@ -138,6 +162,38 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
   const allComplete = completedCount === totalVisible;
 
   const update = (patch: Partial<MaterialenConfig>) => setConfig((c) => ({ ...c, ...patch }));
+
+  // Auto-flow: bij completion-transitie volgende sectie openen + scrollen, huidige inklappen
+  const prevCompletionRef = useRef<Record<SectionKey, boolean>>(completion);
+  useEffect(() => {
+    if (!autoFlowRef.current) {
+      prevCompletionRef.current = completion;
+      return;
+    }
+    for (let i = 0; i < visibleKeys.length; i++) {
+      const k = visibleKeys[i];
+      const wasComplete = prevCompletionRef.current[k];
+      if (!wasComplete && completion[k]) {
+        const next = visibleKeys[i + 1];
+        if (next && !open[next]) {
+          setOpen((o) => ({ ...o, [k]: false, [next]: true }));
+          // smooth scroll naar volgende sectie
+          requestAnimationFrame(() => {
+            const el = sectionRefs.current[next];
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+        break;
+      }
+    }
+    prevCompletionRef.current = completion;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completion]);
+
+  // State doorgeven aan parent (header)
+  useEffect(() => { onProgressChange?.(completedCount, totalVisible); }, [completedCount, totalVisible, onProgressChange]);
+  useEffect(() => { onCanSaveChange?.(allComplete); }, [allComplete, onCanSaveChange]);
+  useEffect(() => { onPreviewCountChange?.(preview.length); }, [preview.length, onPreviewCountChange]);
 
   const opslaan = useMutation({
     mutationFn: async () => {
@@ -230,58 +286,69 @@ export function MaterialenConfigurator({ caseId, caseType, initialConfig, onDirt
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Saving status doorgeven
+  useEffect(() => { onSavingChange?.(opslaan.isPending); }, [opslaan.isPending, onSavingChange]);
+
+  // Save trigger vanuit de header
+  const lastSaveSignalRef = useRef(saveSignal ?? 0);
+  useEffect(() => {
+    if (saveSignal === undefined) return;
+    if (saveSignal !== lastSaveSignalRef.current) {
+      lastSaveSignalRef.current = saveSignal;
+      if (allComplete && !opslaan.isPending) opslaan.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saveSignal]);
+
   // ---- Render ----
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-6">
-      <div className="space-y-3">
-        {/* Voortgang */}
-        <div className="rounded-lg border border-border bg-surface p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Voortgang</span>
-            <span className="text-xs font-mono">{completedCount}/{totalVisible} ingevuld</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-            <div className="h-full bg-primary transition-all" style={{ width: `${(completedCount / totalVisible) * 100}%` }} />
-          </div>
-        </div>
-
+      <div className={cn("space-y-3", mobileTab === "preview" && "hidden lg:block")}>
         {SECTIONS.map((sec) => {
           if (sec.key === "provisorium" && (!isProvisorum || isCompact)) return null;
           if (sec.key === "trafo" && !showTrafo) return null;
           if (sec.key === "vultkabel" && !showVultKabel) return null;
           if (sec.key === "lsrek" && !showLsRek) return null;
           if (sec.key === "ggi" && !isRenovatie) return null;
+          const dimmed = autoFlowRef.current && !open[sec.key] && !completion[sec.key];
           return (
-            <SectionCard
+            <div
               key={sec.key}
-              color={sec.color}
-              title={sec.label}
-              isOpen={open[sec.key]}
-              isComplete={completion[sec.key]}
-              summary={sectionSummary(sec.key, config, sd)}
-              onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
+              ref={(el) => { sectionRefs.current[sec.key] = el; }}
+              className={cn("scroll-mt-20 transition-opacity", dimmed && "opacity-60")}
             >
-              {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
-              {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
-              {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} isCompact={isCompact} />}
-              {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
-              {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
-              {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
-              {sec.key === "ms" && <MsSection config={config} update={update} sd={sd} />}
-              {sec.key === "ls" && <LsSection config={config} update={update} />}
-              {sec.key === "ggi" && <GgiSection config={config} update={update} />}
-            </SectionCard>
+              <SectionCard
+                color={sec.color}
+                title={sec.label}
+                isOpen={open[sec.key]}
+                isComplete={completion[sec.key]}
+                summary={sectionSummary(sec.key, config, sd)}
+                onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
+              >
+                {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
+                {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
+                {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} isCompact={isCompact} />}
+                {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
+                {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
+                {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
+                {sec.key === "ms" && <MsSection config={config} update={update} sd={sd} />}
+                {sec.key === "ls" && <LsSection config={config} update={update} />}
+                {sec.key === "ggi" && <GgiSection config={config} update={update} />}
+              </SectionCard>
+            </div>
           );
         })}
       </div>
 
       {/* Live preview */}
-      <PreviewPanel
-        preview={preview}
-        canSave={allComplete}
-        onSave={() => opslaan.mutate()}
-        saving={opslaan.isPending}
-      />
+      <div className={cn(mobileTab === "config" && "hidden lg:block")}>
+        <PreviewPanel
+          preview={preview}
+          canSave={allComplete}
+          onSave={() => opslaan.mutate()}
+          saving={opslaan.isPending}
+        />
+      </div>
     </div>
   );
 }
@@ -299,13 +366,16 @@ function SectionCard({
 }) {
   return (
     <div className="rounded-lg border border-border bg-surface overflow-hidden">
-      <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/30 transition-colors">
+      <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/30 transition-colors text-left">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
-        <span className="font-medium">{title}</span>
-        <span className={cn("text-xs ml-2 truncate", isComplete ? "text-success" : "text-muted-foreground")}>
-          {isComplete ? "✓ " : ""}{summary}
-        </span>
-        <ChevronDown className={cn("ml-auto w-4 h-4 transition-transform text-muted-foreground", isOpen && "rotate-180")} />
+        <span className="font-medium flex-1 truncate">{title}</span>
+        {isComplete && !isOpen && (
+          <span className="text-xs text-muted-foreground truncate max-w-[18rem]">{summary}</span>
+        )}
+        {isComplete && (
+          <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+        )}
+        <ChevronDown className={cn("w-4 h-4 transition-transform text-muted-foreground", isOpen && "rotate-180")} />
       </button>
       {isOpen && <div className="px-4 pb-4 pt-1 border-t border-border">{children}</div>}
     </div>

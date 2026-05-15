@@ -73,7 +73,8 @@ export function StandaardMaterialenTab() {
           s.standaard_hoeveelheid,
           <RowActions onEdit={() => { setEditing(s); setOpen(true); }} onDelete={() => setToDelete(s)} />,
         ])}
-        emptyMessage="Nog geen standaard materialen."
+        emptyMessage="Nog geen standaard materialen"
+        emptyDescription="Materialen die altijd op de bestellijst komen, ongeacht configuratie."
         emptyAction={
           <Button onClick={() => { setEditing({ case_type: "NSA", standaard_hoeveelheid: 1 }); setOpen(true); }}>
             <Plus className="h-4 w-4 mr-1" /> Eerste standaard materiaal
@@ -186,7 +187,8 @@ export function VasteArtikelenTab() {
           v.actief ? "Ja" : "Nee",
           <RowActions onEdit={() => { setEditing(v); setOpen(true); }} onDelete={() => setToDelete(v)} />,
         ])}
-        emptyMessage="Nog geen vaste artikelen."
+        emptyMessage="Nog geen vaste artikelen"
+        emptyDescription="Configureer station-vaste artikelen per case type."
         emptyAction={
           <Button onClick={() => { setEditing({ van_toepassing_bij: [], hoeveelheid: 1, actief: true }); setOpen(true); }}>
             <Plus className="h-4 w-4 mr-1" /> Eerste vast artikel
@@ -305,7 +307,8 @@ export function TrafoVultKabelTab() {
           <ArtikelLabel id={t.perskabelschoen_artikel_id} />,
           <RowActions onEdit={() => { setEditing(t); setOpen(true); }} onDelete={() => setToDelete(t)} />,
         ])}
-        emptyMessage="Nog geen trafo vult kabel configuraties."
+        emptyMessage="Nog geen trafo vult kabel configuraties"
+        emptyDescription="Voeg kabelspecs toe per trafo type."
         emptyAction={
           <Button onClick={() => { setEditing({ trafo_kva: 400, aantal_kabels: 1, kabel_doorsnede: 150, aantal_perskabelschoenen: 6 }); setOpen(true); }}>
             <Plus className="h-4 w-4 mr-1" /> Eerste configuratie
