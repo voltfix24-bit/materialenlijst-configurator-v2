@@ -36,13 +36,14 @@ function add(
   nietBestellen = false,
 ) {
   if (!artikel || qty <= 0) return;
-  const ex = map.get(artikel.id);
+  const key = artikel.artikel_nummer;
+  const ex = map.get(key);
   if (ex) {
     ex.hoeveelheid += qty;
     if (!ex.herkomst.includes(herkomst)) ex.herkomst.push(herkomst);
     if (nietBestellen) ex.niet_bestellen = true;
   } else {
-    map.set(artikel.id, {
+    map.set(key, {
       artikel_id: artikel.id,
       artikel_nummer: artikel.artikel_nummer,
       korte_omschrijving: artikel.korte_omschrijving,
