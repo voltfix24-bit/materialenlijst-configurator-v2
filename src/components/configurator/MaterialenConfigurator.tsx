@@ -306,7 +306,7 @@ export function MaterialenConfigurator({
     if (saveSignal === undefined) return;
     if (saveSignal !== lastSaveSignalRef.current) {
       lastSaveSignalRef.current = saveSignal;
-      if (allComplete && !opslaan.isPending) opslaan.mutate();
+      if (!opslaan.isPending) opslaan.mutate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saveSignal]);
