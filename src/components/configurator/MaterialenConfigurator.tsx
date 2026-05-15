@@ -355,9 +355,9 @@ export function MaterialenConfigurator({
       <div className={cn(mobileTab === "config" && "hidden lg:block")}>
         <PreviewPanel
           preview={preview}
-          canSave={allComplete}
           onSave={() => opslaan.mutate()}
           saving={opslaan.isPending}
+          hasSubType={!!config.subType}
         />
       </div>
     </div>
