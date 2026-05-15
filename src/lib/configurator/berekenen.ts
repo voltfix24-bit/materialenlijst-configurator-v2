@@ -1,4 +1,4 @@
-import type { MaterialenConfig, PreviewItem, Artikel } from "./types";
+import type { MaterialenConfig, PreviewItem, Artikel, PreviewSectie } from "./types";
 import type { Stamdata } from "./queries";
 import { evaluateFormula } from "./formula";
 
@@ -27,7 +27,14 @@ export const VULT_KABEL_SPECS: Record<string, VultKabelSpec> = {
   "1000": { kabelArtNr: "20030300", aantalKabels: 8, persArtNr: "20017790", aantalPers: 16, omschrijving: "8× 1x300mm² Cu (dubbel uitgevoerd)" },
 };
 
-function add(map: Map<string, PreviewItem>, artikel: Artikel | null | undefined, qty: number, herkomst: string, nietBestellen = false) {
+function add(
+  map: Map<string, PreviewItem>,
+  artikel: Artikel | null | undefined,
+  qty: number,
+  herkomst: string,
+  sectie: PreviewSectie,
+  nietBestellen = false,
+) {
   if (!artikel || qty <= 0) return;
   const ex = map.get(artikel.id);
   if (ex) {
@@ -44,6 +51,7 @@ function add(map: Map<string, PreviewItem>, artikel: Artikel | null | undefined,
       hoeveelheid: qty,
       niet_bestellen: nietBestellen,
       herkomst: [herkomst],
+      sectie,
     });
   }
 }
