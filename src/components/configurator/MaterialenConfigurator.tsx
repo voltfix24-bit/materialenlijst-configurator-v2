@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, ChevronDown, Info, Plus, Trash2, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ClipboardList, Info, Plus, Trash2, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { PillGroup } from "@/components/ui-prim/PillGroup";
@@ -39,7 +39,6 @@ interface Props {
   onDirtyChange?: (isDirty: boolean) => void;
   onProgressChange?: (completed: number, total: number) => void;
   onSavingChange?: (saving: boolean) => void;
-  onCanSaveChange?: (canSave: boolean) => void;
   onPreviewCountChange?: (count: number) => void;
   saveSignal?: number;
   mobileTab?: "config" | "preview";
@@ -68,7 +67,6 @@ export function MaterialenConfigurator({
   onDirtyChange,
   onProgressChange,
   onSavingChange,
-  onCanSaveChange,
   onPreviewCountChange,
   saveSignal,
   mobileTab = "config",
@@ -201,11 +199,15 @@ export function MaterialenConfigurator({
 
   // State doorgeven aan parent (header)
   useEffect(() => { onProgressChange?.(completedCount, totalVisible); }, [completedCount, totalVisible, onProgressChange]);
-  useEffect(() => { onCanSaveChange?.(allComplete); }, [allComplete, onCanSaveChange]);
   useEffect(() => { onPreviewCountChange?.(preview.length); }, [preview.length, onPreviewCountChange]);
 
   const opslaan = useMutation({
     mutationFn: async () => {
+      // Waarschuw maar blokkeer niet bij onvolledige secties
+      if (!allComplete) {
+        const missing = totalVisible - completedCount;
+        toast.warning(`${missing} sectie${missing === 1 ? "" : "s"} nog niet volledig — toch opgeslagen`);
+      }
       // Volledige config opslaan als JSON. rmuConfig wordt afgeslankt tot {id};
       // bij rehydratie wordt het volledige object opgezocht in de stamdata.
       const configToSave = {
@@ -304,7 +306,7 @@ export function MaterialenConfigurator({
     if (saveSignal === undefined) return;
     if (saveSignal !== lastSaveSignalRef.current) {
       lastSaveSignalRef.current = saveSignal;
-      if (allComplete && !opslaan.isPending) opslaan.mutate();
+      if (!opslaan.isPending) opslaan.mutate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saveSignal]);
@@ -353,9 +355,9 @@ export function MaterialenConfigurator({
       <div className={cn(mobileTab === "config" && "hidden lg:block")}>
         <PreviewPanel
           preview={preview}
-          canSave={allComplete}
           onSave={() => opslaan.mutate()}
           saving={opslaan.isPending}
+          hasSubType={!!config.subType}
         />
       </div>
     </div>
@@ -378,8 +380,17 @@ function SectionCard({
       <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/30 transition-colors text-left">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
         <span className="font-medium flex-1 truncate">{title}</span>
-        {isComplete && !isOpen && (
-          <span className="text-xs text-muted-foreground truncate max-w-[18rem]">{summary}</span>
+        {!isOpen && summary && summary !== "Nog in te vullen" && (
+          <span
+            className={cn(
+              "text-xs truncate max-w-[18rem] px-2 py-0.5 rounded",
+              isComplete
+                ? "text-success bg-success/10 font-medium"
+                : "text-muted-foreground",
+            )}
+          >
+            {isComplete ? `✓ ${summary}` : summary}
+          </span>
         )}
         {isComplete && (
           <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
@@ -1961,7 +1972,7 @@ interface SectieGroep {
 const HIGHLIGHT_MS = 1500;
 const REMOVED_MS = 2000;
 
-function PreviewPanel({ preview, canSave, onSave, saving }: { preview: PreviewItem[]; canSave: boolean; onSave: () => void; saving: boolean }) {
+function PreviewPanel({ preview, onSave, saving, hasSubType }: { preview: PreviewItem[]; onSave: () => void; saving: boolean; hasSubType: boolean }) {
   // Vorige snapshot van id → hoeveelheid voor diff
   const vorigeItemsRef = useRef<Map<string, { item: PreviewItem; hoeveelheid: number }>>(new Map());
   const bekendeSectiesRef = useRef<Set<PreviewSectie>>(new Set());
@@ -2063,9 +2074,14 @@ function PreviewPanel({ preview, canSave, onSave, saving }: { preview: PreviewIt
       <div className="flex-1 overflow-y-auto px-2 py-2 space-y-3">
         {sectieGroepen.length === 0 && (
           <div className="px-4 py-12 text-center">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Begin met invullen —<br />
-              de materiaallijst bouwt zich automatisch op.
+            <div className="mx-auto w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center mb-3">
+              <ClipboardList className="w-6 h-6 text-muted-foreground/60" />
+            </div>
+            <p className="text-sm font-medium text-foreground mb-1">Nog geen materialen</p>
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-[220px] mx-auto">
+              {hasSubType
+                ? "Vul de configuratie in — de materiaallijst bouwt zich automatisch op."
+                : "Kies eerst het projecttype om de materiaallijst op te bouwen."}
             </p>
           </div>
         )}
@@ -2109,11 +2125,11 @@ function PreviewPanel({ preview, canSave, onSave, saving }: { preview: PreviewIt
           <span className="font-mono font-semibold">{teBestellen}</span>
         </div>
         <button
-          disabled={!canSave || saving}
+          disabled={saving}
           onClick={onSave}
           className="w-full rounded-md bg-primary text-primary-foreground font-medium py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
         >
-          {saving ? "Opslaan..." : canSave ? "Lijst opslaan" : "Vul alle secties in"}
+          {saving ? "Opslaan..." : "Lijst opslaan"}
         </button>
       </div>
     </div>
