@@ -215,10 +215,11 @@ function CasesPage() {
                 <div className="flex items-start gap-1 shrink-0">
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       if (confirm("Case verwijderen?")) removeCase.mutate(c.id);
                     }}
-                    className="p-1.5 rounded text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="relative z-10 p-1.5 rounded text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
