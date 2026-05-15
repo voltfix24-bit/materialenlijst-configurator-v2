@@ -190,6 +190,13 @@ export interface MaterialenConfig {
   rmuVelden: RmuVeldConfig[];
   iNetArtikelen: INetArtikel[];
   isCompactStation: boolean;
+  ggiVervangen: boolean;
+  provRmuMerk: RmuMerk;
+  provRmuConfig: RmuConfig | null;
+  provRmuVelden: RmuVeldConfig[];
+  provLsMoffenActief: boolean;
+  provLsMoffen: LsMof[];
+  provZekeringKva: TrafoKva;
 }
 
 export type PreviewSectie =
