@@ -92,34 +92,18 @@ function CasesPage() {
     },
   });
 
+  const [typeFilter, setTypeFilter] = useState("");
+
   const filtered = useMemo(() => {
     const term = zoekterm.trim().toLowerCase();
     return (cases ?? []).filter((c) => {
       if (statusFilter && c.status !== statusFilter) return false;
-      if (!term) return true;
-      const hay = `${c.station_naam ?? ""} ${c.case_nummer ?? ""}`.toLowerCase();
-      return hay.includes(term);
-    });
-  }, [cases, zoekterm, statusFilter]);
-
-  const [typeFilter, setTypeFilter] = useState("");
-
-  const filteredFinal = useMemo(() => {
-    return (cases ?? []).filter((c) => {
       if (typeFilter && c.case_type !== typeFilter) return false;
-      return true;
-    });
-  }, [cases, typeFilter]);
-  // re-apply zoekterm/status on top
-  const filteredAll = useMemo(() => {
-    const term = zoekterm.trim().toLowerCase();
-    return filteredFinal.filter((c) => {
-      if (statusFilter && c.status !== statusFilter) return false;
       if (!term) return true;
       const hay = `${c.station_naam ?? ""} ${c.case_nummer ?? ""}`.toLowerCase();
       return hay.includes(term);
     });
-  }, [filteredFinal, zoekterm, statusFilter]);
+  }, [cases, zoekterm, statusFilter, typeFilter]);
 
   return (
     <div className="px-6 sm:px-8 py-6 max-w-6xl mx-auto">
