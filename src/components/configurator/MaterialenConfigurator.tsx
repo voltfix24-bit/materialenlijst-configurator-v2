@@ -342,8 +342,8 @@ export function MaterialenConfigurator({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-6">
-      <div className={cn("space-y-3", mobileTab === "preview" && "hidden lg:block")}>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-0 lg:gap-0">
+      <div className={cn("space-y-6 max-w-4xl w-full mx-auto px-2 sm:px-4 py-2", mobileTab === "preview" && "hidden lg:block")}>
         {SECTIONS.map((sec, idx) => {
           if (sec.key === "provisorium" && (!isProvisorum || (isCompact && !isCompactProv))) return null;
           if (sec.key === "trafo" && !(showTrafo || showVultKabel)) return null;
