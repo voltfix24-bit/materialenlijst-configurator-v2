@@ -168,18 +168,18 @@ function CasesPage() {
       )}
 
       {/* Filter balk */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="relative flex-1">
+      <div className="flex items-center gap-2 mb-5 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             placeholder="Zoek op naam of casenummer..."
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-card text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-card text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
             value={zoekterm}
             onChange={(e) => setZoekterm(e.target.value)}
           />
         </div>
         <select
-          className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+          className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -188,7 +188,74 @@ function CasesPage() {
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
+        <select
+          className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+        >
+          <option value="">Alle types</option>
+          {Object.entries(CASE_TYPE_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
       </div>
+
+      {filtered.length === 0 && (
+        <div className="rounded-xl border border-border bg-card px-4 py-12 text-center text-sm text-muted-foreground">
+          {cases?.length === 0 ? "Nog geen cases. Maak er één aan." : "Geen cases gevonden voor deze filters."}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {filtered.map((c) => {
+          const matCount = (c.case_materialen as { count: number }[] | null)?.[0]?.count ?? 0;
+          return (
+            <div
+              key={c.id}
+              className="group relative rounded-xl border border-border bg-card p-4 hover:border-primary hover:shadow-md transition-all"
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider", CASE_TYPE_COLORS[c.case_type] ?? "bg-muted text-muted-foreground")}>
+                      {CASE_TYPE_LABELS[c.case_type] ?? c.case_type}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-semibold truncate text-[color:var(--navy)]">
+                    {c.station_naam || <span className="text-muted-foreground italic font-normal">Naamloos station</span>}
+                  </h3>
+                  {c.case_nummer && (
+                    <p className="text-xs text-muted-foreground font-mono mt-0.5">{c.case_nummer}</p>
+                  )}
+                </div>
+                <div className="flex items-start gap-1 shrink-0">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (confirm("Case verwijderen?")) removeCase.mutate(c.id);
+                    }}
+                    className="relative z-10 p-1.5 rounded text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 mt-1 group-hover:text-primary transition-colors" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 text-xs pt-2 border-t border-border">
+                <span className={cn("px-2 py-0.5 rounded-full font-medium", STATUS_COLORS[c.status] ?? "bg-muted text-muted-foreground")}>
+                  {STATUS_LABELS[c.status] ?? c.status}
+                </span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Package className="h-3 w-3" />
+                  {matCount}
+                </span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {formatDistanceToNow(new Date(c.updated_at), { locale: nl, addSuffix: true })}
+                </span>
+              </div>
 
       {filtered.length === 0 && (
         <div className="rounded-lg border border-border bg-surface px-4 py-12 text-center text-sm text-muted-foreground">
