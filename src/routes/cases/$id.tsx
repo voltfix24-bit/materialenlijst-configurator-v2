@@ -1,13 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { ArrowLeft, Download, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { MaterialenConfigurator } from "@/components/configurator/MaterialenConfigurator";
 import { exporteerNaarTemplate, downloadBlob } from "@/lib/assortiment/excel";
-import { emptyConfig, type MaterialenConfig, type RmuConfig } from "@/lib/configurator/types";
+import { emptyConfig, type MaterialenConfig, type PreviewItem, type RmuConfig } from "@/lib/configurator/types";
 import { setGlobalDirty } from "@/lib/dirty-state";
 
 export const Route = createFileRoute("/cases/$id")({
@@ -58,6 +58,10 @@ function CaseDetailPage() {
   const [previewCount, setPreviewCount] = useState(0);
   const [saveSignal, setSaveSignal] = useState(0);
   const [mobileTab, setMobileTab] = useState<"config" | "preview">("config");
+  const winkelwagenItemsRef = useRef<PreviewItem[]>([]);
+
+  // Reset winkelwagen-ref bij wisselen case
+  useEffect(() => { winkelwagenItemsRef.current = []; }, [id]);
 
   // Sync naar globale dirty state (sidebar leest dit) en reset bij unmount
   useEffect(() => {
@@ -107,12 +111,20 @@ function CaseDetailPage() {
 
   const exporteer = useMutation({
     mutationFn: async () => {
-      const items = (opgeslagen ?? [])
-        .map((r) => ({
-          artikel_nummer: (r.artikelen as { artikel_nummer?: string } | null)?.artikel_nummer ?? "",
-          hoeveelheid: Number(r.gewenste_hoeveelheid) || 0,
-        }))
-        .filter((i) => i.artikel_nummer && i.hoeveelheid > 0);
+      const winkel = winkelwagenItemsRef.current;
+      const items = winkel.length > 0
+        ? winkel
+            .map((p) => ({
+              artikel_nummer: p.artikel_nummer,
+              hoeveelheid: Number(p.hoeveelheid) || 0,
+            }))
+            .filter((i) => i.artikel_nummer && i.hoeveelheid > 0)
+        : (opgeslagen ?? [])
+            .map((r) => ({
+              artikel_nummer: (r.artikelen as { artikel_nummer?: string } | null)?.artikel_nummer ?? "",
+              hoeveelheid: Number(r.gewenste_hoeveelheid) || 0,
+            }))
+            .filter((i) => i.artikel_nummer && i.hoeveelheid > 0);
       const res = await exporteerNaarTemplate(items, caseRow?.case_nummer ?? null);
       downloadBlob(res.blob, res.filename);
       return res;
@@ -312,6 +324,7 @@ function CaseDetailPage() {
               onProgressChange={(c, t) => { setCompleted(c); setTotal(t); }}
               onSavingChange={setSaving}
               onPreviewCountChange={setPreviewCount}
+              onWinkelwagenItemsChange={(items) => { winkelwagenItemsRef.current = items; }}
               saveSignal={saveSignal}
               mobileTab={mobileTab}
             />

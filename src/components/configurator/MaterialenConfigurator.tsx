@@ -41,6 +41,7 @@ interface Props {
   onProgressChange?: (completed: number, total: number) => void;
   onSavingChange?: (saving: boolean) => void;
   onPreviewCountChange?: (count: number) => void;
+  onWinkelwagenItemsChange?: (items: PreviewItem[]) => void;
   saveSignal?: number;
   mobileTab?: "config" | "preview";
 }
@@ -69,6 +70,7 @@ export function MaterialenConfigurator({
   onProgressChange,
   onSavingChange,
   onPreviewCountChange,
+  onWinkelwagenItemsChange,
   saveSignal,
   mobileTab = "config",
 }: Props) {
@@ -401,7 +403,7 @@ export function MaterialenConfigurator({
           hasSubType={!!config.subType}
           saving={opslaan.isPending}
           onSave={() => opslaan.mutate()}
-          onItemsChange={(eff) => { winkelwagenItemsRef.current = eff; }}
+          onItemsChange={(eff) => { winkelwagenItemsRef.current = eff; onWinkelwagenItemsChange?.(eff); }}
           artikelen={sd.artikelen.data ?? []}
         />
       </div>
