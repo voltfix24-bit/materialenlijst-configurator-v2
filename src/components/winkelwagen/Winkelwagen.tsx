@@ -313,11 +313,21 @@ export function Winkelwagen({
 
   return (
     <div className="rounded-lg border border-border bg-surface flex flex-col h-fit lg:sticky lg:top-4 max-h-[calc(100vh-2rem)]">
-      <div className="px-4 py-3 border-b border-border">
-        <h2 className="font-semibold">Winkelwagen</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {totaal === 0 ? "Nog leeg" : `${totaal} artikelen · ${teBestellen} te bestellen`}
-        </p>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border flex-shrink-0">
+        <div>
+          <span className="text-xs font-semibold text-foreground">Winkelwagen</span>
+          <span className="text-[10px] text-muted-foreground ml-2">
+            {totaal === 0 ? "Nog leeg" : `${totaal} art. · ${teBestellen} te bestellen`}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowZoeker(true)}
+          className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 transition-colors font-medium"
+        >
+          <Plus className="w-3 h-3" />
+          Toevoegen
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 py-2 space-y-3">
@@ -337,10 +347,12 @@ export function Winkelwagen({
 
         {sectieGroepen.map((sec) => (
           <div key={sec.key}>
-            <div className="flex items-center gap-2 px-2 py-1.5">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: sec.color }} />
-              <span className="text-[11px] font-mono uppercase tracking-wider text-foreground/80">{sec.label}</span>
-              <span className="text-[10px] font-mono text-muted-foreground ml-auto">{sec.items.length} art.</span>
+            <div className="flex items-center gap-1.5 mb-1 pb-0.5 border-b border-border/30 sticky top-0 bg-card z-10">
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: sec.color }} />
+              <span className="text-[9px] font-mono font-semibold uppercase tracking-widest text-muted-foreground flex-1">
+                {sec.label}
+              </span>
+              <span className="text-[9px] text-muted-foreground/60 font-mono">{sec.items.length} art.</span>
             </div>
             <div className="space-y-0.5">
               {sec.items.map((it) => (
@@ -373,12 +385,12 @@ export function Winkelwagen({
 
         {toegevoegd.length > 0 && (
           <div>
-            <div className="flex items-center gap-2 px-2 py-1.5">
-              <span className="w-2 h-2 rounded-full shrink-0 bg-primary" />
-              <span className="text-[11px] font-mono uppercase tracking-wider text-foreground/80">
+            <div className="flex items-center gap-1.5 mb-1 pb-0.5 border-b border-border/30 sticky top-0 bg-card z-10">
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-primary" />
+              <span className="text-[9px] font-mono font-semibold uppercase tracking-widest text-muted-foreground flex-1">
                 Handmatig toegevoegd
               </span>
-              <span className="text-[10px] font-mono text-muted-foreground ml-auto">{toegevoegd.length} art.</span>
+              <span className="text-[9px] text-muted-foreground/60 font-mono">{toegevoegd.length} art.</span>
             </div>
             <div className="space-y-0.5">
               {toegevoegd.map((t) => {
@@ -478,15 +490,7 @@ export function Winkelwagen({
               <p className="text-xs text-muted-foreground px-1">Typ minimaal 2 tekens…</p>
             )}
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowZoeker(true)}
-            className="w-full rounded-md border border-dashed border-border py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 flex items-center justify-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" /> Artikel toevoegen
-          </button>
-        )}
+        ) : null}
 
         <div className="flex justify-between text-sm pt-1 border-t border-border/60">
           <span className="font-medium">Totaal te bestellen</span>
@@ -525,66 +529,118 @@ function WinkelwagenRij({
   onChange: (v: number) => void;
   onDelete: () => void;
 }) {
+  const minHoeveelheid = 0;
   return (
     <div
       className={cn(
-        "relative flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors duration-300",
-        !isVerwijderd && "hover:bg-accent/40",
+        "flex items-center gap-2 py-1 px-1.5 rounded-md transition-all duration-500 group",
+        !isVerwijderd && "hover:bg-muted/40",
         item.niet_bestellen && !isVerwijderd && "opacity-50 line-through",
         isNieuw && !isVerwijderd && "bg-success/10 ring-1 ring-success/30",
         isOverride && !isVerwijderd && !isNieuw && "bg-primary/5 ring-1 ring-primary/30",
         isVerwijderd && "bg-destructive/10 ring-1 ring-destructive/30 line-through opacity-70 animate-fade-out",
       )}
-      title={item.herkomst.join(", ")}
     >
-      <span className="w-1.5 h-5 rounded-sm shrink-0" style={{ background: color }} />
-      <span className="font-mono text-xs text-muted-foreground w-20 shrink-0 truncate">{item.artikel_nummer}</span>
-      <span className="flex-1 truncate">{item.korte_omschrijving}</span>
+      {/* Sectie kleurblokje */}
+      <div className="w-0.5 h-4 rounded-full flex-shrink-0" style={{ background: color }} />
+
+      {/* Artikelnummer — vaste breedte, klikbaar voor kopiëren */}
+      <span
+        className="font-mono text-[10px] text-primary/80 flex-shrink-0 w-[72px] cursor-pointer hover:text-primary transition-colors truncate"
+        onClick={() => navigator.clipboard?.writeText(item.artikel_nummer)}
+        title={`${item.artikel_nummer} — ${item.korte_omschrijving}`}
+      >
+        {item.artikel_nummer}
+      </span>
+
+      {/* Omschrijving — flex-1 truncate */}
+      <span
+        className="text-[11px] text-foreground/85 flex-1 min-w-0 truncate leading-tight"
+        title={item.korte_omschrijving}
+      >
+        {item.korte_omschrijving}
+      </span>
+
+      {/* Stepper of weergave */}
       {isVerwijderd ? (
-        <span className="font-mono text-xs tabular-nums text-destructive">
+        <span className="font-mono text-[12px] tabular-nums text-destructive flex-shrink-0">
           {item.hoeveelheid}
-          {item.eenheid}
         </span>
       ) : (
-        <Stepper value={item.hoeveelheid} onChange={onChange} min={0} max={9999} suffix={item.eenheid} />
+        <div className="flex items-center gap-0.5 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => onChange(Math.max(minHoeveelheid, item.hoeveelheid - 1))}
+            disabled={item.hoeveelheid <= minHoeveelheid}
+            className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-bold"
+            aria-label="Verlaag"
+          >
+            −
+          </button>
+          <span className="w-8 text-center text-[12px] font-mono font-medium tabular-nums">
+            {item.hoeveelheid}
+          </span>
+          <button
+            type="button"
+            onClick={() => onChange(item.hoeveelheid + 1)}
+            className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-xs font-bold"
+            aria-label="Verhoog"
+          >
+            +
+          </button>
+        </div>
       )}
-      {item.herkomst.length > 0 && !isVerwijderd && (
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              onClick={(e) => e.stopPropagation()}
-              className="shrink-0 inline-flex items-center justify-center rounded-full w-5 h-5 text-[10px] text-muted-foreground/60 hover:text-foreground hover:bg-accent"
-              aria-label="Toon herkomst"
-            >
-              {item.herkomst.length > 1 ? item.herkomst.length : <Info className="w-3 h-3" />}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent side="left" align="start" className="w-72 p-3">
-            <div className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide">
-              Herkomst ({item.herkomst.length})
-            </div>
-            <ul className="space-y-1.5">
-              {item.herkomst.map((h, i) => (
-                <li key={i} className="text-sm flex gap-2">
-                  <span className="text-muted-foreground font-mono text-xs shrink-0 mt-0.5">{i + 1}.</span>
-                  <span className="break-words">{h}</span>
-                </li>
-              ))}
-            </ul>
-          </PopoverContent>
-        </Popover>
-      )}
-      {!isVerwijderd && (
-        <button
-          type="button"
-          onClick={onDelete}
-          className="shrink-0 p-1 rounded text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10"
-          aria-label="Verwijder artikel"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      )}
+
+      {/* Eenheid klein */}
+      <span className="text-[9px] text-muted-foreground/60 flex-shrink-0 w-6 text-center uppercase">
+        {item.eenheid}
+      </span>
+
+      {/* Acties — alleen op hover */}
+      <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        {item.herkomst.length > 0 && !isVerwijderd && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors"
+                aria-label="Toon herkomst"
+              >
+                {item.herkomst.length > 1 ? (
+                  <span className="text-[10px] font-mono">{item.herkomst.length}</span>
+                ) : (
+                  <Info className="w-3 h-3" />
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="left" align="start" className="w-72 p-3">
+              <div className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide">
+                Herkomst ({item.herkomst.length})
+              </div>
+              <ul className="space-y-1.5">
+                {item.herkomst.map((h, i) => (
+                  <li key={i} className="text-sm flex gap-2">
+                    <span className="text-muted-foreground font-mono text-xs shrink-0 mt-0.5">{i + 1}.</span>
+                    <span className="break-words">{h}</span>
+                  </li>
+                ))}
+              </ul>
+            </PopoverContent>
+          </Popover>
+        )}
+        {!isVerwijderd && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+            aria-label="Verwijder artikel"
+            title="Verwijder artikel"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
