@@ -331,15 +331,22 @@ export function Winkelwagen({
 
   // ---- groepering ----
   const sectieGroepen = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    const matches = (p: PreviewItem) =>
+      !q ||
+      p.artikel_nummer.toLowerCase().includes(q) ||
+      p.korte_omschrijving.toLowerCase().includes(q);
     const map = new Map<PreviewSectie, PreviewItem[]>();
     for (const p of effectief) {
       if (toegevoegd.some((t) => t.artikel_nummer === p.artikel_nummer)) continue;
+      if (!matches(p)) continue;
       const arr = map.get(p.sectie) ?? [];
       arr.push(p);
       map.set(p.sectie, arr);
     }
     const verwijderdPerSectie = new Map<PreviewSectie, PreviewItem[]>();
     for (const v of verwijderdAnim) {
+      if (!matches(v)) continue;
       const arr = verwijderdPerSectie.get(v.sectie) ?? [];
       arr.push(v);
       verwijderdPerSectie.set(v.sectie, arr);
@@ -351,7 +358,17 @@ export function Winkelwagen({
       items: map.get(def.key) ?? [],
       verwijderdeItems: verwijderdPerSectie.get(def.key) ?? [],
     })).filter((g) => g.items.length > 0 || g.verwijderdeItems.length > 0);
-  }, [effectief, verwijderdAnim, toegevoegd]);
+  }, [effectief, verwijderdAnim, toegevoegd, filter]);
+
+  const zichtbareToegevoegd = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return toegevoegd;
+    return toegevoegd.filter(
+      (t) =>
+        t.artikel_nummer.toLowerCase().includes(q) ||
+        t.korte_omschrijving.toLowerCase().includes(q),
+    );
+  }, [toegevoegd, filter]);
 
   const teBestellen = effectief.filter((p) => !p.niet_bestellen).length;
   const totaal = effectief.length;
