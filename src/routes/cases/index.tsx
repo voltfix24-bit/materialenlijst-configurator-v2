@@ -257,63 +257,6 @@ function CasesPage() {
                 </span>
               </div>
 
-      {filtered.length === 0 && (
-        <div className="rounded-lg border border-border bg-surface px-4 py-12 text-center text-sm text-muted-foreground">
-          {cases?.length === 0 ? "Nog geen cases. Maak er één aan." : "Geen cases gevonden voor deze filters."}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {filtered.map((c) => {
-          const matCount = (c.case_materialen as { count: number }[] | null)?.[0]?.count ?? 0;
-          return (
-            <div
-              key={c.id}
-              className="group relative rounded-xl border border-border bg-surface p-4 hover:border-border/80 hover:bg-accent/30 transition-all"
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wider">
-                      {CASE_TYPE_LABELS[c.case_type] ?? c.case_type}
-                    </span>
-                    <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-medium", STATUS_COLORS[c.status] ?? "bg-muted text-muted-foreground")}>
-                      {STATUS_LABELS[c.status] ?? c.status}
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-semibold truncate">
-                    {c.station_naam || <span className="text-muted-foreground italic">Naamloos station</span>}
-                  </h3>
-                  {c.case_nummer && (
-                    <p className="text-xs text-muted-foreground font-mono mt-0.5">{c.case_nummer}</p>
-                  )}
-                </div>
-                <div className="flex items-start gap-1 shrink-0">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (confirm("Case verwijderen?")) removeCase.mutate(c.id);
-                    }}
-                    className="relative z-10 p-1.5 rounded text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 mt-1 group-hover:text-muted-foreground transition-colors" />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Package className="h-3 w-3" />
-                  {matCount} materialen
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatDistanceToNow(new Date(c.updated_at), { locale: nl, addSuffix: true })}
-                </span>
-              </div>
-
               <Link
                 to="/cases/$id"
                 params={{ id: c.id }}
@@ -327,3 +270,4 @@ function CasesPage() {
     </div>
   );
 }
+
