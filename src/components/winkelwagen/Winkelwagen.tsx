@@ -625,17 +625,28 @@ export function Winkelwagen({
           </div>
         ) : null}
 
-        <div className="flex justify-between text-sm pt-1 border-t border-border/60">
-          <span className="font-medium">Totaal te bestellen</span>
-          <span className="font-mono font-semibold">{teBestellen}</span>
+        <div className="flex items-center justify-between text-sm pt-1">
+          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Te bestellen</span>
+          <span className="font-mono font-semibold text-foreground">{teBestellen}</span>
         </div>
-        <button
-          disabled={saving}
-          onClick={onSave}
-          className="w-full rounded-md bg-primary text-primary-foreground font-medium py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
-        >
-          {saving ? "Opslaan..." : "Lijst opslaan"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            disabled={saving}
+            onClick={onSave}
+            className="flex-shrink-0 px-3 py-2.5 rounded-lg border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            {saving ? "…" : "Opslaan"}
+          </button>
+          <button
+            type="button"
+            onClick={() => onExport?.()}
+            disabled={exportDisabled || exportPending || !onExport}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground font-semibold py-2.5 text-sm hover:bg-[color:var(--primary-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+          >
+            {exportPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Export naar Liander
+          </button>
+        </div>
       </div>
 
       {dialoogData && (
