@@ -520,12 +520,12 @@ export function Winkelwagen({
               {!openSecties.has("__handmatig") && sectiesMetNieuw.has("__handmatig") && (
                 <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-label="nieuwe artikelen" />
               )}
-              <span className="text-[9px] text-muted-foreground/70 font-mono">{toegevoegd.length} art.</span>
+              <span className="text-[9px] text-muted-foreground/70 font-mono">{zichtbareToegevoegd.length} art.</span>
               <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform", openSecties.has("__handmatig") && "rotate-180")} />
             </button>
             {openSecties.has("__handmatig") && (
               <div className="space-y-0.5">
-                {toegevoegd.map((t) => {
+                {zichtbareToegevoegd.map((t) => {
                   const item: PreviewItem = {
                     artikel_id: t.artikel_id,
                     artikel_nummer: t.artikel_nummer,
