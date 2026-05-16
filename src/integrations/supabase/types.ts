@@ -74,6 +74,60 @@ export type Database = {
         }
         Relationships: []
       }
+      beheer_notificaties: {
+        Row: {
+          aantal_correcties: number
+          actie: string
+          afgehandeld_door: string | null
+          afgehandeld_op: string | null
+          artikel_nummer: string
+          case_type: string
+          correctie_ids: string[] | null
+          created_at: string | null
+          gemiddelde_wijziging: number | null
+          id: string
+          korte_omschrijving: string | null
+          status: string
+          sub_type: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          aantal_correcties?: number
+          actie: string
+          afgehandeld_door?: string | null
+          afgehandeld_op?: string | null
+          artikel_nummer: string
+          case_type: string
+          correctie_ids?: string[] | null
+          created_at?: string | null
+          gemiddelde_wijziging?: number | null
+          id?: string
+          korte_omschrijving?: string | null
+          status?: string
+          sub_type: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          aantal_correcties?: number
+          actie?: string
+          afgehandeld_door?: string | null
+          afgehandeld_op?: string | null
+          artikel_nummer?: string
+          case_type?: string
+          correctie_ids?: string[] | null
+          created_at?: string | null
+          gemiddelde_wijziging?: number | null
+          id?: string
+          korte_omschrijving?: string | null
+          status?: string
+          sub_type?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       case_ls_moffen: {
         Row: {
           aantal: number
@@ -692,6 +746,62 @@ export type Database = {
             columns: ["perskabelschoen_artikel_id"]
             isOneToOne: false
             referencedRelation: "artikelen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      winkelwagen_correcties: {
+        Row: {
+          actie: string
+          artikel_nummer: string
+          case_id: string | null
+          case_type: string
+          created_at: string | null
+          engineer_id: string | null
+          id: string
+          korte_omschrijving: string | null
+          nieuwe_hoeveelheid: number | null
+          oude_hoeveelheid: number | null
+          reden: string | null
+          scope: string
+          sub_type: string
+        }
+        Insert: {
+          actie: string
+          artikel_nummer: string
+          case_id?: string | null
+          case_type: string
+          created_at?: string | null
+          engineer_id?: string | null
+          id?: string
+          korte_omschrijving?: string | null
+          nieuwe_hoeveelheid?: number | null
+          oude_hoeveelheid?: number | null
+          reden?: string | null
+          scope: string
+          sub_type: string
+        }
+        Update: {
+          actie?: string
+          artikel_nummer?: string
+          case_id?: string | null
+          case_type?: string
+          created_at?: string | null
+          engineer_id?: string | null
+          id?: string
+          korte_omschrijving?: string | null
+          nieuwe_hoeveelheid?: number | null
+          oude_hoeveelheid?: number | null
+          reden?: string | null
+          scope?: string
+          sub_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "winkelwagen_correcties_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
             referencedColumns: ["id"]
           },
         ]
