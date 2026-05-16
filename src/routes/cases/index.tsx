@@ -30,13 +30,13 @@ const CASE_TYPE_LABELS: Record<string, string> = {
   NSA: "NSA",
   provisorium: "Provisorium",
   compact: "Compact",
-  custom: "Custom",
+  compact_prov: "Compact met Prov",
 };
 const CASE_TYPE_COLORS: Record<string, string> = {
   NSA: "bg-[color:var(--navy)] text-white",
   provisorium: "bg-info text-white",
   compact: "bg-primary text-primary-foreground",
-  custom: "bg-muted-foreground text-white",
+  compact_prov: "bg-teal-500/15 text-teal-700 dark:text-teal-300",
 };
 
 function CasesPage() {
@@ -147,7 +147,7 @@ function CasesPage() {
                   { value: "NSA", label: "NSA" },
                   { value: "provisorium", label: "Provisorium" },
                   { value: "compact", label: "Compact" },
-                  { value: "custom", label: "Custom" },
+                  { value: "compact_prov", label: "Compact met Prov" },
                 ]}
               />
             </Field>
