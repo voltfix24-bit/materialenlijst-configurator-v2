@@ -386,6 +386,17 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
     }
   }
 
+  // LS zekeringen per richting (compact en renovatie via lsRekActie=vervangen, of gehandhaafd+aanpassen)
+  const lsZekeringActief =
+    isCompact ||
+    (isRenovatie && config.lsRekActie === "vervangen") ||
+    (isRenovatie && config.lsRekActie === "gehandhaafd" && config.lsRekBeveiligingAanpassen);
+  if (lsZekeringActief && (config.lsRekAantalBeveiligingen ?? 0) > 0) {
+    for (const artNr of config.lsRekBeveiligingen ?? []) {
+      if (artNr) add(map, findArtNr(artNr), 3, "LS richting beveiliging", "lsRek");
+    }
+  }
+
   // Mespatroon LS-rek bij compact: altijd 3×
   if (isCompact) {
     const mpNr = mespatroon[config.trafoKva ?? ""];
@@ -461,6 +472,25 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
           add(map, findArtNr("20009692"), lm.kabelLengteMeters * lm.aantal, "Provisorium LS kabel", "provisorium");
         }
       }
+    }
+
+    // Provisorium in-bedrijfname MS eindsluitingen
+    if ((config.provInbMsKabels ?? 0) > 0) {
+      const n = config.provInbMsKabels ?? 0;
+      if (config.provRmuMerk === "Magnefix") {
+        add(map, findArtNr("20039648"), n, "Prov in-bedrijfname MS eindsluiting", "provisorium");
+        add(map, findArtNr("20018032"), n, "Prov in-bedrijfname MS afschermset", "provisorium");
+        add(map, findArtNr("20029905"), 1, "Prov in-bedrijfname MS doos onderdelen", "provisorium");
+      } else {
+        add(map, findArtNr("20040681"), n, "Prov in-bedrijfname MS eindsluiting", "provisorium");
+      }
+    }
+
+    // Provisorium in-bedrijfname LS eindsluitingen
+    if ((config.provInbLsKabels ?? 0) > 0) {
+      const n = config.provInbLsKabels ?? 0;
+      add(map, findArtNr("20018004"), n, "Prov in-bedrijfname LS kabelinlegklem", "provisorium");
+      add(map, findArtNr("20042042"), n, "Prov in-bedrijfname LS K56 klem", "provisorium");
     }
   }
 

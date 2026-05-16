@@ -698,6 +698,7 @@ function RmuSection({ config, update, sd, isCompact }: { config: MaterialenConfi
               K56 U bevestigingsklem ({config.lsRekAanSluitenKabels * 2}×) + kabelinlegklem ({config.lsRekAanSluitenKabels}×)
             </InfoBox>
           )}
+          <LsRichtingBeveiliging config={config} update={update} />
         </>
       )}
 
@@ -1049,6 +1050,65 @@ function OvStuurpuntVragen({ config, update }: { config: MaterialenConfig; updat
   );
 }
 
+const LS_BEVEILIGING_OPTIONS = [
+  { value: "20001042", label: "80A gG" },
+  { value: "20001099", label: "125A gG" },
+  { value: "20026896", label: "160A gFF" },
+  { value: "20026895", label: "200A gFF" },
+  { value: "20026894", label: "250A gFF" },
+  { value: "20001038", label: "315A gG" },
+];
+
+function LsRichtingBeveiliging({
+  config,
+  update,
+}: {
+  config: MaterialenConfig;
+  update: (p: Partial<MaterialenConfig>) => void;
+}) {
+  const aantal = config.lsRekAantalBeveiligingen ?? 0;
+  return (
+    <>
+      <Field label="Hoeveel LS richtingen beveiliging aanpassen?">
+        <Stepper
+          value={aantal}
+          onChange={(v) => {
+            const arr = (config.lsRekBeveiligingen ?? []).slice(0, v);
+            update({ lsRekAantalBeveiligingen: v, lsRekBeveiligingen: arr });
+          }}
+          min={0}
+          max={24}
+        />
+      </Field>
+
+      {aantal > 0 && (
+        <div className="space-y-2">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            Mespatroon per richting (3 stuks per richting)
+          </div>
+          {Array.from({ length: aantal }, (_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground w-16 flex-shrink-0">
+                Richting {i + 1}
+              </span>
+              <PillGroup
+                value={config.lsRekBeveiligingen?.[i] ?? ""}
+                onChange={(v) => {
+                  const arr = [...(config.lsRekBeveiligingen ?? [])];
+                  arr[i] = v;
+                  update({ lsRekBeveiligingen: arr });
+                }}
+                options={LS_BEVEILIGING_OPTIONS}
+                size="sm"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
   const maxStroken = config.lsRekType === "8" ? 8 : config.lsRekType === "12" ? 12 : null;
   return (
@@ -1065,6 +1125,8 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
               lsRekBeveiligingAanpassen: false,
               lsRekOvStuurpunt: false,
               lsRekSchroefpatroon: "",
+              lsRekAantalBeveiligingen: 0,
+              lsRekBeveiligingen: [],
             })
           }
           options={[
@@ -1130,6 +1192,8 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
             <InfoBox type="warning">⚠ Vul het trafo vermogen in bij de Trafo-sectie voor de juiste beveiliging</InfoBox>
           )}
 
+          <LsRichtingBeveiliging config={config} update={update} />
+
           <OvStuurpuntVragen config={config} update={update} />
         </>
       )}
@@ -1152,6 +1216,10 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
           )}
           {config.lsRekBeveiligingAanpassen && config.trafoKva && (
             <InfoBox type="info">Mespatroon voor {config.trafoKva} kVA wordt toegevoegd</InfoBox>
+          )}
+
+          {config.lsRekBeveiligingAanpassen && (
+            <LsRichtingBeveiliging config={config} update={update} />
           )}
 
           <OvStuurpuntVragen config={config} update={update} />
@@ -2035,6 +2103,44 @@ function ProvisoriumSection({
           </button>
         </div>
       )}
+
+      <div className="border-t border-border pt-4 space-y-4">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          In-bedrijfname
+        </div>
+
+        <Field label="Hoeveel MS kabels aansluiten?">
+          <Stepper
+            value={config.provInbMsKabels ?? 0}
+            onChange={(v) => update({ provInbMsKabels: v })}
+            min={0}
+            max={10}
+          />
+        </Field>
+
+        {(config.provInbMsKabels ?? 0) > 0 && config.provRmuMerk && (
+          <InfoBox type="info">
+            {config.provRmuMerk === "Magnefix"
+              ? `${config.provInbMsKabels}× Eindsl XLPE 20kV (20039648) · ${config.provInbMsKabels}× Afschermset (20018032) · 1× Doos onderdelen (20029905)`
+              : `${config.provInbMsKabels}× Steker XLPE 20kV 3x1x240 (20040681)`}
+          </InfoBox>
+        )}
+
+        <Field label="Hoeveel LS kabels aansluiten?">
+          <Stepper
+            value={config.provInbLsKabels ?? 0}
+            onChange={(v) => update({ provInbLsKabels: v })}
+            min={0}
+            max={24}
+          />
+        </Field>
+
+        {(config.provInbLsKabels ?? 0) > 0 && (
+          <InfoBox type="info">
+            {`${config.provInbLsKabels}× Kabelinlegklem M10 (20018004) · ${config.provInbLsKabels}× K56 S klem (20042042)`}
+          </InfoBox>
+        )}
+      </div>
     </div>
   );
 }
