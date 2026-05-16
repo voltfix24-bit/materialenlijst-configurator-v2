@@ -220,12 +220,7 @@ function CaseDetailPage() {
           <button
             onClick={() => setSaveSignal((c) => c + 1)}
             disabled={saving}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 disabled:opacity-50",
-              isDirty
-                ? "bg-primary text-primary-foreground hover:bg-[color:var(--primary-hover)] shadow-sm"
-                : "bg-muted text-muted-foreground hover:bg-accent",
-            )}
+            className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-[color:var(--primary-hover)] shadow-sm transition-opacity disabled:opacity-50 flex items-center gap-1.5"
           >
             <Save className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{saving ? "Opslaan…" : "Opslaan"}</span>
