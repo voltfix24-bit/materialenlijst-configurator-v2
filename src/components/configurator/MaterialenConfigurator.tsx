@@ -44,6 +44,9 @@ interface Props {
   onWinkelwagenItemsChange?: (items: PreviewItem[]) => void;
   saveSignal?: number;
   mobileTab?: "config" | "preview";
+  onExport?: () => void;
+  exportDisabled?: boolean;
+  exportPending?: boolean;
 }
 
 // Nieuwe gegroepeerde sectievolgorde (TerreVolt redesign)
