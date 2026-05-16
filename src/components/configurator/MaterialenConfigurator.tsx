@@ -391,13 +391,18 @@ export function MaterialenConfigurator({
         })}
       </div>
 
-      {/* Live preview */}
+      {/* Live winkelwagen */}
       <div className={cn(mobileTab === "config" && "hidden lg:block")}>
-        <PreviewPanel
-          preview={preview}
-          onSave={() => opslaan.mutate()}
-          saving={opslaan.isPending}
+        <Winkelwagen
+          items={preview}
+          caseId={caseId}
+          caseType={caseType}
+          subType={config.subType}
           hasSubType={!!config.subType}
+          saving={opslaan.isPending}
+          onSave={() => opslaan.mutate()}
+          onItemsChange={(eff) => { winkelwagenItemsRef.current = eff; }}
+          artikelen={sd.artikelen.data ?? []}
         />
       </div>
     </div>
