@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NotificatiesRouteImport } from './routes/notificaties'
 import { Route as BeheerRouteImport } from './routes/beheer'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CasesIndexRouteImport } from './routes/cases/index'
 import { Route as CasesIdRouteImport } from './routes/cases/$id'
 
+const NotificatiesRoute = NotificatiesRouteImport.update({
+  id: '/notificaties',
+  path: '/notificaties',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BeheerRoute = BeheerRouteImport.update({
   id: '/beheer',
   path: '/beheer',
@@ -38,12 +44,14 @@ const CasesIdRoute = CasesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/beheer': typeof BeheerRoute
+  '/notificaties': typeof NotificatiesRoute
   '/cases/$id': typeof CasesIdRoute
   '/cases/': typeof CasesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/beheer': typeof BeheerRoute
+  '/notificaties': typeof NotificatiesRoute
   '/cases/$id': typeof CasesIdRoute
   '/cases': typeof CasesIndexRoute
 }
@@ -51,26 +59,35 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/beheer': typeof BeheerRoute
+  '/notificaties': typeof NotificatiesRoute
   '/cases/$id': typeof CasesIdRoute
   '/cases/': typeof CasesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/beheer' | '/cases/$id' | '/cases/'
+  fullPaths: '/' | '/beheer' | '/notificaties' | '/cases/$id' | '/cases/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/beheer' | '/cases/$id' | '/cases'
-  id: '__root__' | '/' | '/beheer' | '/cases/$id' | '/cases/'
+  to: '/' | '/beheer' | '/notificaties' | '/cases/$id' | '/cases'
+  id: '__root__' | '/' | '/beheer' | '/notificaties' | '/cases/$id' | '/cases/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BeheerRoute: typeof BeheerRoute
+  NotificatiesRoute: typeof NotificatiesRoute
   CasesIdRoute: typeof CasesIdRoute
   CasesIndexRoute: typeof CasesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/notificaties': {
+      id: '/notificaties'
+      path: '/notificaties'
+      fullPath: '/notificaties'
+      preLoaderRoute: typeof NotificatiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/beheer': {
       id: '/beheer'
       path: '/beheer'
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BeheerRoute: BeheerRoute,
+  NotificatiesRoute: NotificatiesRoute,
   CasesIdRoute: CasesIdRoute,
   CasesIndexRoute: CasesIndexRoute,
 }

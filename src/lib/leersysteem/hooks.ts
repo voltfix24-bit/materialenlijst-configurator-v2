@@ -1,0 +1,59 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  haalNotificatiesOp,
+  telOpenNotificaties,
+  verwerkNotificatie,
+  voerGoedgekeurdeWijzigingDoor,
+  slaCorrectieOp,
+} from './api'
+import type { WinkelwagenCorrectie, BeheerNotificatie } from './types'
+import { toast } from 'sonner'
+
+export function useNotificaties() {
+  return useQuery({
+    queryKey: ['beheer_notificaties'],
+    queryFn: haalNotificatiesOp,
+    refetchInterval: 60_000,
+  })
+}
+
+export function useNotificatieBadge() {
+  return useQuery({
+    queryKey: ['notificatie_count'],
+    queryFn: telOpenNotificaties,
+    refetchInterval: 30_000,
+  })
+}
+
+export function useVerwerkNotificatie() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      notificatie,
+      status,
+    }: {
+      notificatie: BeheerNotificatie
+      status: 'goedgekeurd' | 'afgewezen'
+    }) => {
+      await verwerkNotificatie(notificatie.id, status)
+      if (status === 'goedgekeurd') {
+        await voerGoedgekeurdeWijzigingDoor(notificatie)
+      }
+    },
+    onSuccess: (_, { status }) => {
+      qc.invalidateQueries({ queryKey: ['beheer_notificaties'] })
+      qc.invalidateQueries({ queryKey: ['notificatie_count'] })
+      qc.invalidateQueries({ queryKey: ['standaard_materialen_templates'] })
+      toast.success(
+        status === 'goedgekeurd' ? 'Wijziging doorgevoerd' : 'Notificatie afgewezen'
+      )
+    },
+  })
+}
+
+export function useSlaCorrectieOp() {
+  return useMutation({
+    mutationFn: (correctie: WinkelwagenCorrectie) => slaCorrectieOp(correctie),
+    onError: (err) => console.error('Correctie opslaan mislukt:', err),
+  })
+}
