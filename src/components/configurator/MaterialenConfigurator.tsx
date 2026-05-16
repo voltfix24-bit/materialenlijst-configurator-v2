@@ -179,7 +179,7 @@ export function MaterialenConfigurator({
     overig: true,
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
-    if (k === "provisorium") return isProvisorum && !isCompact;
+    if (k === "provisorium") return isProvisorum && (!isCompact || isCompactProv);
     if (k === "trafo") return showTrafo || showVultKabel;
     if (k === "overig") return true;
     return true;
@@ -373,7 +373,7 @@ export function MaterialenConfigurator({
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-6">
       <div className={cn("space-y-3", mobileTab === "preview" && "hidden lg:block")}>
         {SECTIONS.map((sec, idx) => {
-          if (sec.key === "provisorium" && (!isProvisorum || isCompact)) return null;
+          if (sec.key === "provisorium" && (!isProvisorum || (isCompact && !isCompactProv))) return null;
           if (sec.key === "trafo" && !(showTrafo || showVultKabel)) return null;
           const dimmed = autoFlowRef.current && !open[sec.key] && !completion[sec.key];
           return (
