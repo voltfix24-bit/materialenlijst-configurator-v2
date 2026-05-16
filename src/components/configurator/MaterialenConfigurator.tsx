@@ -2103,6 +2103,44 @@ function ProvisoriumSection({
           </button>
         </div>
       )}
+
+      <div className="border-t border-border pt-4 space-y-4">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          In-bedrijfname
+        </div>
+
+        <Field label="Hoeveel MS kabels aansluiten?">
+          <Stepper
+            value={config.provInbMsKabels ?? 0}
+            onChange={(v) => update({ provInbMsKabels: v })}
+            min={0}
+            max={10}
+          />
+        </Field>
+
+        {(config.provInbMsKabels ?? 0) > 0 && config.provRmuMerk && (
+          <InfoBox type="info">
+            {config.provRmuMerk === "Magnefix"
+              ? `${config.provInbMsKabels}× Eindsl XLPE 20kV (20039648) · ${config.provInbMsKabels}× Afschermset (20018032) · 1× Doos onderdelen (20029905)`
+              : `${config.provInbMsKabels}× Steker XLPE 20kV 3x1x240 (20040681)`}
+          </InfoBox>
+        )}
+
+        <Field label="Hoeveel LS kabels aansluiten?">
+          <Stepper
+            value={config.provInbLsKabels ?? 0}
+            onChange={(v) => update({ provInbLsKabels: v })}
+            min={0}
+            max={24}
+          />
+        </Field>
+
+        {(config.provInbLsKabels ?? 0) > 0 && (
+          <InfoBox type="info">
+            {`${config.provInbLsKabels}× Kabelinlegklem M10 (20018004) · ${config.provInbLsKabels}× K56 S klem (20042042)`}
+          </InfoBox>
+        )}
+      </div>
     </div>
   );
 }
