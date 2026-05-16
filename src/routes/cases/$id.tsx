@@ -24,9 +24,9 @@ const STATUS_OPTIONS = ["concept", "gepland", "in_uitvoering", "afgerond"] as co
 
 const STATUS_COLORS_ACTIVE: Record<string, string> = {
   concept: "bg-muted text-foreground",
-  gepland: "bg-blue-500/15 text-blue-500 dark:text-blue-400",
-  in_uitvoering: "bg-amber-500/15 text-amber-500 dark:text-amber-400",
-  afgerond: "bg-emerald-500/15 text-emerald-500 dark:text-emerald-400",
+  gepland: "bg-info/15 text-info",
+  in_uitvoering: "bg-warning/15 text-[color:var(--warning)]",
+  afgerond: "bg-success/15 text-success",
 };
 
 const CASE_TYPE_LABELS: Record<string, string> = {
