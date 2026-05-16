@@ -501,8 +501,9 @@ export function Winkelwagen({
                       onDelete={() => verwijderItem(item)}
                     />
                   );
-              })}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
