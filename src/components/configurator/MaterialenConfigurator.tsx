@@ -368,22 +368,21 @@ export function MaterialenConfigurator({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-6">
       <div className={cn("space-y-3", mobileTab === "preview" && "hidden lg:block")}>
-        {SECTIONS.map((sec) => {
+        {SECTIONS.map((sec, idx) => {
           if (sec.key === "provisorium" && (!isProvisorum || isCompact)) return null;
-          if (sec.key === "trafo" && !showTrafo) return null;
-          if (sec.key === "vultkabel" && !showVultKabel) return null;
-          if (sec.key === "lsrek" && !showLsRek) return null;
-          if (sec.key === "ggi" && !isRenovatie) return null;
+          if (sec.key === "trafo" && !(showTrafo || showVultKabel)) return null;
           const dimmed = autoFlowRef.current && !open[sec.key] && !completion[sec.key];
           return (
             <div
               key={sec.key}
               ref={(el) => { sectionRefs.current[sec.key] = el; }}
-              className={cn("scroll-mt-20 transition-opacity", dimmed && "opacity-60")}
+              className={cn("scroll-mt-20 transition-opacity", dimmed && "opacity-70")}
             >
               <SectionCard
                 color={sec.color}
                 title={sec.label}
+                index={idx + 1}
+                Icon={sec.icon}
                 isOpen={open[sec.key]}
                 isComplete={completion[sec.key]}
                 summary={sectionSummary(sec.key, config, sd)}
@@ -391,13 +390,41 @@ export function MaterialenConfigurator({
               >
                 {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
                 {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
-                {sec.key === "rmu" && <RmuSection config={config} update={update} sd={sd} isCompact={isCompact} />}
-                {sec.key === "trafo" && <TrafoSection config={config} update={update} sd={sd} />}
-                {sec.key === "vultkabel" && <VultKabelSection config={config} update={update} />}
-                {sec.key === "lsrek" && <LsRekSection config={config} update={update} />}
-                {sec.key === "ms" && <MsSection config={config} update={update} sd={sd} />}
-                {sec.key === "ls" && <LsSection config={config} update={update} />}
-                {sec.key === "ggi" && <GgiSection config={config} update={update} />}
+                {sec.key === "ms" && (
+                  <div className="space-y-6">
+                    <RmuSection config={config} update={update} sd={sd} isCompact={isCompact} />
+                    <div className="border-t border-border pt-5">
+                      <MsSection config={config} update={update} sd={sd} />
+                    </div>
+                  </div>
+                )}
+                {sec.key === "trafo" && (
+                  <div className="space-y-6">
+                    {showTrafo && <TrafoSection config={config} update={update} sd={sd} />}
+                    {showVultKabel && (
+                      <div className={cn(showTrafo && "border-t border-border pt-5")}>
+                        <VultKabelSection config={config} update={update} />
+                      </div>
+                    )}
+                  </div>
+                )}
+                {sec.key === "ls" && (
+                  <div className="space-y-6">
+                    {showLsRek && <LsRekSection config={config} update={update} />}
+                    <div className={cn(showLsRek && "border-t border-border pt-5")}>
+                      <LsSection config={config} update={update} />
+                    </div>
+                  </div>
+                )}
+                {sec.key === "overig" && (
+                  <div className="space-y-6">
+                    {isRenovatie && <GgiSection config={config} update={update} />}
+                    <div className={cn(isRenovatie && "border-t border-border pt-5", "text-xs text-muted-foreground")}>
+                      <div className="font-semibold text-foreground mb-1">Standaard materialen</div>
+                      Worden automatisch toegevoegd op basis van case type en sub type. Zichtbaar in de winkelwagen rechts.
+                    </div>
+                  </div>
+                )}
               </SectionCard>
             </div>
           );
@@ -423,76 +450,82 @@ export function MaterialenConfigurator({
 }
 
 function SectionCard({
-  color, title, summary, isOpen, isComplete, onToggle, children,
+  color, title, summary, index, Icon, isOpen, isComplete, onToggle, children,
 }: {
   color: string;
   title: string;
   summary: string;
+  index: number;
+  Icon: React.ComponentType<{ className?: string }>;
   isOpen: boolean;
   isComplete: boolean;
   onToggle: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
-      <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/30 transition-colors text-left">
-        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
-        <span className="font-medium flex-1 truncate">{title}</span>
+    <div
+      className="rounded-xl border border-border bg-card overflow-hidden shadow-sm"
+      style={{ borderLeft: `4px solid ${color}` }}
+    >
+      <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left">
+        <span
+          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-white"
+          style={{ background: color }}
+        >
+          <Icon className="w-4.5 h-4.5" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            Sectie {index}
+          </div>
+          <div className="font-semibold text-[color:var(--navy)] truncate">{title}</div>
+        </div>
         {!isOpen && summary && summary !== "Nog in te vullen" && (
           <span
             className={cn(
-              "text-xs truncate max-w-[18rem] px-2 py-0.5 rounded",
+              "text-xs truncate max-w-[18rem] px-2.5 py-1 rounded-full",
               isComplete
                 ? "text-success bg-success/10 font-medium"
-                : "text-muted-foreground",
+                : "text-muted-foreground bg-muted",
             )}
           >
             {isComplete ? `✓ ${summary}` : summary}
           </span>
         )}
         {isComplete && (
-          <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
         )}
         <ChevronDown className={cn("w-4 h-4 transition-transform text-muted-foreground", isOpen && "rotate-180")} />
       </button>
-      {isOpen && <div className="px-4 pb-4 pt-1 border-t border-border">{children}</div>}
+      {isOpen && <div className="px-4 pb-4 pt-3 border-t border-border">{children}</div>}
     </div>
   );
 }
 
-function sectionSummary(key: SectionKey, c: MaterialenConfig, sd: ReturnType<typeof useStamdata>): string {
+function sectionSummary(key: SectionKey, c: MaterialenConfig, _sd: ReturnType<typeof useStamdata>): string {
   switch (key) {
     case "project":
       return c.subType ? subTypeLabel(c.subType) : "Nog in te vullen";
-    case "rmu":
-      return c.rmuConfig ? `${c.rmuConfig.merk} ${c.rmuConfig.code} — ${c.rmuConfig.aantal_velden}-velds` : "Nog in te vullen";
-    case "trafo":
-      return c.trafoActie && c.trafoKva ? `${c.trafoActie} — ${c.trafoKva} kVA` : "Nog in te vullen";
-    case "vultkabel":
-      return c.vultKabelAfstand > 0 ? `${c.vultKabelAfstand} m afstand` : "Nog in te vullen";
-    case "lsrek":
-      return c.lsRekActie ? c.lsRekActie : "Nog in te vullen";
-    case "ms": {
-      const n = c.msRichtingen.length;
-      const isProv = c.subType === "cs_met_prov" || c.subType === "renovatie_prov";
-      const ok = c.msRichtingen.every((r) => {
-        if (!r.mofTijdelijk.mofTypeId) return false;
-        if (isProv) {
-          if (r.kanZwaaien === null) return false;
-          if (r.kanZwaaien === false && !r.mofDefinitief?.mofTypeId) return false;
-        }
-        return true;
-      });
-      return `${n} richting${n === 1 ? "" : "en"}${ok ? "" : " — onvolledig"}`;
-    }
-    case "ls":
-      if (!c.lsMoffenActief) return "Geen LS-moffen";
-      return c.lsMoffen.length === 0 ? "0 LS-moffen" : `${c.lsMoffen.length} LS-mof${c.lsMoffen.length === 1 ? "" : "fen"}`;
     case "provisorium":
       if (!c.provRmuConfig) return "Nog in te vullen";
       return `${c.provRmuMerk} ${c.provRmuConfig.code}${c.provZekeringKva ? ` — ${c.provZekeringKva} kVA` : ""}`;
-    case "ggi":
-      return c.ggiVervangen ? "GGI wordt vervangen" : "Geen GGI vervangen";
+    case "ms": {
+      const rmu = c.rmuConfig ? `${c.rmuConfig.merk} ${c.rmuConfig.aantal_velden}V` : "RMU?";
+      const n = c.msRichtingen.length;
+      return `${rmu} · ${n} richting${n === 1 ? "" : "en"}`;
+    }
+    case "trafo": {
+      const t = c.trafoActie && c.trafoKva ? `${c.trafoActie} ${c.trafoKva}kVA` : "Trafo?";
+      const v = c.vultKabelAfstand > 0 ? ` · ${c.vultKabelAfstand}m` : "";
+      return `${t}${v}`;
+    }
+    case "ls": {
+      const rek = c.lsRekActie ? `LS-rek ${c.lsRekActie}` : "LS-rek?";
+      const m = c.lsMoffenActief ? `${c.lsMoffen.length} mof${c.lsMoffen.length === 1 ? "" : "fen"}` : "geen moffen";
+      return `${rek} · ${m}`;
+    }
+    case "overig":
+      return c.ggiVervangen ? "GGI wordt vervangen" : "Standaard materialen";
   }
 }
 
