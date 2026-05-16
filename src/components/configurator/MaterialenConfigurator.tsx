@@ -70,6 +70,7 @@ export function MaterialenConfigurator({
   onProgressChange,
   onSavingChange,
   onPreviewCountChange,
+  onWinkelwagenItemsChange,
   saveSignal,
   mobileTab = "config",
 }: Props) {
