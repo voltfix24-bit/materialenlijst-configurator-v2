@@ -324,6 +324,7 @@ function CaseDetailPage() {
               onProgressChange={(c, t) => { setCompleted(c); setTotal(t); }}
               onSavingChange={setSaving}
               onPreviewCountChange={setPreviewCount}
+              onWinkelwagenItemsChange={(items) => { winkelwagenItemsRef.current = items; }}
               saveSignal={saveSignal}
               mobileTab={mobileTab}
             />
