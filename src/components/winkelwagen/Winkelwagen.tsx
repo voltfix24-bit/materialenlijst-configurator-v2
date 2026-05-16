@@ -64,6 +64,9 @@ export function Winkelwagen({
   onItemsChange,
   artikelen,
   activeSectie,
+  onExport,
+  exportDisabled,
+  exportPending,
 }: Props) {
   // Lokale state
   const [overrides, setOverrides] = useState<Map<string, number>>(new Map());
