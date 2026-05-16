@@ -1164,6 +1164,12 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
   );
 }
 
+const MOF_DOORSNEDES: Record<string, number[]> = {
+  GPLK: [35, 70, 95, 120, 150, 185, 240],
+  XLPE: [95, 150, 240],
+  XLPE_singel: [240, 400, 630],
+};
+
 function MofFormulier({
   label,
   config: mof,
@@ -1250,18 +1256,19 @@ function MofFormulier({
           <Field label="Bestaande kabel — type">
             <PillGroup
               value={mof.bestaandType}
-              onChange={(v) => onChange({ bestaandType: v as any, mofTypeId: null, mofHandmatig: false })}
+              onChange={(v) => onChange({ bestaandType: v as any, bestaandDoorsnede: null, mofTypeId: null, mofHandmatig: false })}
               options={kabelOpties.map((o) => ({ value: o.value, label: o.label }))}
             />
           </Field>
           {mof.bestaandType && (
             <Field label="Bestaande kabel — doorsnede (mm²)">
-              <Stepper
-                value={mof.bestaandDoorsnede ?? 0}
-                onChange={(v) => onChange({ bestaandDoorsnede: v, mofTypeId: null, mofHandmatig: false })}
-                min={0}
-                max={999}
-                suffix=" mm²"
+              <PillGroup
+                value={mof.bestaandDoorsnede?.toString() ?? ""}
+                onChange={(v) => onChange({ bestaandDoorsnede: Number(v), mofTypeId: null, mofHandmatig: false })}
+                options={(MOF_DOORSNEDES[mof.bestaandType] ?? []).map((d) => ({
+                  value: d.toString(),
+                  label: `${d} mm²`,
+                }))}
               />
             </Field>
           )}
@@ -1269,18 +1276,19 @@ function MofFormulier({
           <Field label="Nieuwe kabel — type">
             <PillGroup
               value={mof.nieuwType}
-              onChange={(v) => onChange({ nieuwType: v as any, mofTypeId: null, mofHandmatig: false })}
+              onChange={(v) => onChange({ nieuwType: v as any, nieuwDoorsnede: null, mofTypeId: null, mofHandmatig: false })}
               options={kabelOpties.map((o) => ({ value: o.value, label: o.label }))}
             />
           </Field>
           {mof.nieuwType && (
             <Field label="Nieuwe kabel — doorsnede (mm²)">
-              <Stepper
-                value={mof.nieuwDoorsnede ?? 0}
-                onChange={(v) => onChange({ nieuwDoorsnede: v, mofTypeId: null, mofHandmatig: false })}
-                min={0}
-                max={999}
-                suffix=" mm²"
+              <PillGroup
+                value={mof.nieuwDoorsnede?.toString() ?? ""}
+                onChange={(v) => onChange({ nieuwDoorsnede: Number(v), mofTypeId: null, mofHandmatig: false })}
+                options={(MOF_DOORSNEDES[mof.nieuwType] ?? []).map((d) => ({
+                  value: d.toString(),
+                  label: `${d} mm²`,
+                }))}
               />
             </Field>
           )}
