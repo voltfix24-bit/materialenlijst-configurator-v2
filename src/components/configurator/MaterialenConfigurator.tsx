@@ -31,6 +31,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Winkelwagen } from "@/components/winkelwagen/Winkelwagen";
 
 interface Props {
   caseId: string;
@@ -121,6 +122,8 @@ export function MaterialenConfigurator({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [debounced, sd.isLoading, caseType, sd.artikelen.data, sd.rmuConfigs.data, sd.rmuVeldArtikelen.data, sd.rmuZekeringen.data, sd.msMofTypes.data, sd.msMofMaterialen.data, sd.lsMofTypes.data, sd.lsMofMaterialen.data, sd.standaardTemplates.data, sd.stationVaste.data],
   );
+  // Effectieve winkelwagen-items (na overrides / verwijderingen / handmatig toegevoegde)
+  const winkelwagenItemsRef = useRef<PreviewItem[]>([]);
 
   const showTrafo = !isCompact && RENOVATIE(config.subType);
   const showLsRek = !isCompact && RENOVATIE(config.subType);
@@ -226,10 +229,14 @@ export function MaterialenConfigurator({
         .eq("id", caseId);
       if (caseErr) throw caseErr;
 
-      // case_materialen vervangen
+      // case_materialen vervangen — gebruik de effectieve winkelwagen-items
+      // (incl. overrides, excl. verwijderde, incl. handmatig toegevoegde)
+      const effectief = winkelwagenItemsRef.current.length > 0 || preview.length === 0
+        ? winkelwagenItemsRef.current
+        : preview;
       await supabase.from("case_materialen").delete().eq("case_id", caseId);
-      if (preview.length > 0) {
-        const rows = preview.map((p) => ({
+      if (effectief.length > 0) {
+        const rows = effectief.map((p) => ({
           case_id: caseId,
           artikel_id: p.artikel_id,
           gewenste_hoeveelheid: p.hoeveelheid,
@@ -384,13 +391,18 @@ export function MaterialenConfigurator({
         })}
       </div>
 
-      {/* Live preview */}
+      {/* Live winkelwagen */}
       <div className={cn(mobileTab === "config" && "hidden lg:block")}>
-        <PreviewPanel
-          preview={preview}
-          onSave={() => opslaan.mutate()}
-          saving={opslaan.isPending}
+        <Winkelwagen
+          items={preview}
+          caseId={caseId}
+          caseType={caseType}
+          subType={config.subType}
           hasSubType={!!config.subType}
+          saving={opslaan.isPending}
+          onSave={() => opslaan.mutate()}
+          onItemsChange={(eff) => { winkelwagenItemsRef.current = eff; }}
+          artikelen={sd.artikelen.data ?? []}
         />
       </div>
     </div>
