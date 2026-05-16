@@ -227,10 +227,14 @@ export function MaterialenConfigurator({
         .eq("id", caseId);
       if (caseErr) throw caseErr;
 
-      // case_materialen vervangen
+      // case_materialen vervangen — gebruik de effectieve winkelwagen-items
+      // (incl. overrides, excl. verwijderde, incl. handmatig toegevoegde)
+      const effectief = winkelwagenItemsRef.current.length > 0 || preview.length === 0
+        ? winkelwagenItemsRef.current
+        : preview;
       await supabase.from("case_materialen").delete().eq("case_id", caseId);
-      if (preview.length > 0) {
-        const rows = preview.map((p) => ({
+      if (effectief.length > 0) {
+        const rows = effectief.map((p) => ({
           case_id: caseId,
           artikel_id: p.artikel_id,
           gewenste_hoeveelheid: p.hoeveelheid,
