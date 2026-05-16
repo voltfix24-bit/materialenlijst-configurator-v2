@@ -3,6 +3,7 @@ import { ChevronDown, ClipboardList, Download, Info, Loader2, Plus, Search, Tras
 import { cn } from "@/lib/utils";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSectie } from "@/lib/configurator/types";
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
 import type { CorrectieDialoogData, CorrectieScope } from "@/lib/leersysteem/types";
@@ -697,13 +698,24 @@ function WinkelwagenRij({
         {item.artikel_nummer}
       </span>
 
-      {/* Omschrijving — flex-1 truncate */}
-      <span
-        className="text-[11px] text-foreground/85 flex-1 min-w-0 truncate leading-tight"
-        title={item.korte_omschrijving}
-      >
-        {item.korte_omschrijving}
-      </span>
+      {/* Omschrijving — truncate, met hover card voor volledige tekst */}
+      <HoverCard openDelay={250} closeDelay={80}>
+        <HoverCardTrigger asChild>
+          <span
+            className="text-[11px] text-foreground/85 flex-1 min-w-0 truncate leading-tight cursor-help"
+          >
+            {item.korte_omschrijving}
+          </span>
+        </HoverCardTrigger>
+        <HoverCardContent
+          side="top"
+          align="start"
+          className="w-auto max-w-xs p-2 text-xs leading-snug"
+        >
+          <div className="font-mono text-[10px] text-primary mb-1">{item.artikel_nummer}</div>
+          <div className="text-foreground">{item.korte_omschrijving}</div>
+        </HoverCardContent>
+      </HoverCard>
 
       {/* Stepper of weergave */}
       {isVerwijderd ? (
