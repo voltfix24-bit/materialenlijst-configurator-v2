@@ -1250,7 +1250,7 @@ function MofFormulier({
           <Field label="Bestaande kabel — type">
             <PillGroup
               value={mof.bestaandType}
-              onChange={(v) => onChange({ bestaandType: v as any, mofTypeId: null, mofHandmatig: false })}
+              onChange={(v) => onChange({ bestaandType: v as any, bestaandDoorsnede: null, mofTypeId: null, mofHandmatig: false })}
               options={kabelOpties.map((o) => ({ value: o.value, label: o.label }))}
             />
           </Field>
