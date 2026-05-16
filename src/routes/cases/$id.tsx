@@ -153,24 +153,16 @@ function CaseDetailPage() {
     if (!raw || typeof raw !== "object") return null;
     if (!rmuConfigs) return undefined;
     const base: MaterialenConfig = { ...emptyConfig(), ...raw } as MaterialenConfig;
-    base.msKabelTraces = (raw.msKabelTraces ?? []).map((t) => ({
-      heeftOversteek: false,
-      aantalOversteken: 1,
-      oversteekMeters: 0,
-      ...t,
-    }));
-    base.lsMoffen = (raw.lsMoffen ?? []).map((m) => ({
-      heeftOversteek: false,
-      aantalOversteken: 1,
-      oversteekMeters: 0,
-      ...m,
-    }));
-    base.provLsMoffen = (raw.provLsMoffen ?? []).map((m) => ({
-      heeftOversteek: false,
-      aantalOversteken: 1,
-      oversteekMeters: 0,
-      ...m,
-    }));
+    const oversteekDefaults = { heeftOversteek: false, aantalOversteken: 1, oversteekMeters: 0 };
+    base.msKabelTraces = ((raw.msKabelTraces ?? []) as unknown as Record<string, unknown>[]).map(
+      (t) => ({ ...oversteekDefaults, ...t }) as MaterialenConfig["msKabelTraces"][number],
+    );
+    base.lsMoffen = ((raw.lsMoffen ?? []) as unknown as Record<string, unknown>[]).map(
+      (m) => ({ ...oversteekDefaults, ...m }) as MaterialenConfig["lsMoffen"][number],
+    );
+    base.provLsMoffen = ((raw.provLsMoffen ?? []) as unknown as Record<string, unknown>[]).map(
+      (m) => ({ ...oversteekDefaults, ...m }) as MaterialenConfig["lsMoffen"][number],
+    );
     const savedRmuId = (raw.rmuConfig as { id?: string } | null | undefined)?.id ?? null;
     base.rmuConfig = savedRmuId
       ? ((rmuConfigs.find((c) => c.id === savedRmuId) as RmuConfig | undefined) ?? null)
