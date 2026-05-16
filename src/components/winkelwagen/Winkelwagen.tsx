@@ -80,6 +80,8 @@ export function Winkelwagen({
   const [gekozenArtikel, setGekozenArtikel] = useState<ArtikelStam | null>(null);
   // Welke winkelwagen-secties zijn opengeklapt — standaard alles ingeklapt
   const [openSecties, setOpenSecties] = useState<Set<string>>(new Set());
+  // Lokale filter voor zichtbare artikelen in de winkelwagen
+  const [filter, setFilter] = useState("");
   const lijstRef = useRef<HTMLDivElement | null>(null);
 
   const slaCorrectieOp = useSlaCorrectieOp();
