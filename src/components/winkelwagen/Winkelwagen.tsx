@@ -394,22 +394,49 @@ export function Winkelwagen({
   }, [nieuwNrs, sectieGroepen, toegevoegd]);
 
   return (
-    <div className="rounded-lg border border-border bg-surface flex flex-col h-full max-h-[calc(100vh-2rem)] lg:my-4">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border flex-shrink-0">
-        <div>
-          <span className="text-xs font-semibold text-foreground">Winkelwagen</span>
-          <span className="text-[10px] text-muted-foreground ml-2">
-            {totaal === 0 ? "Nog leeg" : `${totaal} art. · ${teBestellen} te bestellen`}
-          </span>
+    <div className="bg-card flex flex-col h-full max-h-screen">
+      {/* Header */}
+      <div className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0 space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">
+              Winkelwagen
+            </div>
+            <div className="text-2xl font-bold text-[color:var(--navy)] leading-none">
+              {totaal} <span className="text-base font-semibold text-muted-foreground">artikel{totaal === 1 ? "" : "en"}</span>
+            </div>
+            {totaal > 0 && (
+              <div className="text-[11px] text-muted-foreground mt-1">{teBestellen} te bestellen</div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowZoeker(true)}
+            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-semibold shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Toevoegen
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowZoeker(true)}
-          className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 transition-colors font-medium"
-        >
-          <Plus className="w-3 h-3" />
-          Toevoegen
-        </button>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Materialen zoeken…"
+            className="w-full pl-9 pr-8 py-2 text-sm rounded-lg bg-muted border border-transparent focus:outline-none focus:border-primary/40 focus:bg-card transition-colors"
+          />
+          {filter && (
+            <button
+              type="button"
+              onClick={() => setFilter("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted-foreground/10"
+              aria-label="Filter wissen"
+            >
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div ref={lijstRef} className="flex-1 overflow-y-auto px-2 py-2 space-y-2">
