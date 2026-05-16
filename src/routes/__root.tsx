@@ -66,12 +66,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="nl" className="dark" suppressHydrationWarning>
+    <html lang="nl" suppressHydrationWarning>
       <head>
         <HeadContent />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('mc-theme');var d=t==='light'?false:true;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('mc-theme');var d=t==='dark';document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
           }}
         />
       </head>

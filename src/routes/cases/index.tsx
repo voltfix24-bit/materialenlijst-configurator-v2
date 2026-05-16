@@ -22,15 +22,21 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const STATUS_COLORS: Record<string, string> = {
   concept: "bg-muted text-muted-foreground",
-  gepland: "bg-blue-500/10 text-blue-500 dark:text-blue-400",
-  in_uitvoering: "bg-amber-500/10 text-amber-500 dark:text-amber-400",
-  afgerond: "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400",
+  gepland: "bg-info/10 text-info",
+  in_uitvoering: "bg-warning/15 text-[color:var(--warning)]",
+  afgerond: "bg-success/10 text-success",
 };
 const CASE_TYPE_LABELS: Record<string, string> = {
   NSA: "NSA",
   provisorium: "Provisorium",
   compact: "Compact",
   custom: "Custom",
+};
+const CASE_TYPE_COLORS: Record<string, string> = {
+  NSA: "bg-[color:var(--navy)] text-white",
+  provisorium: "bg-info text-white",
+  compact: "bg-primary text-primary-foreground",
+  custom: "bg-muted-foreground text-white",
 };
 
 function CasesPage() {
@@ -86,26 +92,29 @@ function CasesPage() {
     },
   });
 
+  const [typeFilter, setTypeFilter] = useState("");
+
   const filtered = useMemo(() => {
     const term = zoekterm.trim().toLowerCase();
     return (cases ?? []).filter((c) => {
       if (statusFilter && c.status !== statusFilter) return false;
+      if (typeFilter && c.case_type !== typeFilter) return false;
       if (!term) return true;
       const hay = `${c.station_naam ?? ""} ${c.case_nummer ?? ""}`.toLowerCase();
       return hay.includes(term);
     });
-  }, [cases, zoekterm, statusFilter]);
+  }, [cases, zoekterm, statusFilter, typeFilter]);
 
   return (
-    <div className="px-8 py-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="px-6 sm:px-8 py-6 max-w-6xl mx-auto">
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Cases</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Materiaalbestellijsten per station.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[color:var(--navy)]">TerreVolt</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Materialen Configurator</p>
         </div>
         <button
           onClick={() => setShowForm((s) => !s)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-[color:var(--primary-hover)] transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" /> Nieuwe case
         </button>
@@ -159,18 +168,18 @@ function CasesPage() {
       )}
 
       {/* Filter balk */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="relative flex-1">
+      <div className="flex items-center gap-2 mb-5 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             placeholder="Zoek op naam of casenummer..."
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-card text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-card text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
             value={zoekterm}
             onChange={(e) => setZoekterm(e.target.value)}
           />
         </div>
         <select
-          className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+          className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -179,10 +188,20 @@ function CasesPage() {
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
+        <select
+          className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+        >
+          <option value="">Alle types</option>
+          {Object.entries(CASE_TYPE_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
       </div>
 
       {filtered.length === 0 && (
-        <div className="rounded-lg border border-border bg-surface px-4 py-12 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card px-4 py-12 text-center text-sm text-muted-foreground">
           {cases?.length === 0 ? "Nog geen cases. Maak er één aan." : "Geen cases gevonden voor deze filters."}
         </div>
       )}
@@ -193,20 +212,17 @@ function CasesPage() {
           return (
             <div
               key={c.id}
-              className="group relative rounded-xl border border-border bg-surface p-4 hover:border-border/80 hover:bg-accent/30 transition-all"
+              className="group relative rounded-xl border border-border bg-card p-4 hover:border-primary hover:shadow-md transition-all"
             >
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wider">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider", CASE_TYPE_COLORS[c.case_type] ?? "bg-muted text-muted-foreground")}>
                       {CASE_TYPE_LABELS[c.case_type] ?? c.case_type}
                     </span>
-                    <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-medium", STATUS_COLORS[c.status] ?? "bg-muted text-muted-foreground")}>
-                      {STATUS_LABELS[c.status] ?? c.status}
-                    </span>
                   </div>
-                  <h3 className="text-sm font-semibold truncate">
-                    {c.station_naam || <span className="text-muted-foreground italic">Naamloos station</span>}
+                  <h3 className="text-base font-semibold truncate text-[color:var(--navy)]">
+                    {c.station_naam || <span className="text-muted-foreground italic font-normal">Naamloos station</span>}
                   </h3>
                   {c.case_nummer && (
                     <p className="text-xs text-muted-foreground font-mono mt-0.5">{c.case_nummer}</p>
@@ -223,16 +239,19 @@ function CasesPage() {
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 mt-1 group-hover:text-muted-foreground transition-colors" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 mt-1 group-hover:text-primary transition-colors" />
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Package className="h-3 w-3" />
-                  {matCount} materialen
+              <div className="flex items-center justify-between gap-2 text-xs pt-2 border-t border-border">
+                <span className={cn("px-2 py-0.5 rounded-full font-medium", STATUS_COLORS[c.status] ?? "bg-muted text-muted-foreground")}>
+                  {STATUS_LABELS[c.status] ?? c.status}
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Package className="h-3 w-3" />
+                  {matCount}
+                </span>
+                <span className="flex items-center gap-1 text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   {formatDistanceToNow(new Date(c.updated_at), { locale: nl, addSuffix: true })}
                 </span>
@@ -251,3 +270,4 @@ function CasesPage() {
     </div>
   );
 }
+
