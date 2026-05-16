@@ -446,41 +446,29 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="rounded-xl border border-border bg-card overflow-hidden shadow-sm"
-      style={{ borderLeft: `4px solid ${color}` }}
-    >
-      <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left">
+    <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      <button onClick={onToggle} className="w-full flex items-center gap-4 px-6 py-5 hover:bg-accent/20 transition-colors text-left">
         <span
-          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-white"
+          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-white"
           style={{ background: color }}
         >
-          <Icon className="w-4 h-4" />
+          <Icon className="w-5 h-5" />
         </span>
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-0.5">
             Sectie {index}
           </div>
-          <div className="font-semibold text-[color:var(--navy)] truncate">{title}</div>
+          <div className="font-bold text-lg text-[color:var(--navy)] truncate leading-tight">{title}</div>
+          {!isOpen && summary && summary !== "Nog in te vullen" && (
+            <div className="text-xs text-muted-foreground mt-1 truncate">{summary}</div>
+          )}
         </div>
-        {!isOpen && summary && summary !== "Nog in te vullen" && (
-          <span
-            className={cn(
-              "text-xs truncate max-w-[18rem] px-2.5 py-1 rounded-full",
-              isComplete
-                ? "text-success bg-success/10 font-medium"
-                : "text-muted-foreground bg-muted",
-            )}
-          >
-            {isComplete ? `✓ ${summary}` : summary}
-          </span>
-        )}
         {isComplete && (
-          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+          <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
         )}
-        <ChevronDown className={cn("w-4 h-4 transition-transform text-muted-foreground", isOpen && "rotate-180")} />
+        <ChevronDown className={cn("w-5 h-5 transition-transform text-muted-foreground", isOpen && "rotate-180")} />
       </button>
-      {isOpen && <div className="px-4 pb-4 pt-3 border-t border-border">{children}</div>}
+      {isOpen && <div className="px-8 pb-8 pt-2 border-t border-border">{children}</div>}
     </div>
   );
 }
