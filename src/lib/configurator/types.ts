@@ -12,6 +12,9 @@ export interface MsKabelTrace {
   id: string;
   kabelType: MsKabelType;
   lengteMeters: number;
+  heeftOversteek: boolean;
+  aantalOversteken: number;
+  oversteekMeters: number;
 }
 
 export interface Artikel {
