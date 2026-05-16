@@ -46,16 +46,20 @@ interface Props {
   mobileTab?: "config" | "preview";
 }
 
+// Nieuwe gegroepeerde sectievolgorde (TerreVolt redesign)
+//  1 Type opdracht (navy)
+//  2 Provisorium (blauw)        — alleen bij cs_met_prov / renovatie_prov
+//  3 MS — Middenspanning (oranje) bevat RMU + I-Net + Veldinstellingen + traces + moffen
+//  4 Trafo & Vult kabel (amber) — alleen renovatie
+//  5 LS — Laagspanning (paars)  bevat LS-rek + OV-stuurpunt + LS moffen
+//  6 Overig (grijs)             bevat GGI + standaard materialen
 const SECTIONS = [
-  { key: "project", label: "Projecttype", color: "var(--color-section-project)" },
-  { key: "provisorium", label: "Provisorium", color: "#378ADD" },
-  { key: "rmu", label: "RMU configuratie", color: "var(--color-section-rmu)" },
-  { key: "trafo", label: "Trafo", color: "var(--color-section-trafo)" },
-  { key: "vultkabel", label: "Vult kabel", color: "var(--color-section-vultkabel)" },
-  { key: "lsrek", label: "LS-rek", color: "var(--color-section-lsrek)" },
-  { key: "ms", label: "MS verbindingen", color: "var(--color-section-ms)" },
-  { key: "ls", label: "LS verbindingen", color: "var(--color-section-ls)" },
-  { key: "ggi", label: "GGI — Gebouwgebonden installaties", color: "#64748b" },
+  { key: "project",     label: "Type opdracht",       color: "var(--color-section-project)",     icon: Layers },
+  { key: "provisorium", label: "Provisorium",         color: "var(--color-section-provisorium)", icon: Cable },
+  { key: "ms",          label: "MS — Middenspanning", color: "var(--color-section-ms)",          icon: Zap },
+  { key: "trafo",       label: "Trafo & Vult kabel",  color: "var(--color-section-trafo)",       icon: Box },
+  { key: "ls",          label: "LS — Laagspanning",   color: "var(--color-section-ls)",          icon: Plug },
+  { key: "overig",      label: "Overig",              color: "var(--color-section-overig)",      icon: Package },
 ] as const;
 
 type SectionKey = (typeof SECTIONS)[number]["key"];
