@@ -205,6 +205,8 @@ export interface MaterialenConfig {
   provLsMoffenActief: boolean;
   provLsMoffen: LsMof[];
   provZekeringKva: TrafoKva;
+  provInbMsKabels: number;
+  provInbLsKabels: number;
 }
 
 export type PreviewSectie =
@@ -292,6 +294,8 @@ export const emptyConfig = (): MaterialenConfig => ({
   lsRekBeveiligingAanpassen: false,
   lsRekOvStuurpunt: false,
   lsRekSchroefpatroon: "",
+  lsRekAantalBeveiligingen: 0,
+  lsRekBeveiligingen: [],
   msRichtingen: [],
   msKabelTraces: [],
   lsMoffenActief: false,
@@ -304,4 +308,6 @@ export const emptyConfig = (): MaterialenConfig => ({
   provLsMoffenActief: false,
   provLsMoffen: [],
   provZekeringKva: "",
+  provInbMsKabels: 0,
+  provInbLsKabels: 0,
 });
