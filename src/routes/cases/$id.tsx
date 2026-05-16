@@ -297,16 +297,16 @@ function CaseDetailPage() {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-3 sm:py-5">
-        <div className="max-w-[1500px] mx-auto">
+      <div className="flex-1 overflow-y-auto">
+        <div>
           {showRehydrationError && (
-            <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="mx-6 mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               Opgeslagen configuratie kon niet volledig worden hersteld: {(rmuError as Error).message}
             </div>
           )}
 
           {!configReady || rmuLoading ? (
-            <div className="px-2 py-12 text-sm text-muted-foreground flex items-center gap-2">
+            <div className="px-6 py-12 text-sm text-muted-foreground flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" /> Configuratie herstellen…
             </div>
           ) : (
@@ -322,6 +322,13 @@ function CaseDetailPage() {
               onWinkelwagenItemsChange={(items) => { winkelwagenItemsRef.current = items; }}
               saveSignal={saveSignal}
               mobileTab={mobileTab}
+              onExport={() => {
+                if (isDirty) { toast.warning("Sla eerst op voor je exporteert."); return; }
+                if (!heeftMateriaal) { toast.warning("Geen materialen om te exporteren."); return; }
+                exporteer.mutate();
+              }}
+              exportDisabled={isDirty || !heeftMateriaal}
+              exportPending={exporteer.isPending}
             />
           )}
         </div>
