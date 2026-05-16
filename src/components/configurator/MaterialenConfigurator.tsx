@@ -347,12 +347,11 @@ export function MaterialenConfigurator({
         {SECTIONS.map((sec, idx) => {
           if (sec.key === "provisorium" && (!isProvisorum || (isCompact && !isCompactProv))) return null;
           if (sec.key === "trafo" && !(showTrafo || showVultKabel)) return null;
-          const dimmed = autoFlowRef.current && !open[sec.key] && !completion[sec.key];
           return (
             <div
               key={sec.key}
               ref={(el) => { sectionRefs.current[sec.key] = el; }}
-              className={cn("scroll-mt-20 transition-opacity", dimmed && "opacity-70")}
+              className="scroll-mt-20"
             >
               <SectionCard
                 color={sec.color}
@@ -362,7 +361,11 @@ export function MaterialenConfigurator({
                 isOpen={open[sec.key]}
                 isComplete={completion[sec.key]}
                 summary={sectionSummary(sec.key, config, sd)}
-                onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
+                onToggle={() => {
+                  const willOpen = !open[sec.key];
+                  setOpen({ ...open, [sec.key]: willOpen });
+                  if (willOpen) setActiveSectie(sec.key);
+                }}
               >
                 {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} isCompactProv={isCompactProv} />}
                 {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
@@ -407,8 +410,11 @@ export function MaterialenConfigurator({
         })}
       </div>
 
-      {/* Live winkelwagen */}
-      <div className={cn(mobileTab === "config" && "hidden lg:block")}>
+      {/* Live winkelwagen — sticky op lg, mobiel via tab-toggle */}
+      <div className={cn(
+        mobileTab === "config" && "hidden lg:block",
+        "lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden",
+      )}>
         <Winkelwagen
           items={preview}
           caseId={caseId}
@@ -419,6 +425,7 @@ export function MaterialenConfigurator({
           onSave={() => opslaan.mutate()}
           onItemsChange={(eff) => { winkelwagenItemsRef.current = eff; onWinkelwagenItemsChange?.(eff); }}
           artikelen={sd.artikelen.data ?? []}
+          activeSectie={activeSectie ?? undefined}
         />
       </div>
     </div>
