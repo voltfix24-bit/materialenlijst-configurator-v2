@@ -1844,6 +1844,52 @@ function LsMofKaart({
         </div>
       </Field>
 
+      {mof.kabelLengteMeters > 0 && (
+        <>
+          <Field label="Oversteek (weg/watergang)?">
+            <PillGroup
+              value={mof.heeftOversteek ? "ja" : "nee"}
+              onChange={(v) =>
+                onChange({
+                  heeftOversteek: v === "ja",
+                  aantalOversteken: v === "ja" ? mof.aantalOversteken || 1 : 0,
+                  oversteekMeters: v === "ja" ? mof.oversteekMeters : 0,
+                })
+              }
+              options={[
+                { value: "ja", label: "Ja" },
+                { value: "nee", label: "Nee" },
+              ]}
+            />
+          </Field>
+          {mof.heeftOversteek && (
+            <>
+              <Field label="Aantal oversteken">
+                <Stepper
+                  value={mof.aantalOversteken}
+                  onChange={(v) => onChange({ aantalOversteken: v })}
+                  min={1}
+                  max={10}
+                />
+              </Field>
+              <Field label="Lengte per oversteek (meter)">
+                <Stepper
+                  value={mof.oversteekMeters}
+                  onChange={(v) => onChange({ oversteekMeters: v })}
+                  min={1}
+                  max={200}
+                  suffix=" m"
+                />
+              </Field>
+              <InfoBox type="info">
+                {`PVC 110mm beschermbuis (20028640) — ${Math.ceil(mof.oversteekMeters / 6) * mof.aantalOversteken} stuks`}
+                {` | Geotextiel — ${mof.aantalOversteken * 2} stuks`}
+              </InfoBox>
+            </>
+          )}
+        </>
+      )}
+
       {isProv && (
         <Field label="Kan kabel worden omgezwaaid?">
           <PillGroup
