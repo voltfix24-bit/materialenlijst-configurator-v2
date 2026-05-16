@@ -419,7 +419,7 @@ export function MaterialenConfigurator({
       {/* Live winkelwagen — sticky op lg, mobiel via tab-toggle */}
       <div className={cn(
         mobileTab === "config" && "hidden lg:block",
-        "lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden",
+        "lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden border-l border-border bg-card",
       )}>
         <Winkelwagen
           items={preview}
@@ -432,6 +432,9 @@ export function MaterialenConfigurator({
           onItemsChange={(eff) => { winkelwagenItemsRef.current = eff; onWinkelwagenItemsChange?.(eff); }}
           artikelen={sd.artikelen.data ?? []}
           activeSectie={activeSectie ?? undefined}
+          onExport={onExport}
+          exportDisabled={exportDisabled}
+          exportPending={exportPending}
         />
       </div>
     </div>
