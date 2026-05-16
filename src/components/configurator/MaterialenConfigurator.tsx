@@ -44,6 +44,9 @@ interface Props {
   onWinkelwagenItemsChange?: (items: PreviewItem[]) => void;
   saveSignal?: number;
   mobileTab?: "config" | "preview";
+  onExport?: () => void;
+  exportDisabled?: boolean;
+  exportPending?: boolean;
 }
 
 // Nieuwe gegroepeerde sectievolgorde (TerreVolt redesign)
@@ -77,6 +80,9 @@ export function MaterialenConfigurator({
   onWinkelwagenItemsChange,
   saveSignal,
   mobileTab = "config",
+  onExport,
+  exportDisabled,
+  exportPending,
 }: Props) {
   const isCompact = caseType === "compact" || caseType === "compact_prov";
   const isCompactProv = caseType === "compact_prov";
@@ -342,8 +348,8 @@ export function MaterialenConfigurator({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-6">
-      <div className={cn("space-y-3", mobileTab === "preview" && "hidden lg:block")}>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-0 lg:gap-0">
+      <div className={cn("space-y-6 max-w-4xl w-full mx-auto px-2 sm:px-4 py-2", mobileTab === "preview" && "hidden lg:block")}>
         {SECTIONS.map((sec, idx) => {
           if (sec.key === "provisorium" && (!isProvisorum || (isCompact && !isCompactProv))) return null;
           if (sec.key === "trafo" && !(showTrafo || showVultKabel)) return null;
@@ -413,7 +419,7 @@ export function MaterialenConfigurator({
       {/* Live winkelwagen — sticky op lg, mobiel via tab-toggle */}
       <div className={cn(
         mobileTab === "config" && "hidden lg:block",
-        "lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden",
+        "lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden border-l border-border bg-card",
       )}>
         <Winkelwagen
           items={preview}
@@ -426,6 +432,9 @@ export function MaterialenConfigurator({
           onItemsChange={(eff) => { winkelwagenItemsRef.current = eff; onWinkelwagenItemsChange?.(eff); }}
           artikelen={sd.artikelen.data ?? []}
           activeSectie={activeSectie ?? undefined}
+          onExport={onExport}
+          exportDisabled={exportDisabled}
+          exportPending={exportPending}
         />
       </div>
     </div>
@@ -446,41 +455,29 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="rounded-xl border border-border bg-card overflow-hidden shadow-sm"
-      style={{ borderLeft: `4px solid ${color}` }}
-    >
-      <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left">
+    <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      <button onClick={onToggle} className="w-full flex items-center gap-4 px-6 py-5 hover:bg-accent/20 transition-colors text-left">
         <span
-          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-white"
+          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-white"
           style={{ background: color }}
         >
-          <Icon className="w-4 h-4" />
+          <Icon className="w-5 h-5" />
         </span>
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-0.5">
             Sectie {index}
           </div>
-          <div className="font-semibold text-[color:var(--navy)] truncate">{title}</div>
+          <div className="font-bold text-lg text-[color:var(--navy)] truncate leading-tight">{title}</div>
+          {!isOpen && summary && summary !== "Nog in te vullen" && (
+            <div className="text-xs text-muted-foreground mt-1 truncate">{summary}</div>
+          )}
         </div>
-        {!isOpen && summary && summary !== "Nog in te vullen" && (
-          <span
-            className={cn(
-              "text-xs truncate max-w-[18rem] px-2.5 py-1 rounded-full",
-              isComplete
-                ? "text-success bg-success/10 font-medium"
-                : "text-muted-foreground bg-muted",
-            )}
-          >
-            {isComplete ? `✓ ${summary}` : summary}
-          </span>
-        )}
         {isComplete && (
-          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+          <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
         )}
-        <ChevronDown className={cn("w-4 h-4 transition-transform text-muted-foreground", isOpen && "rotate-180")} />
+        <ChevronDown className={cn("w-5 h-5 transition-transform text-muted-foreground", isOpen && "rotate-180")} />
       </button>
-      {isOpen && <div className="px-4 pb-4 pt-3 border-t border-border">{children}</div>}
+      {isOpen && <div className="px-8 pb-8 pt-2 border-t border-border">{children}</div>}
     </div>
   );
 }

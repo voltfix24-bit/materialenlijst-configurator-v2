@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutGrid, Database, Sun, Moon, Bell } from "lucide-react";
+import { LayoutGrid, Database, Sun, Moon, Bell, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
@@ -51,14 +51,14 @@ export function AppSidebar() {
 
   return (
     <aside
-      className="w-16 shrink-0 flex flex-col items-center py-4 gap-2 sticky top-0 h-screen z-40"
+      className="w-[72px] shrink-0 flex flex-col items-center py-4 gap-3 sticky top-0 h-screen z-40"
       style={{ background: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)" }}
     >
-      <Link to="/cases" title="TerreVolt" className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-[#0e1e35] ring-1 ring-white/5">
-        <TerreVoltLogo className="w-6 h-7" />
+      <Link to="/cases" title="TerreVolt" className="w-12 h-12 rounded-xl flex items-center justify-center mb-2">
+        <TerreVoltLogo className="w-7 h-8" />
       </Link>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         {items.map((it) => {
           const active = pathname === it.to || pathname.startsWith(it.to + "/");
           const Icon = it.icon;
@@ -69,15 +69,15 @@ export function AppSidebar() {
               onClick={(e) => handleNav(e, it.to)}
               title={it.label}
               className={cn(
-                "relative w-11 h-11 rounded-xl flex items-center justify-center transition-all group",
+                "relative w-12 h-12 rounded-full flex items-center justify-center transition-all group",
                 active
-                  ? "bg-primary/15 text-white border-l-2 border-primary"
-                  : "text-[color:var(--sidebar-foreground)] hover:bg-[color:var(--sidebar-accent)] hover:text-white",
+                  ? "bg-primary text-white shadow-md"
+                  : "text-white/60 hover:bg-white/10 hover:text-white",
               )}
             >
               <Icon className="w-5 h-5" />
               {it.to === "/notificaties" && notificatieCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center ring-2 ring-[color:var(--sidebar)]">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center ring-2 ring-[color:var(--sidebar)]">
                   {notificatieCount > 9 ? "9+" : notificatieCount}
                 </span>
               )}
@@ -86,14 +86,23 @@ export function AppSidebar() {
         })}
       </div>
 
-      <button
-        type="button"
-        onClick={toggle}
-        title={theme === "dark" ? "Licht thema" : "Donker thema"}
-        className="mt-auto w-11 h-11 rounded-xl flex items-center justify-center text-[color:var(--sidebar-foreground)] hover:bg-[color:var(--sidebar-accent)] hover:text-white transition-colors"
-      >
-        {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-      </button>
+      <div className="mt-auto flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={toggle}
+          title={theme === "dark" ? "Licht thema" : "Donker thema"}
+          className="w-12 h-12 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+        >
+          {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+        <button
+          type="button"
+          title="Instellingen"
+          className="w-12 h-12 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
+      </div>
     </aside>
   );
 }
