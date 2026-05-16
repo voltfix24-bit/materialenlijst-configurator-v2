@@ -1,13 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { ArrowLeft, Download, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { MaterialenConfigurator } from "@/components/configurator/MaterialenConfigurator";
 import { exporteerNaarTemplate, downloadBlob } from "@/lib/assortiment/excel";
-import { emptyConfig, type MaterialenConfig, type RmuConfig } from "@/lib/configurator/types";
+import { emptyConfig, type MaterialenConfig, type PreviewItem, type RmuConfig } from "@/lib/configurator/types";
 import { setGlobalDirty } from "@/lib/dirty-state";
 
 export const Route = createFileRoute("/cases/$id")({
