@@ -22,15 +22,21 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const STATUS_COLORS: Record<string, string> = {
   concept: "bg-muted text-muted-foreground",
-  gepland: "bg-blue-500/10 text-blue-500 dark:text-blue-400",
-  in_uitvoering: "bg-amber-500/10 text-amber-500 dark:text-amber-400",
-  afgerond: "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400",
+  gepland: "bg-info/10 text-info",
+  in_uitvoering: "bg-warning/15 text-[color:var(--warning)]",
+  afgerond: "bg-success/10 text-success",
 };
 const CASE_TYPE_LABELS: Record<string, string> = {
   NSA: "NSA",
   provisorium: "Provisorium",
   compact: "Compact",
   custom: "Custom",
+};
+const CASE_TYPE_COLORS: Record<string, string> = {
+  NSA: "bg-[color:var(--navy)] text-white",
+  provisorium: "bg-info text-white",
+  compact: "bg-primary text-primary-foreground",
+  custom: "bg-muted-foreground text-white",
 };
 
 function CasesPage() {
