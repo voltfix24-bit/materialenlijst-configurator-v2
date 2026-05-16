@@ -58,6 +58,10 @@ function CaseDetailPage() {
   const [previewCount, setPreviewCount] = useState(0);
   const [saveSignal, setSaveSignal] = useState(0);
   const [mobileTab, setMobileTab] = useState<"config" | "preview">("config");
+  const winkelwagenItemsRef = useRef<PreviewItem[]>([]);
+
+  // Reset winkelwagen-ref bij wisselen case
+  useEffect(() => { winkelwagenItemsRef.current = []; }, [id]);
 
   // Sync naar globale dirty state (sidebar leest dit) en reset bij unmount
   useEffect(() => {
