@@ -321,6 +321,19 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
         const totaal = lm.kabelLengteMeters * lm.aantal * fases;
         add(map, findArtNr("20009692"), totaal, "LS kabel", "lsVerbindingen");
       }
+
+      if (lm.heeftOversteek && lm.oversteekMeters > 0 && lm.aantalOversteken > 0) {
+        const buizenPerOversteek = Math.ceil(lm.oversteekMeters / 6);
+        const totaalBuizen = buizenPerOversteek * lm.aantalOversteken;
+        add(map, findArtNr("20028640"), totaalBuizen, "LS kabel oversteek", "lsVerbindingen");
+        add(
+          map,
+          findArtNr("20043703"),
+          lm.aantalOversteken * 2,
+          "LS kabel oversteek geotextiel",
+          "lsVerbindingen",
+        );
+      }
     }
   }
 
