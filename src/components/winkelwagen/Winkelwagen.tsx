@@ -385,12 +385,12 @@ export function Winkelwagen({
 
         {toegevoegd.length > 0 && (
           <div>
-            <div className="flex items-center gap-2 px-2 py-1.5">
-              <span className="w-2 h-2 rounded-full shrink-0 bg-primary" />
-              <span className="text-[11px] font-mono uppercase tracking-wider text-foreground/80">
+            <div className="flex items-center gap-1.5 mb-1 pb-0.5 border-b border-border/30 sticky top-0 bg-card z-10">
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-primary" />
+              <span className="text-[9px] font-mono font-semibold uppercase tracking-widest text-muted-foreground flex-1">
                 Handmatig toegevoegd
               </span>
-              <span className="text-[10px] font-mono text-muted-foreground ml-auto">{toegevoegd.length} art.</span>
+              <span className="text-[9px] text-muted-foreground/60 font-mono">{toegevoegd.length} art.</span>
             </div>
             <div className="space-y-0.5">
               {toegevoegd.map((t) => {
