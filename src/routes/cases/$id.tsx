@@ -111,12 +111,20 @@ function CaseDetailPage() {
 
   const exporteer = useMutation({
     mutationFn: async () => {
-      const items = (opgeslagen ?? [])
-        .map((r) => ({
-          artikel_nummer: (r.artikelen as { artikel_nummer?: string } | null)?.artikel_nummer ?? "",
-          hoeveelheid: Number(r.gewenste_hoeveelheid) || 0,
-        }))
-        .filter((i) => i.artikel_nummer && i.hoeveelheid > 0);
+      const winkel = winkelwagenItemsRef.current;
+      const items = winkel.length > 0
+        ? winkel
+            .map((p) => ({
+              artikel_nummer: p.artikel_nummer,
+              hoeveelheid: Number(p.hoeveelheid) || 0,
+            }))
+            .filter((i) => i.artikel_nummer && i.hoeveelheid > 0)
+        : (opgeslagen ?? [])
+            .map((r) => ({
+              artikel_nummer: (r.artikelen as { artikel_nummer?: string } | null)?.artikel_nummer ?? "",
+              hoeveelheid: Number(r.gewenste_hoeveelheid) || 0,
+            }))
+            .filter((i) => i.artikel_nummer && i.hoeveelheid > 0);
       const res = await exporteerNaarTemplate(items, caseRow?.case_nummer ?? null);
       downloadBlob(res.blob, res.filename);
       return res;
