@@ -1049,6 +1049,65 @@ function OvStuurpuntVragen({ config, update }: { config: MaterialenConfig; updat
   );
 }
 
+const LS_BEVEILIGING_OPTIONS = [
+  { value: "20001042", label: "80A gG" },
+  { value: "20001099", label: "125A gG" },
+  { value: "20026896", label: "160A gFF" },
+  { value: "20026895", label: "200A gFF" },
+  { value: "20026894", label: "250A gFF" },
+  { value: "20001038", label: "315A gG" },
+];
+
+function LsRichtingBeveiliging({
+  config,
+  update,
+}: {
+  config: MaterialenConfig;
+  update: (p: Partial<MaterialenConfig>) => void;
+}) {
+  const aantal = config.lsRekAantalBeveiligingen ?? 0;
+  return (
+    <>
+      <Field label="Hoeveel LS richtingen beveiliging aanpassen?">
+        <Stepper
+          value={aantal}
+          onChange={(v) => {
+            const arr = (config.lsRekBeveiligingen ?? []).slice(0, v);
+            update({ lsRekAantalBeveiligingen: v, lsRekBeveiligingen: arr });
+          }}
+          min={0}
+          max={24}
+        />
+      </Field>
+
+      {aantal > 0 && (
+        <div className="space-y-2">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            Mespatroon per richting (3 stuks per richting)
+          </div>
+          {Array.from({ length: aantal }, (_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground w-16 flex-shrink-0">
+                Richting {i + 1}
+              </span>
+              <PillGroup
+                value={config.lsRekBeveiligingen?.[i] ?? ""}
+                onChange={(v) => {
+                  const arr = [...(config.lsRekBeveiligingen ?? [])];
+                  arr[i] = v;
+                  update({ lsRekBeveiligingen: arr });
+                }}
+                options={LS_BEVEILIGING_OPTIONS}
+                size="sm"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
   const maxStroken = config.lsRekType === "8" ? 8 : config.lsRekType === "12" ? 12 : null;
   return (
