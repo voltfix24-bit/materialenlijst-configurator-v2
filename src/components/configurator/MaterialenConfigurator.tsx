@@ -1031,6 +1031,40 @@ function VultKabelSection({ config, update }: { config: MaterialenConfig; update
   );
 }
 
+function OvStuurpuntVragen({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
+  return (
+    <>
+      <Field label="OV-stuurpunt installeren?">
+        <PillGroup
+          value={config.lsRekOvStuurpunt ? "ja" : "nee"}
+          onChange={(v) =>
+            update({
+              lsRekOvStuurpunt: v === "ja",
+              lsRekSchroefpatroon: v === "nee" ? "" : config.lsRekSchroefpatroon,
+            })
+          }
+          options={[
+            { value: "ja", label: "Ja", color: "green" },
+            { value: "nee", label: "Nee", color: "amber" },
+          ]}
+        />
+      </Field>
+      {config.lsRekOvStuurpunt && (
+        <Field label="Schroefpatroon type">
+          <PillGroup
+            value={config.lsRekSchroefpatroon}
+            onChange={(v) => update({ lsRekSchroefpatroon: v as "35A" | "50A" })}
+            options={[
+              { value: "35A", label: "35A (20001107)" },
+              { value: "50A", label: "50A (20001108)" },
+            ]}
+          />
+        </Field>
+      )}
+    </>
+  );
+}
+
 function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
   const maxStroken = config.lsRekType === "8" ? 8 : config.lsRekType === "12" ? 12 : null;
   return (
