@@ -41,6 +41,7 @@ interface Props {
   onProgressChange?: (completed: number, total: number) => void;
   onSavingChange?: (saving: boolean) => void;
   onPreviewCountChange?: (count: number) => void;
+  onWinkelwagenItemsChange?: (items: PreviewItem[]) => void;
   saveSignal?: number;
   mobileTab?: "config" | "preview";
 }
