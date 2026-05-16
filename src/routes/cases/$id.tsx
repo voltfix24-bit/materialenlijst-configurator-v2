@@ -153,6 +153,24 @@ function CaseDetailPage() {
     if (!raw || typeof raw !== "object") return null;
     if (!rmuConfigs) return undefined;
     const base: MaterialenConfig = { ...emptyConfig(), ...raw } as MaterialenConfig;
+    base.msKabelTraces = (raw.msKabelTraces ?? []).map((t) => ({
+      heeftOversteek: false,
+      aantalOversteken: 1,
+      oversteekMeters: 0,
+      ...t,
+    }));
+    base.lsMoffen = (raw.lsMoffen ?? []).map((m) => ({
+      heeftOversteek: false,
+      aantalOversteken: 1,
+      oversteekMeters: 0,
+      ...m,
+    }));
+    base.provLsMoffen = (raw.provLsMoffen ?? []).map((m) => ({
+      heeftOversteek: false,
+      aantalOversteken: 1,
+      oversteekMeters: 0,
+      ...m,
+    }));
     const savedRmuId = (raw.rmuConfig as { id?: string } | null | undefined)?.id ?? null;
     base.rmuConfig = savedRmuId
       ? ((rmuConfigs.find((c) => c.id === savedRmuId) as RmuConfig | undefined) ?? null)
