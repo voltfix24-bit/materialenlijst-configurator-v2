@@ -80,6 +80,9 @@ export function MaterialenConfigurator({
   onWinkelwagenItemsChange,
   saveSignal,
   mobileTab = "config",
+  onExport,
+  exportDisabled,
+  exportPending,
 }: Props) {
   const isCompact = caseType === "compact" || caseType === "compact_prov";
   const isCompactProv = caseType === "compact_prov";
