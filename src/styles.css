@@ -26,6 +26,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-subtle: var(--accent-subtle);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -64,8 +65,9 @@
   --primary-hover: #24a04e;
 
   /* Accent: TerreVolt geel */
-  --accent: #fef3d1;
+  --accent: #eaab20;
   --accent-foreground: #0e1e35;
+  --accent-subtle: #fef3d1;
 
   /* Navy voor titels en tekst */
   --navy: #0e1e35;
@@ -129,8 +131,9 @@
   --primary-foreground: #ffffff;
   --primary-hover: #24a04e;
 
-  --accent: #1a2f4a;
-  --accent-foreground: #f1f5f9;
+  --accent: #eaab20;
+  --accent-foreground: #0e1e35;
+  --accent-subtle: #2a2000;
 
   --navy: #f1f5f9;
   --foreground: #f1f5f9;
