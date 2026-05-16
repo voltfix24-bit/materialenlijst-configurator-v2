@@ -15,14 +15,6 @@ interface Props<T extends string> {
   size?: "sm" | "md";
 }
 
-const colorClasses: Record<PillColor, string> = {
-  default: "data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:border-primary",
-  green: "data-[active=true]:bg-success data-[active=true]:text-background data-[active=true]:border-success",
-  amber: "data-[active=true]:bg-warning data-[active=true]:text-background data-[active=true]:border-warning",
-  blue: "data-[active=true]:bg-info data-[active=true]:text-background data-[active=true]:border-info",
-  red: "data-[active=true]:bg-destructive data-[active=true]:text-destructive-foreground data-[active=true]:border-destructive",
-};
-
 export function PillGroup<T extends string>({ value, onChange, options, size = "md" }: Props<T>) {
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -32,12 +24,13 @@ export function PillGroup<T extends string>({ value, onChange, options, size = "
           <button
             key={opt.value}
             type="button"
-            data-active={active}
             onClick={() => onChange(opt.value)}
             className={cn(
-              "border border-border bg-surface text-foreground rounded-md transition-colors hover:bg-accent",
-              size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
-              colorClasses[opt.color ?? "default"],
+              "rounded-lg font-medium transition-all",
+              size === "sm" ? "px-2.5 py-1 text-xs" : "px-3.5 py-1.5 text-sm",
+              active
+                ? "bg-primary text-primary-foreground shadow-sm border border-primary"
+                : "bg-muted text-muted-foreground border border-border hover:bg-muted/60 hover:text-foreground",
             )}
           >
             {opt.label}
