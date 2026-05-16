@@ -506,7 +506,7 @@ export function Winkelwagen({
           );
         })}
 
-        {toegevoegd.length > 0 && (
+        {zichtbareToegevoegd.length > 0 && (
           <div data-sectie="__handmatig" className="scroll-mt-2">
             <button
               type="button"
