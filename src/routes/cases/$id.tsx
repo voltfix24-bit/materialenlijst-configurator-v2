@@ -180,35 +180,40 @@ function CaseDetailPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header — rij 1: terug | identiteit | acties */}
+      {/* Header — rij 1: terug | logo | identiteit | acties */}
       <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 border-b border-border bg-card flex-shrink-0">
         <button onClick={goBack} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex-shrink-0">
           <ArrowLeft className="h-4 w-4 text-muted-foreground" />
         </button>
 
-        <div className="w-px h-5 bg-border hidden sm:block" />
+        <svg viewBox="0 0 100 130" className="w-5 h-6 flex-shrink-0 hidden sm:block" aria-hidden>
+          <path d="M55 5L10 65h35L30 115l60-70H55L70 5z" fill="#2db85a" stroke="#2db85a" strokeWidth="2"/>
+          <rect x="20" y="108" width="60" height="6" rx="3" fill="#eaab20"/>
+          <rect x="30" y="116" width="40" height="4" rx="2" fill="#eaab20"/>
+          <rect x="40" y="122" width="20" height="3" rx="1.5" fill="#eaab20"/>
+        </svg>
 
         <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wider">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[color:var(--navy)] text-white uppercase tracking-wider font-semibold">
             {CASE_TYPE_LABELS[caseRow.case_type] ?? caseRow.case_type}
           </span>
           {caseRow.case_nummer && (
-            <span className="text-xs font-mono text-primary">{caseRow.case_nummer}</span>
+            <span className="text-xs font-mono text-muted-foreground">{caseRow.case_nummer}</span>
           )}
           <input
             value={naam}
             onChange={(e) => setNaam(e.target.value)}
             onBlur={() => naam !== caseRow.station_naam && updateCase.mutate({ station_naam: naam || null })}
             placeholder="Stationsnaam"
-            className="bg-transparent text-sm font-semibold focus:outline-none focus:bg-input rounded-md px-2 py-0.5 min-w-0 flex-1 max-w-64"
+            className="bg-transparent text-sm font-semibold text-[color:var(--navy)] focus:outline-none focus:bg-input rounded-md px-2 py-0.5 min-w-0 flex-1 max-w-64"
           />
         </div>
 
         {/* Acties */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {isDirty && (
-            <span className="text-[11px] text-amber-500 dark:text-amber-400 hidden md:flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
+            <span className="text-[11px] text-[color:var(--warning)] hidden md:flex items-center gap-1.5 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--warning)] animate-pulse" />
               Niet opgeslagen
             </span>
           )}
@@ -216,9 +221,9 @@ function CaseDetailPage() {
             onClick={() => setSaveSignal((c) => c + 1)}
             disabled={saving}
             className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-50",
+              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 disabled:opacity-50",
               isDirty
-                ? "bg-primary text-primary-foreground hover:opacity-90"
+                ? "bg-primary text-primary-foreground hover:bg-[color:var(--primary-hover)] shadow-sm"
                 : "bg-muted text-muted-foreground hover:bg-accent",
             )}
           >
@@ -237,8 +242,8 @@ function CaseDetailPage() {
               }
               exporteer.mutate();
             }}
-            disabled={exporteer.isPending}
-            className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors disabled:opacity-40 flex items-center gap-1.5"
+            disabled={exporteer.isPending || isDirty}
+            className="px-3 py-1.5 rounded-lg border border-[color:var(--navy)] text-[color:var(--navy)] text-xs font-semibold hover:bg-[color:var(--navy)] hover:text-white transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
             {exporteer.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
             <span className="hidden sm:inline">Export</span>
@@ -246,10 +251,22 @@ function CaseDetailPage() {
         </div>
       </div>
 
-      {/* Header — rij 2: status pills + voortgang */}
+      {/* Header — rij 2: voortgang + status pills */}
       <div className="flex items-center gap-3 px-3 sm:px-5 py-2 border-b border-border bg-card/60 flex-shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+          <div className="w-32 sm:w-40 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-[11px] text-muted-foreground font-mono tabular-nums">
+            {progress}%
+          </span>
+        </div>
+
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Status</span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium hidden sm:inline">Status</span>
           <div className="flex items-center gap-0.5">
             {STATUS_OPTIONS.map((s) => (
               <button
@@ -270,17 +287,11 @@ function CaseDetailPage() {
 
         <div className="ml-auto flex items-center gap-2 flex-shrink-0">
           {isDirty && (
-            <span className="md:hidden w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
+            <span className="md:hidden w-1.5 h-1.5 rounded-full bg-[color:var(--warning)] animate-pulse" />
           )}
           <span className="text-[11px] text-muted-foreground font-mono tabular-nums">
             {completed}/{total} secties
           </span>
-          <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
         </div>
       </div>
 
