@@ -3,6 +3,7 @@ import { ChevronDown, ClipboardList, Download, Info, Loader2, Plus, Search, Tras
 import { cn } from "@/lib/utils";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSectie } from "@/lib/configurator/types";
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
 import type { CorrectieDialoogData, CorrectieScope } from "@/lib/leersysteem/types";
