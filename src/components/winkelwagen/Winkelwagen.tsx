@@ -199,9 +199,25 @@ export function Winkelwagen({
   };
 
   const verwijderItem = (it: PreviewItem) => {
-    // Handmatig toegevoegd → direct weg, geen dialoog
-    if (toegevoegd.some((t) => t.artikel_nummer === it.artikel_nummer)) {
+    // Handmatig toegevoegd → ook via dialoog (zelfde flow)
+    const isHandmatig = toegevoegd.some((t) => t.artikel_nummer === it.artikel_nummer);
+    if (isHandmatig) {
+      const snapshot = toegevoegd.find((t) => t.artikel_nummer === it.artikel_nummer)!;
       setToegevoegd((prev) => prev.filter((t) => t.artikel_nummer !== it.artikel_nummer));
+      openDialoog(
+        {
+          artikel_nummer: it.artikel_nummer,
+          korte_omschrijving: it.korte_omschrijving,
+          actie: "verwijderd",
+          oude_hoeveelheid: it.hoeveelheid,
+          nieuwe_hoeveelheid: null,
+        },
+        () => {
+          setToegevoegd((prev) =>
+            prev.some((t) => t.artikel_nummer === snapshot.artikel_nummer) ? prev : [...prev, snapshot],
+          );
+        },
+      );
       return;
     }
     setVerwijderd((prev) => new Set([...prev, it.artikel_nummer]));
@@ -211,7 +227,7 @@ export function Winkelwagen({
         korte_omschrijving: it.korte_omschrijving,
         actie: "verwijderd",
         oude_hoeveelheid: it.hoeveelheid,
-        nieuwe_hoeveelheid: 0,
+        nieuwe_hoeveelheid: null,
       },
       () => {
         setVerwijderd((prev) => {
