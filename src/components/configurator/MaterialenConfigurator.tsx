@@ -2115,7 +2115,13 @@ function ProvisoriumSection({
             onChange={(v) => update({ provInbMsKabels: v })}
             min={0}
             max={10}
+            disabled={!config.provRmuConfig}
           />
+          {!config.provRmuConfig && (
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Kies eerst een provisorium RMU configuratie
+            </p>
+          )}
         </Field>
 
         {(config.provInbMsKabels ?? 0) > 0 && config.provRmuMerk && (
@@ -2132,7 +2138,13 @@ function ProvisoriumSection({
             onChange={(v) => update({ provInbLsKabels: v })}
             min={0}
             max={24}
+            disabled={!config.provRmuConfig}
           />
+          {!config.provRmuConfig && (
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Kies eerst een provisorium RMU configuratie
+            </p>
+          )}
         </Field>
 
         {(config.provInbLsKabels ?? 0) > 0 && (
