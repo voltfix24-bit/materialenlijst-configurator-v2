@@ -8,22 +8,28 @@ interface Props {
   max?: number;
   step?: number;
   suffix?: string;
+  disabled?: boolean;
 }
 
-export function Stepper({ value, onChange, min = 0, max = 999, step = 1, suffix }: Props) {
+export function Stepper({ value, onChange, min = 0, max = 999, step = 1, suffix, disabled = false }: Props) {
   const dec = () => onChange(Math.max(min, value - step));
   const inc = () => onChange(Math.min(max, value + step));
   const atMin = value <= min;
   const atMax = value >= max;
+  const decDisabled = disabled || atMin;
+  const incDisabled = disabled || atMax;
   return (
-    <div className="inline-flex items-center gap-2 bg-surface border border-border rounded-lg px-2 py-1">
+    <div className={cn(
+      "inline-flex items-center gap-2 bg-surface border border-border rounded-lg px-2 py-1",
+      disabled && "opacity-50",
+    )}>
       <button
         type="button"
         onClick={dec}
-        disabled={atMin}
+        disabled={decDisabled}
         className={cn(
           "w-8 h-8 rounded-full border flex items-center justify-center transition-colors",
-          atMin
+          decDisabled
             ? "border-border text-muted-foreground/40 cursor-not-allowed"
             : "border-border text-foreground hover:bg-primary/10 hover:border-primary hover:text-primary",
         )}
@@ -33,20 +39,21 @@ export function Stepper({ value, onChange, min = 0, max = 999, step = 1, suffix 
       <input
         type="number"
         value={value}
+        disabled={disabled}
         onChange={(e) => {
           const n = Number(e.target.value);
           if (!Number.isNaN(n)) onChange(Math.max(min, Math.min(max, n)));
         }}
-        className="w-12 bg-transparent text-center text-sm font-mono font-medium text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-12 bg-transparent text-center text-sm font-mono font-medium text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:cursor-not-allowed"
       />
       {suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
       <button
         type="button"
         onClick={inc}
-        disabled={atMax}
+        disabled={incDisabled}
         className={cn(
           "w-8 h-8 rounded-full border flex items-center justify-center transition-colors",
-          atMax
+          incDisabled
             ? "border-border text-muted-foreground/40 cursor-not-allowed"
             : "border-border text-foreground hover:bg-primary/10 hover:border-primary hover:text-primary",
         )}
