@@ -25,7 +25,19 @@ interface Props {
   onSave: () => void;
   onItemsChange: (effectief: PreviewItem[]) => void;
   artikelen: ArtikelStam[];
+  /** Welke configurator-sectie is actief — winkelwagen synchroniseert open secties hierop. */
+  activeSectie?: string;
 }
+
+// Mapping: configurator sectie → winkelwagen secties
+const CONFIG_SECTIE_NAAR_WINKELWAGEN: Record<string, PreviewSectie[]> = {
+  project: ["standaard"],
+  provisorium: ["provisorium"],
+  ms: ["rmu", "msVerbindingen"],
+  trafo: ["trafo", "vultKabel"],
+  ls: ["lsVerbindingen", "lsRek"],
+  overig: ["ggi", "standaard"],
+};
 
 interface ToegevoegdArtikel {
   artikel_id: string;
