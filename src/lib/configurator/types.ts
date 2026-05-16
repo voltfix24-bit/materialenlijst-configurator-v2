@@ -1,7 +1,7 @@
 // Domain types voor de materialen configurator
 
 export type SubType = "cs_zonder_prov" | "cs_met_prov" | "renovatie_prov" | "renovatie_nsa" | "";
-export type CaseType = "NSA" | "provisorium" | "compact" | "custom";
+export type CaseType = "NSA" | "provisorium" | "compact" | "compact_prov";
 export type RmuMerk = "ABB" | "Siemens" | "Magnefix" | "";
 export type TrafoActie = "nieuw" | "blijft" | "draaien" | "";
 export type TrafoKva = "250" | "400" | "630" | "1000" | "";

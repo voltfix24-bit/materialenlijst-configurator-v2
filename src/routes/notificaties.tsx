@@ -35,7 +35,7 @@ const CASE_TYPE_LABELS: Record<string, string> = {
   NSA: "NSA",
   provisorium: "Provisorium",
   compact: "Compact",
-  custom: "Custom",
+  compact_prov: "Compact met Prov",
 };
 
 function NotificatiesPage() {

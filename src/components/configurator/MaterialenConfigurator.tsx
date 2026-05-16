@@ -78,14 +78,18 @@ export function MaterialenConfigurator({
   saveSignal,
   mobileTab = "config",
 }: Props) {
-  const isCompact = caseType === "compact";
+  const isCompact = caseType === "compact" || caseType === "compact_prov";
+  const isCompactProv = caseType === "compact_prov";
   const initial = useMemo(() => {
     const base = initialConfig ?? emptyConfig();
+    if (isCompactProv) {
+      return { ...base, isCompactStation: true, subType: "cs_met_prov" as SubType };
+    }
     if (isCompact) {
       return { ...base, isCompactStation: true, subType: "cs_zonder_prov" as SubType };
     }
     return { ...base, isCompactStation: false };
-  }, [initialConfig, isCompact]);
+  }, [initialConfig, isCompact, isCompactProv]);
   const [config, setConfig] = useState<MaterialenConfig>(initial);
 
   // Nieuwe lege case → gestuurde flow: alleen eerste sectie open. Bestaande config → alles open.
@@ -175,7 +179,7 @@ export function MaterialenConfigurator({
     overig: true,
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
-    if (k === "provisorium") return isProvisorum && !isCompact;
+    if (k === "provisorium") return isProvisorum && (!isCompact || isCompactProv);
     if (k === "trafo") return showTrafo || showVultKabel;
     if (k === "overig") return true;
     return true;
@@ -369,7 +373,7 @@ export function MaterialenConfigurator({
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-6">
       <div className={cn("space-y-3", mobileTab === "preview" && "hidden lg:block")}>
         {SECTIONS.map((sec, idx) => {
-          if (sec.key === "provisorium" && (!isProvisorum || isCompact)) return null;
+          if (sec.key === "provisorium" && (!isProvisorum || (isCompact && !isCompactProv))) return null;
           if (sec.key === "trafo" && !(showTrafo || showVultKabel)) return null;
           const dimmed = autoFlowRef.current && !open[sec.key] && !completion[sec.key];
           return (
@@ -388,7 +392,7 @@ export function MaterialenConfigurator({
                 summary={sectionSummary(sec.key, config, sd)}
                 onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
               >
-                {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
+                {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} isCompactProv={isCompactProv} />}
                 {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
                 {sec.key === "ms" && (
                   <div className="space-y-6">
@@ -539,18 +543,22 @@ const subTypeLabel = (s: SubType) => ({
 
 // ---------- Sections ----------
 
-function ProjectSection({ config, update, isCompact }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; isCompact: boolean }) {
+function ProjectSection({ config, update, isCompact, isCompactProv }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; isCompact: boolean; isCompactProv?: boolean }) {
   if (isCompact) {
+    const lockedSub: SubType = isCompactProv ? "cs_met_prov" : "cs_zonder_prov";
+    const lockedLabel = isCompactProv ? "CS via provisorium" : "CS direct";
     return (
       <div className="space-y-3">
         <InfoBox type="info">
-          Compact station — prefab. RMU, trafo, telcon, vult kabel en LS-rek zijn aanwezig.
+          {isCompactProv
+            ? "Compact station via provisorium — prefab compact kist met tijdelijke provisorium-verbinding."
+            : "Compact station — prefab. RMU, trafo, telcon, vult kabel en LS-rek zijn aanwezig."}
         </InfoBox>
         <Field label="Sub-type">
           <PillGroup
             value={config.subType}
-            onChange={() => { /* vergrendeld op cs_zonder_prov */ }}
-            options={[{ value: "cs_zonder_prov", label: "CS direct" }]}
+            onChange={() => { /* vergrendeld */ }}
+            options={[{ value: lockedSub, label: lockedLabel }]}
           />
         </Field>
       </div>

@@ -9,7 +9,7 @@ import { ConfirmDelete, DataTable, FormDialog, FormField, FormRow, RowActions } 
 import { ArtikelZoeker } from "./ArtikelZoeker";
 import { ArtikelLabel } from "./RmuTab";
 
-const CASE_TYPES = ["NSA", "provisorium", "compact", "custom"];
+const CASE_TYPES = ["NSA", "provisorium", "compact", "compact_prov"];
 const SUBTYPES = ["cs_zonder_prov", "cs_met_prov", "renovatie_prov", "renovatie_nsa"];
 const KVAS = [250, 400, 630, 1000];
 
