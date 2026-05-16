@@ -78,14 +78,18 @@ export function MaterialenConfigurator({
   saveSignal,
   mobileTab = "config",
 }: Props) {
-  const isCompact = caseType === "compact";
+  const isCompact = caseType === "compact" || caseType === "compact_prov";
+  const isCompactProv = caseType === "compact_prov";
   const initial = useMemo(() => {
     const base = initialConfig ?? emptyConfig();
+    if (isCompactProv) {
+      return { ...base, isCompactStation: true, subType: "cs_met_prov" as SubType };
+    }
     if (isCompact) {
       return { ...base, isCompactStation: true, subType: "cs_zonder_prov" as SubType };
     }
     return { ...base, isCompactStation: false };
-  }, [initialConfig, isCompact]);
+  }, [initialConfig, isCompact, isCompactProv]);
   const [config, setConfig] = useState<MaterialenConfig>(initial);
 
   // Nieuwe lege case → gestuurde flow: alleen eerste sectie open. Bestaande config → alles open.
