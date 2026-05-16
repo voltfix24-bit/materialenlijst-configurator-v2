@@ -129,6 +129,9 @@ export interface LsMof {
   aantal: number;
   kanZwaaien: boolean | null;
   kabelLengteMeters: number;
+  heeftOversteek: boolean;
+  aantalOversteken: number;
+  oversteekMeters: number;
 }
 
 export interface RmuVeldConfig {
