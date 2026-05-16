@@ -1256,12 +1256,13 @@ function MofFormulier({
           </Field>
           {mof.bestaandType && (
             <Field label="Bestaande kabel — doorsnede (mm²)">
-              <Stepper
-                value={mof.bestaandDoorsnede ?? 0}
-                onChange={(v) => onChange({ bestaandDoorsnede: v, mofTypeId: null, mofHandmatig: false })}
-                min={0}
-                max={999}
-                suffix=" mm²"
+              <PillGroup
+                value={mof.bestaandDoorsnede?.toString() ?? ""}
+                onChange={(v) => onChange({ bestaandDoorsnede: Number(v), mofTypeId: null, mofHandmatig: false })}
+                options={(MOF_DOORSNEDES[mof.bestaandType] ?? []).map((d) => ({
+                  value: d.toString(),
+                  label: `${d} mm²`,
+                }))}
               />
             </Field>
           )}
@@ -1269,18 +1270,19 @@ function MofFormulier({
           <Field label="Nieuwe kabel — type">
             <PillGroup
               value={mof.nieuwType}
-              onChange={(v) => onChange({ nieuwType: v as any, mofTypeId: null, mofHandmatig: false })}
+              onChange={(v) => onChange({ nieuwType: v as any, nieuwDoorsnede: null, mofTypeId: null, mofHandmatig: false })}
               options={kabelOpties.map((o) => ({ value: o.value, label: o.label }))}
             />
           </Field>
           {mof.nieuwType && (
             <Field label="Nieuwe kabel — doorsnede (mm²)">
-              <Stepper
-                value={mof.nieuwDoorsnede ?? 0}
-                onChange={(v) => onChange({ nieuwDoorsnede: v, mofTypeId: null, mofHandmatig: false })}
-                min={0}
-                max={999}
-                suffix=" mm²"
+              <PillGroup
+                value={mof.nieuwDoorsnede?.toString() ?? ""}
+                onChange={(v) => onChange({ nieuwDoorsnede: Number(v), mofTypeId: null, mofHandmatig: false })}
+                options={(MOF_DOORSNEDES[mof.nieuwType] ?? []).map((d) => ({
+                  value: d.toString(),
+                  label: `${d} mm²`,
+                }))}
               />
             </Field>
           )}
