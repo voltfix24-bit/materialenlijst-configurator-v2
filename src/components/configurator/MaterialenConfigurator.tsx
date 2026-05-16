@@ -95,8 +95,8 @@ export function MaterialenConfigurator({
   const autoFlowRef = useRef(false);
   const [open, setOpen] = useState<Record<SectionKey, boolean>>(() =>
     isNewCase
-      ? { project: true, provisorium: false, rmu: false, trafo: false, vultkabel: false, lsrek: false, ms: false, ls: false, ggi: false }
-      : { project: true, provisorium: true, rmu: true, trafo: true, vultkabel: true, lsrek: true, ms: true, ls: true, ggi: true },
+      ? { project: true, provisorium: false, ms: false, trafo: false, ls: false, overig: false }
+      : { project: true, provisorium: true, ms: true, trafo: true, ls: true, overig: true },
   );
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [debounced, setDebounced] = useState(config);
