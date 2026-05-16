@@ -392,7 +392,7 @@ export function MaterialenConfigurator({
                 summary={sectionSummary(sec.key, config, sd)}
                 onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
               >
-                {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} />}
+                {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} isCompactProv={isCompactProv} />}
                 {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
                 {sec.key === "ms" && (
                   <div className="space-y-6">
@@ -543,18 +543,22 @@ const subTypeLabel = (s: SubType) => ({
 
 // ---------- Sections ----------
 
-function ProjectSection({ config, update, isCompact }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; isCompact: boolean }) {
+function ProjectSection({ config, update, isCompact, isCompactProv }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; isCompact: boolean; isCompactProv?: boolean }) {
   if (isCompact) {
+    const lockedSub: SubType = isCompactProv ? "cs_met_prov" : "cs_zonder_prov";
+    const lockedLabel = isCompactProv ? "CS via provisorium" : "CS direct";
     return (
       <div className="space-y-3">
         <InfoBox type="info">
-          Compact station — prefab. RMU, trafo, telcon, vult kabel en LS-rek zijn aanwezig.
+          {isCompactProv
+            ? "Compact station via provisorium — prefab compact kist met tijdelijke provisorium-verbinding."
+            : "Compact station — prefab. RMU, trafo, telcon, vult kabel en LS-rek zijn aanwezig."}
         </InfoBox>
         <Field label="Sub-type">
           <PillGroup
             value={config.subType}
-            onChange={() => { /* vergrendeld op cs_zonder_prov */ }}
-            options={[{ value: "cs_zonder_prov", label: "CS direct" }]}
+            onChange={() => { /* vergrendeld */ }}
+            options={[{ value: lockedSub, label: lockedLabel }]}
           />
         </Field>
       </div>
