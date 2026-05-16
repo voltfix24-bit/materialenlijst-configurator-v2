@@ -490,15 +490,7 @@ export function Winkelwagen({
               <p className="text-xs text-muted-foreground px-1">Typ minimaal 2 tekens…</p>
             )}
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowZoeker(true)}
-            className="w-full rounded-md border border-dashed border-border py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 flex items-center justify-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" /> Artikel toevoegen
-          </button>
-        )}
+        ) : null}
 
         <div className="flex justify-between text-sm pt-1 border-t border-border/60">
           <span className="font-medium">Totaal te bestellen</span>
