@@ -146,31 +146,38 @@ export function MaterialenConfigurator({
     return true;
   };
   const isRenovatie = config.subType === "renovatie_prov" || config.subType === "renovatie_nsa";
+  // Sub-completion (per onderdeel) — gegroepeerd in supergroepen hieronder
+  const rmuOk = !!config.rmuConfig && (!isCompact || !!config.trafoKva);
+  const trafoOk = isCompact ? true : (!showTrafo || (!!config.trafoActie && !!config.trafoKva));
+  const vultKabelOk = isCompact ? true : (!isRenovatie || config.vultKabelAfstand > 0);
+  const lsRekOk = isCompact
+    ? true
+    : (!isRenovatie ||
+      (!!config.lsRekActie && (config.lsRekActie === "gehandhaafd" || !!config.lsRekType)));
+  const msMoffenOk = config.msRichtingen.length === 0 || config.msRichtingen.every(richtingComplete);
+  const lsMoffenOk =
+    !config.lsMoffenActief ||
+    (config.lsMoffen.length > 0 &&
+      config.lsMoffen.every((m) => !!m.type && !!m.bestaandType));
+
   const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
     provisorium:
       !isProvisorum ||
       (!!config.provRmuMerk && !!config.provRmuConfig && !!config.provZekeringKva),
-    rmu: !!config.rmuConfig && (!isCompact || !!config.trafoKva),
-    trafo: isCompact ? true : (!showTrafo || (!!config.trafoActie && !!config.trafoKva)),
-    vultkabel: isCompact ? true : (!isRenovatie || config.vultKabelAfstand > 0),
-    lsrek: isCompact
-      ? true
-      : (!isRenovatie ||
-        (!!config.lsRekActie && (config.lsRekActie === "gehandhaafd" || !!config.lsRekType))),
-    ms: config.msRichtingen.length === 0 || config.msRichtingen.every(richtingComplete),
-    ls:
-      !config.lsMoffenActief ||
-      (config.lsMoffen.length > 0 &&
-        config.lsMoffen.every((m) => !!m.type && !!m.bestaandType)),
-    ggi: true,
+    // MS supergroep: RMU + alle MS verbindingen
+    ms: rmuOk && msMoffenOk,
+    // Trafo supergroep: trafo + vult kabel
+    trafo: trafoOk && vultKabelOk,
+    // LS supergroep: LS-rek + LS moffen
+    ls: lsRekOk && lsMoffenOk,
+    // Overig (GGI + standaard) — informatief, altijd compleet
+    overig: true,
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
     if (k === "provisorium") return isProvisorum && !isCompact;
-    if (k === "trafo") return showTrafo;
-    if (k === "vultkabel") return showVultKabel;
-    if (k === "lsrek") return showLsRek;
-    if (k === "ggi") return isRenovatie;
+    if (k === "trafo") return showTrafo || showVultKabel;
+    if (k === "overig") return true;
     return true;
   });
   const totalVisible = visibleKeys.length;
