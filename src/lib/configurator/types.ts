@@ -188,7 +188,9 @@ export interface MaterialenConfig {
   lsRekBeveiligingAanpassen: boolean;
   lsRekOvStuurpunt: boolean;
   lsRekSchroefpatroon: "35A" | "50A" | "";
-  
+  lsRekAantalBeveiligingen: number;
+  lsRekBeveiligingen: string[];
+
   msRichtingen: MsRichting[];
   msKabelTraces: MsKabelTrace[];
   lsMoffenActief: boolean;
