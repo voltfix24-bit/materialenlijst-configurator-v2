@@ -1136,34 +1136,7 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
             <InfoBox type="info">Mespatroon voor {config.trafoKva} kVA wordt toegevoegd</InfoBox>
           )}
 
-          <Field label="OV-stuurpunt installeren?">
-            <PillGroup
-              value={config.lsRekOvStuurpunt ? "ja" : "nee"}
-              onChange={(v) =>
-                update({
-                  lsRekOvStuurpunt: v === "ja",
-                  lsRekSchroefpatroon: v === "nee" ? "" : config.lsRekSchroefpatroon,
-                })
-              }
-              options={[
-                { value: "ja", label: "Ja", color: "green" },
-                { value: "nee", label: "Nee", color: "amber" },
-              ]}
-            />
-          </Field>
-
-          {config.lsRekOvStuurpunt && (
-            <Field label="Schroefpatroon type">
-              <PillGroup
-                value={config.lsRekSchroefpatroon}
-                onChange={(v) => update({ lsRekSchroefpatroon: v as "35A" | "50A" })}
-                options={[
-                  { value: "35A", label: "35A (20001107)" },
-                  { value: "50A", label: "50A (20001108)" },
-                ]}
-              />
-            </Field>
-          )}
+          <OvStuurpuntVragen config={config} update={update} />
         </>
       )}
     </div>
