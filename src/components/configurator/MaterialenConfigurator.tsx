@@ -698,6 +698,7 @@ function RmuSection({ config, update, sd, isCompact }: { config: MaterialenConfi
               K56 U bevestigingsklem ({config.lsRekAanSluitenKabels * 2}×) + kabelinlegklem ({config.lsRekAanSluitenKabels}×)
             </InfoBox>
           )}
+          <LsRichtingBeveiliging config={config} update={update} />
         </>
       )}
 
@@ -1124,6 +1125,8 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
               lsRekBeveiligingAanpassen: false,
               lsRekOvStuurpunt: false,
               lsRekSchroefpatroon: "",
+              lsRekAantalBeveiligingen: 0,
+              lsRekBeveiligingen: [],
             })
           }
           options={[
@@ -1189,6 +1192,8 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
             <InfoBox type="warning">⚠ Vul het trafo vermogen in bij de Trafo-sectie voor de juiste beveiliging</InfoBox>
           )}
 
+          <LsRichtingBeveiliging config={config} update={update} />
+
           <OvStuurpuntVragen config={config} update={update} />
         </>
       )}
@@ -1211,6 +1216,10 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
           )}
           {config.lsRekBeveiligingAanpassen && config.trafoKva && (
             <InfoBox type="info">Mespatroon voor {config.trafoKva} kVA wordt toegevoegd</InfoBox>
+          )}
+
+          {config.lsRekBeveiligingAanpassen && (
+            <LsRichtingBeveiliging config={config} update={update} />
           )}
 
           <OvStuurpuntVragen config={config} update={update} />
