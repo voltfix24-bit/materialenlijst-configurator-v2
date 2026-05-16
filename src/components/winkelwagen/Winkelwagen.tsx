@@ -560,7 +560,7 @@ export function Winkelwagen({
         )}
       </div>
 
-      <div className="border-t border-border px-3 py-3 space-y-2">
+      <div className="border-t border-border px-6 py-4 space-y-3 bg-card flex-shrink-0">
         {showZoeker ? (
           <div className="space-y-2 rounded-md border border-border p-2 bg-background">
             <div className="flex items-center gap-2">
