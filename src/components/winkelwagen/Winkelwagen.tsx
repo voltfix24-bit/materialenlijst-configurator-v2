@@ -27,6 +27,9 @@ interface Props {
   artikelen: ArtikelStam[];
   /** Welke configurator-sectie is actief — winkelwagen synchroniseert open secties hierop. */
   activeSectie?: string;
+  onExport?: () => void;
+  exportDisabled?: boolean;
+  exportPending?: boolean;
 }
 
 // Mapping: configurator sectie → winkelwagen secties
