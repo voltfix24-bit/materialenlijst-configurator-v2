@@ -1486,6 +1486,59 @@ function MsSection({ config, update, sd }: { config: MaterialenConfig; update: (
             {trace.kabelType && trace.lengteMeters > 0 && (
               <InfoBox type="info">{kabelSamenvatting(trace)}</InfoBox>
             )}
+
+            <Field label="Oversteek (weg/watergang)?">
+              <PillGroup
+                value={trace.heeftOversteek ? "ja" : "nee"}
+                onChange={(v) =>
+                  updateTrace(trace.id, {
+                    heeftOversteek: v === "ja",
+                    aantalOversteken: v === "ja" ? trace.aantalOversteken || 1 : 0,
+                    oversteekMeters: v === "ja" ? trace.oversteekMeters : 0,
+                  })
+                }
+                options={[
+                  { value: "ja", label: "Ja" },
+                  { value: "nee", label: "Nee" },
+                ]}
+              />
+            </Field>
+
+            {trace.heeftOversteek && (
+              <>
+                <Field label="Aantal oversteken">
+                  <Stepper
+                    value={trace.aantalOversteken}
+                    onChange={(v) => updateTrace(trace.id, { aantalOversteken: v })}
+                    min={1}
+                    max={10}
+                  />
+                </Field>
+                <Field label="Lengte per oversteek (meter)">
+                  <div className="flex items-center gap-3">
+                    <Stepper
+                      value={trace.oversteekMeters}
+                      onChange={(v) => updateTrace(trace.id, { oversteekMeters: v })}
+                      min={1}
+                      max={200}
+                      suffix=" m"
+                    />
+                    {trace.oversteekMeters > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        = {Math.ceil(trace.oversteekMeters / 6)} buizen per oversteek · totaal{" "}
+                        {Math.ceil(trace.oversteekMeters / 6) * trace.aantalOversteken} stuks
+                      </span>
+                    )}
+                  </div>
+                </Field>
+                <InfoBox type="info">
+                  {trace.kabelType === "240AL_singel" || trace.kabelType === "630AL_singel"
+                    ? `PVC 160mm beschermbuis (20036049) — ${Math.ceil(trace.oversteekMeters / 6) * trace.aantalOversteken} stuks`
+                    : `PVC 110mm beschermbuis (20028640) — ${Math.ceil(trace.oversteekMeters / 6) * trace.aantalOversteken} stuks`}
+                  {` | Geotextiel — ${trace.aantalOversteken * 2} stuks`}
+                </InfoBox>
+              </>
+            )}
           </div>
         ))}
 
@@ -1495,7 +1548,14 @@ function MsSection({ config, update, sd }: { config: MaterialenConfig; update: (
             update({
               msKabelTraces: [
                 ...config.msKabelTraces,
-                { id: crypto.randomUUID(), kabelType: "240AL_singel", lengteMeters: 0 },
+                {
+                  id: crypto.randomUUID(),
+                  kabelType: "240AL_singel",
+                  lengteMeters: 0,
+                  heeftOversteek: false,
+                  aantalOversteken: 1,
+                  oversteekMeters: 0,
+                },
               ],
             })
           }
@@ -1783,6 +1843,52 @@ function LsMofKaart({
           })()}
         </div>
       </Field>
+
+      {mof.kabelLengteMeters > 0 && (
+        <>
+          <Field label="Oversteek (weg/watergang)?">
+            <PillGroup
+              value={mof.heeftOversteek ? "ja" : "nee"}
+              onChange={(v) =>
+                onChange({
+                  heeftOversteek: v === "ja",
+                  aantalOversteken: v === "ja" ? mof.aantalOversteken || 1 : 0,
+                  oversteekMeters: v === "ja" ? mof.oversteekMeters : 0,
+                })
+              }
+              options={[
+                { value: "ja", label: "Ja" },
+                { value: "nee", label: "Nee" },
+              ]}
+            />
+          </Field>
+          {mof.heeftOversteek && (
+            <>
+              <Field label="Aantal oversteken">
+                <Stepper
+                  value={mof.aantalOversteken}
+                  onChange={(v) => onChange({ aantalOversteken: v })}
+                  min={1}
+                  max={10}
+                />
+              </Field>
+              <Field label="Lengte per oversteek (meter)">
+                <Stepper
+                  value={mof.oversteekMeters}
+                  onChange={(v) => onChange({ oversteekMeters: v })}
+                  min={1}
+                  max={200}
+                  suffix=" m"
+                />
+              </Field>
+              <InfoBox type="info">
+                {`PVC 110mm beschermbuis (20028640) — ${Math.ceil(mof.oversteekMeters / 6) * mof.aantalOversteken} stuks`}
+                {` | Geotextiel — ${mof.aantalOversteken * 2} stuks`}
+              </InfoBox>
+            </>
+          )}
+        </>
+      )}
 
       {isProv && (
         <Field label="Kan kabel worden omgezwaaid?">

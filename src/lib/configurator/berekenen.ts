@@ -267,6 +267,22 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
 
     const rollen = Math.ceil(trace.lengteMeters / 40);
     add(map, findArtNr("20018148"), rollen, `MS kabel beschermband trace ${idx}`, "msVerbindingen");
+
+    if (trace.heeftOversteek && trace.oversteekMeters > 0 && trace.aantalOversteken > 0) {
+      const buizenPerOversteek = Math.ceil(trace.oversteekMeters / 6);
+      const totaalBuizen = buizenPerOversteek * trace.aantalOversteken;
+      const isSingelTrace =
+        trace.kabelType === "240AL_singel" || trace.kabelType === "630AL_singel";
+      const buisNr = isSingelTrace ? "20036049" : "20028640";
+      add(map, findArtNr(buisNr), totaalBuizen, `MS kabel oversteek trace ${idx}`, "msVerbindingen");
+      add(
+        map,
+        findArtNr("20043703"),
+        trace.aantalOversteken * 2,
+        `MS kabel oversteek geotextiel trace ${idx}`,
+        "msVerbindingen",
+      );
+    }
   }
 
   // 5. LS moffen
@@ -304,6 +320,19 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
       if (lm.kabelLengteMeters > 0) {
         const totaal = lm.kabelLengteMeters * lm.aantal * fases;
         add(map, findArtNr("20009692"), totaal, "LS kabel", "lsVerbindingen");
+      }
+
+      if (lm.heeftOversteek && lm.oversteekMeters > 0 && lm.aantalOversteken > 0) {
+        const buizenPerOversteek = Math.ceil(lm.oversteekMeters / 6);
+        const totaalBuizen = buizenPerOversteek * lm.aantalOversteken;
+        add(map, findArtNr("20028640"), totaalBuizen, "LS kabel oversteek", "lsVerbindingen");
+        add(
+          map,
+          findArtNr("20043703"),
+          lm.aantalOversteken * 2,
+          "LS kabel oversteek geotextiel",
+          "lsVerbindingen",
+        );
       }
     }
   }

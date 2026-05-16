@@ -12,6 +12,9 @@ export interface MsKabelTrace {
   id: string;
   kabelType: MsKabelType;
   lengteMeters: number;
+  heeftOversteek: boolean;
+  aantalOversteken: number;
+  oversteekMeters: number;
 }
 
 export interface Artikel {
@@ -126,6 +129,9 @@ export interface LsMof {
   aantal: number;
   kanZwaaien: boolean | null;
   kabelLengteMeters: number;
+  heeftOversteek: boolean;
+  aantalOversteken: number;
+  oversteekMeters: number;
 }
 
 export interface RmuVeldConfig {
@@ -261,6 +267,9 @@ export const newLsMof = (): LsMof => ({
   aantal: 1,
   kanZwaaien: null,
   kabelLengteMeters: 0,
+  heeftOversteek: false,
+  aantalOversteken: 1,
+  oversteekMeters: 0,
 });
 
 export const emptyConfig = (): MaterialenConfig => ({
