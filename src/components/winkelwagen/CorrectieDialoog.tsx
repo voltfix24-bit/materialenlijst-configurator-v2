@@ -40,8 +40,13 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
   };
 
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onAnnuleer(); }}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open onOpenChange={() => { /* sluiten alleen via Annuleer/Bevestigen */ }}>
+      <DialogContent
+        className="sm:max-w-md [&>button.absolute]:hidden"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{TITELS[data.actie]}</DialogTitle>
           <DialogDescription className="text-xs">
