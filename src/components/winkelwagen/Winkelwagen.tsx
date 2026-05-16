@@ -347,10 +347,12 @@ export function Winkelwagen({
 
         {sectieGroepen.map((sec) => (
           <div key={sec.key}>
-            <div className="flex items-center gap-2 px-2 py-1.5">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: sec.color }} />
-              <span className="text-[11px] font-mono uppercase tracking-wider text-foreground/80">{sec.label}</span>
-              <span className="text-[10px] font-mono text-muted-foreground ml-auto">{sec.items.length} art.</span>
+            <div className="flex items-center gap-1.5 mb-1 pb-0.5 border-b border-border/30 sticky top-0 bg-card z-10">
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: sec.color }} />
+              <span className="text-[9px] font-mono font-semibold uppercase tracking-widest text-muted-foreground flex-1">
+                {sec.label}
+              </span>
+              <span className="text-[9px] text-muted-foreground/60 font-mono">{sec.items.length} art.</span>
             </div>
             <div className="space-y-0.5">
               {sec.items.map((it) => (
