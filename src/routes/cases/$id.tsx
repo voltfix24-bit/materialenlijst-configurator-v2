@@ -183,39 +183,69 @@ function CaseDetailPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header — rij 1: terug | logo | identiteit | acties */}
-      <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 border-b border-border bg-card flex-shrink-0">
+      {/* Eén header-rij: identiteit + status tabs links, acties rechts */}
+      <div className="flex items-center gap-4 px-4 sm:px-6 py-3 border-b border-border bg-card flex-shrink-0">
         <button onClick={goBack} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex-shrink-0">
           <ArrowLeft className="h-4 w-4 text-muted-foreground" />
         </button>
 
-        <svg viewBox="0 0 100 130" className="w-5 h-6 flex-shrink-0 hidden sm:block" aria-hidden>
-          <path d="M55 5L10 65h35L30 115l60-70H55L70 5z" fill="#2db85a" stroke="#2db85a" strokeWidth="2"/>
-          <rect x="20" y="108" width="60" height="6" rx="3" fill="#eaab20"/>
-          <rect x="30" y="116" width="40" height="4" rx="2" fill="#eaab20"/>
-          <rect x="40" y="122" width="20" height="3" rx="1.5" fill="#eaab20"/>
-        </svg>
-
-        <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[color:var(--navy)] text-white uppercase tracking-wider font-semibold">
+        {/* Identiteit */}
+        <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
+          <span className="text-[10px] px-2 py-0.5 rounded bg-[color:var(--navy)] text-white uppercase tracking-wider font-semibold">
             {CASE_TYPE_LABELS[caseRow.case_type] ?? caseRow.case_type}
           </span>
-          {caseRow.case_nummer && (
-            <span className="text-xs font-mono text-muted-foreground">{caseRow.case_nummer}</span>
-          )}
-          <input
-            value={naam}
-            onChange={(e) => setNaam(e.target.value)}
-            onBlur={() => naam !== caseRow.station_naam && updateCase.mutate({ station_naam: naam || null })}
-            placeholder="Stationsnaam"
-            className="bg-transparent text-sm font-semibold text-[color:var(--navy)] focus:outline-none focus:bg-input rounded-md px-2 py-0.5 min-w-0 flex-1 max-w-64"
-          />
+          <div className="flex flex-col min-w-0">
+            {caseRow.case_nummer && (
+              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider leading-none">
+                {caseRow.case_nummer}
+              </span>
+            )}
+            <input
+              value={naam}
+              onChange={(e) => setNaam(e.target.value)}
+              onBlur={() => naam !== caseRow.station_naam && updateCase.mutate({ station_naam: naam || null })}
+              placeholder="Stationsnaam"
+              className="bg-transparent text-lg font-bold text-[color:var(--navy)] focus:outline-none focus:bg-input rounded-md -mx-1 px-1 leading-tight min-w-0 max-w-[280px]"
+            />
+          </div>
         </div>
 
-        {/* Acties */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Status tabs */}
+        <nav className="flex items-end gap-1 self-end h-full flex-shrink min-w-0 overflow-x-auto">
+          {STATUS_OPTIONS.map((s) => {
+            const isActive = caseRow.status === s;
+            return (
+              <button
+                key={s}
+                onClick={() => updateCase.mutate({ status: s })}
+                className={cn(
+                  "px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap border-b-2 -mb-3",
+                  isActive
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
+                )}
+              >
+                {STATUS_LABELS[s]}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Acties rechts */}
+        <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+          <div className="hidden md:flex items-center gap-2">
+            <div className="w-28 h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <span className="text-[11px] text-muted-foreground font-mono tabular-nums w-8 text-right">
+              {progress}%
+            </span>
+          </div>
           {isDirty && (
-            <span className="text-[11px] text-[color:var(--warning)] hidden md:flex items-center gap-1.5 font-medium">
+            <span className="text-[11px] text-[color:var(--warning)] hidden lg:flex items-center gap-1.5 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--warning)] animate-pulse" />
               Niet opgeslagen
             </span>
@@ -223,9 +253,9 @@ function CaseDetailPage() {
           <button
             onClick={() => setSaveSignal((c) => c + 1)}
             disabled={saving}
-            className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-[color:var(--primary-hover)] shadow-sm transition-opacity disabled:opacity-50 flex items-center gap-1.5"
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-[color:var(--primary-hover)] shadow-sm transition-opacity disabled:opacity-50 flex items-center gap-1.5"
           >
-            <Save className="h-3.5 w-3.5" />
+            <Save className="h-4 w-4" />
             <span className="hidden sm:inline">{saving ? "Opslaan…" : "Opslaan"}</span>
           </button>
           <button
@@ -241,55 +271,11 @@ function CaseDetailPage() {
               exporteer.mutate();
             }}
             disabled={exporteer.isPending || isDirty}
-            className="px-3 py-1.5 rounded-lg border border-[color:var(--navy)] text-[color:var(--navy)] text-xs font-semibold hover:bg-[color:var(--navy)] hover:text-white transition-colors disabled:opacity-40 flex items-center gap-1.5"
+            className="px-4 py-2 rounded-lg border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
-            {exporteer.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            {exporteer.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             <span className="hidden sm:inline">Export</span>
           </button>
-        </div>
-      </div>
-
-      {/* Header — rij 2: voortgang + status pills */}
-      <div className="flex items-center gap-3 px-3 sm:px-5 py-2 border-b border-border bg-card/60 flex-shrink-0 overflow-x-auto">
-        <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
-          <div className="w-32 sm:w-40 h-1.5 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <span className="text-[11px] text-muted-foreground font-mono tabular-nums">
-            {progress}%
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium hidden sm:inline">Status</span>
-          <div className="flex items-center gap-0.5">
-            {STATUS_OPTIONS.map((s) => (
-              <button
-                key={s}
-                onClick={() => updateCase.mutate({ status: s })}
-                className={cn(
-                  "px-2 py-0.5 rounded text-[11px] font-medium transition-all whitespace-nowrap",
-                  caseRow.status === s
-                    ? STATUS_COLORS_ACTIVE[s]
-                    : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/50",
-                )}
-              >
-                {STATUS_LABELS[s]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-          {isDirty && (
-            <span className="md:hidden w-1.5 h-1.5 rounded-full bg-[color:var(--warning)] animate-pulse" />
-          )}
-          <span className="text-[11px] text-muted-foreground font-mono tabular-nums">
-            {completed}/{total} secties
-          </span>
         </div>
       </div>
 
