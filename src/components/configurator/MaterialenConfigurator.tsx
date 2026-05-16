@@ -92,16 +92,16 @@ export function MaterialenConfigurator({
   }, [initialConfig, isCompact, isCompactProv]);
   const [config, setConfig] = useState<MaterialenConfig>(initial);
 
-  // Nieuwe lege case → gestuurde flow: alleen eerste sectie open. Bestaande config → alles open.
+  // Nieuwe lege case → alleen eerste sectie open. Bestaande config → alles open.
+  // Secties openen/sluiten daarna alleen nog door expliciet op de header te klikken.
   const isNewCase = !initialConfig || !initialConfig.subType;
-  // autoFlow start uit — pas actief na eerste echte gebruikersinteractie (zelfde timing als skipDirty).
-  // Voorkomt dat secties van een gehydrateerde bestaande case als gedimd verschijnen.
-  const autoFlowRef = useRef(false);
   const [open, setOpen] = useState<Record<SectionKey, boolean>>(() =>
     isNewCase
       ? { project: true, provisorium: false, ms: false, trafo: false, ls: false, overig: false }
       : { project: true, provisorium: true, ms: true, trafo: true, ls: true, overig: true },
   );
+  // Welke configurator sectie is als laatst door de engineer geopend → winkelwagen synchroniseert mee
+  const [activeSectie, setActiveSectie] = useState<SectionKey | null>("project");
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [debounced, setDebounced] = useState(config);
 
@@ -112,7 +112,6 @@ export function MaterialenConfigurator({
       skipDirty.current = false;
       return;
     }
-    autoFlowRef.current = true;
     onDirtyChange?.(true);
   }, [config, onDirtyChange]);
 
@@ -189,33 +188,6 @@ export function MaterialenConfigurator({
   const allComplete = completedCount === totalVisible;
 
   const update = (patch: Partial<MaterialenConfig>) => setConfig((c) => ({ ...c, ...patch }));
-
-  // Auto-flow: bij completion-transitie volgende sectie openen + scrollen, huidige inklappen
-  const prevCompletionRef = useRef<Record<SectionKey, boolean>>(completion);
-  useEffect(() => {
-    if (!autoFlowRef.current) {
-      prevCompletionRef.current = completion;
-      return;
-    }
-    for (let i = 0; i < visibleKeys.length; i++) {
-      const k = visibleKeys[i];
-      const wasComplete = prevCompletionRef.current[k];
-      if (!wasComplete && completion[k]) {
-        const next = visibleKeys[i + 1];
-        if (next && !open[next]) {
-          setOpen((o) => ({ ...o, [k]: false, [next]: true }));
-          // smooth scroll naar volgende sectie
-          requestAnimationFrame(() => {
-            const el = sectionRefs.current[next];
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-          });
-        }
-        break;
-      }
-    }
-    prevCompletionRef.current = completion;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [completion]);
 
   // State doorgeven aan parent (header)
   useEffect(() => { onProgressChange?.(completedCount, totalVisible); }, [completedCount, totalVisible, onProgressChange]);
@@ -375,12 +347,11 @@ export function MaterialenConfigurator({
         {SECTIONS.map((sec, idx) => {
           if (sec.key === "provisorium" && (!isProvisorum || (isCompact && !isCompactProv))) return null;
           if (sec.key === "trafo" && !(showTrafo || showVultKabel)) return null;
-          const dimmed = autoFlowRef.current && !open[sec.key] && !completion[sec.key];
           return (
             <div
               key={sec.key}
               ref={(el) => { sectionRefs.current[sec.key] = el; }}
-              className={cn("scroll-mt-20 transition-opacity", dimmed && "opacity-70")}
+              className="scroll-mt-20"
             >
               <SectionCard
                 color={sec.color}
@@ -390,7 +361,11 @@ export function MaterialenConfigurator({
                 isOpen={open[sec.key]}
                 isComplete={completion[sec.key]}
                 summary={sectionSummary(sec.key, config, sd)}
-                onToggle={() => setOpen({ ...open, [sec.key]: !open[sec.key] })}
+                onToggle={() => {
+                  const willOpen = !open[sec.key];
+                  setOpen({ ...open, [sec.key]: willOpen });
+                  if (willOpen) setActiveSectie(sec.key);
+                }}
               >
                 {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} isCompactProv={isCompactProv} />}
                 {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
@@ -435,8 +410,11 @@ export function MaterialenConfigurator({
         })}
       </div>
 
-      {/* Live winkelwagen */}
-      <div className={cn(mobileTab === "config" && "hidden lg:block")}>
+      {/* Live winkelwagen — sticky op lg, mobiel via tab-toggle */}
+      <div className={cn(
+        mobileTab === "config" && "hidden lg:block",
+        "lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden",
+      )}>
         <Winkelwagen
           items={preview}
           caseId={caseId}
@@ -447,6 +425,7 @@ export function MaterialenConfigurator({
           onSave={() => opslaan.mutate()}
           onItemsChange={(eff) => { winkelwagenItemsRef.current = eff; onWinkelwagenItemsChange?.(eff); }}
           artikelen={sd.artikelen.data ?? []}
+          activeSectie={activeSectie ?? undefined}
         />
       </div>
     </div>
