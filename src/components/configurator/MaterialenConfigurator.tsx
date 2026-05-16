@@ -1164,6 +1164,12 @@ function LsRekSection({ config, update }: { config: MaterialenConfig; update: (p
   );
 }
 
+const MOF_DOORSNEDES: Record<string, number[]> = {
+  GPLK: [35, 70, 95, 120, 150, 185, 240],
+  XLPE: [95, 150, 240],
+  XLPE_singel: [240, 400, 630],
+};
+
 function MofFormulier({
   label,
   config: mof,
