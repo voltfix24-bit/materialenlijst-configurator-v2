@@ -102,16 +102,35 @@ function CasesPage() {
     });
   }, [cases, zoekterm, statusFilter]);
 
+  const [typeFilter, setTypeFilter] = useState("");
+
+  const filteredFinal = useMemo(() => {
+    return (cases ?? []).filter((c) => {
+      if (typeFilter && c.case_type !== typeFilter) return false;
+      return true;
+    });
+  }, [cases, typeFilter]);
+  // re-apply zoekterm/status on top
+  const filteredAll = useMemo(() => {
+    const term = zoekterm.trim().toLowerCase();
+    return filteredFinal.filter((c) => {
+      if (statusFilter && c.status !== statusFilter) return false;
+      if (!term) return true;
+      const hay = `${c.station_naam ?? ""} ${c.case_nummer ?? ""}`.toLowerCase();
+      return hay.includes(term);
+    });
+  }, [filteredFinal, zoekterm, statusFilter]);
+
   return (
-    <div className="px-8 py-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="px-6 sm:px-8 py-6 max-w-6xl mx-auto">
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Cases</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Materiaalbestellijsten per station.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[color:var(--navy)]">TerreVolt</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Materialen Configurator</p>
         </div>
         <button
           onClick={() => setShowForm((s) => !s)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-[color:var(--primary-hover)] transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" /> Nieuwe case
         </button>
