@@ -122,6 +122,8 @@ export function MaterialenConfigurator({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [debounced, sd.isLoading, caseType, sd.artikelen.data, sd.rmuConfigs.data, sd.rmuVeldArtikelen.data, sd.rmuZekeringen.data, sd.msMofTypes.data, sd.msMofMaterialen.data, sd.lsMofTypes.data, sd.lsMofMaterialen.data, sd.standaardTemplates.data, sd.stationVaste.data],
   );
+  // Effectieve winkelwagen-items (na overrides / verwijderingen / handmatig toegevoegde)
+  const winkelwagenItemsRef = useRef<PreviewItem[]>([]);
 
   const showTrafo = !isCompact && RENOVATIE(config.subType);
   const showLsRek = !isCompact && RENOVATIE(config.subType);
