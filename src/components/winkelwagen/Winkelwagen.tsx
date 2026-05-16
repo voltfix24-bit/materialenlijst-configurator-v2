@@ -60,6 +60,7 @@ export function Winkelwagen({
   onSave,
   onItemsChange,
   artikelen,
+  activeSectie,
 }: Props) {
   // Lokale state
   const [overrides, setOverrides] = useState<Map<string, number>>(new Map());
@@ -71,6 +72,9 @@ export function Winkelwagen({
   const [zoek, setZoek] = useState("");
   const [zoekHoeveelheid, setZoekHoeveelheid] = useState(1);
   const [gekozenArtikel, setGekozenArtikel] = useState<ArtikelStam | null>(null);
+  // Welke winkelwagen-secties zijn opengeklapt — standaard alles ingeklapt
+  const [openSecties, setOpenSecties] = useState<Set<string>>(new Set());
+  const lijstRef = useRef<HTMLDivElement | null>(null);
 
   const slaCorrectieOp = useSlaCorrectieOp();
 
@@ -81,7 +85,28 @@ export function Winkelwagen({
     setToegevoegd([]);
     setDialoogData(null);
     setPendingRevert(null);
+    setOpenSecties(new Set());
   }, [caseId]);
+
+  // Sync: zodra de engineer een configurator-sectie opent, open de bijbehorende
+  // winkelwagen secties (en sluit de rest) + scroll naar de eerste geopende sectie.
+  useEffect(() => {
+    if (!activeSectie) return;
+    const mapped = CONFIG_SECTIE_NAAR_WINKELWAGEN[activeSectie];
+    if (!mapped || mapped.length === 0) return;
+    setOpenSecties(new Set(mapped));
+    requestAnimationFrame(() => {
+      const root = lijstRef.current;
+      if (!root) return;
+      for (const k of mapped) {
+        const el = root.querySelector<HTMLElement>(`[data-sectie="${k}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          break;
+        }
+      }
+    });
+  }, [activeSectie]);
 
   // Effectieve lijst = items - verwijderd, met overrides toegepast, + handmatig toegevoegd
   const effectief = useMemo<PreviewItem[]>(() => {
