@@ -7,6 +7,7 @@ import { RmuTab } from "@/components/beheer/RmuTab";
 import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
 import { StandaardMaterialenTab, VasteArtikelenTab } from "@/components/beheer/OverigeTabs";
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
+import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 
 export const Route = createFileRoute("/beheer")({
   component: BeheerPage,
@@ -26,6 +27,7 @@ const TABS = [
   { key: "ms_kabel_regels", label: "MS kabel regels" },
   { key: "rmu_veld_regels", label: "RMU veld regels" },
   { key: "ggi", label: "GGI artikelen" },
+  { key: "datakwaliteit", label: "Datakwaliteit" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -67,7 +69,7 @@ function BeheerPage() {
       {tab === "ms_kabel_regels" && <MsKabelRegelsTab />}
       {tab === "rmu_veld_regels" && <RmuVeldRegelsTab />}
       {tab === "ggi" && <GgiRegelsTab />}
-      
+      {tab === "datakwaliteit" && <DataKwaliteitTab />}
     </div>
   );
 }
