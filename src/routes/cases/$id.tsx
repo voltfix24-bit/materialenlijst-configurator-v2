@@ -43,6 +43,24 @@ function CaseDetailPage() {
     },
   });
 
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const apply = () => {
+      const h = Math.round(el.getBoundingClientRect().height);
+      document.documentElement.style.setProperty("--app-header-h", `${h}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    window.addEventListener("resize", apply);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", apply);
+    };
+  }, []);
+
   const [naam, setNaam] = useState("");
   const [isDirty, setIsDirty] = useState(false);
   const [completed, setCompleted] = useState(0);
