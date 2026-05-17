@@ -24,6 +24,7 @@ const TABS = [
   { key: "lsrek_regels", label: "LS-rek regels" },
   { key: "prov_regels", label: "Provisorium regels" },
   { key: "ms_kabel_regels", label: "MS kabel regels" },
+  { key: "rmu_veld_regels", label: "RMU veld regels" },
   { key: "ggi", label: "GGI artikelen" },
 ] as const;
 
