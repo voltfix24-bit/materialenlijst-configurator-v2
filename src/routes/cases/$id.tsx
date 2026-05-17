@@ -150,11 +150,14 @@ function CaseDetailPage() {
     base.msKabelTraces = ((raw.msKabelTraces ?? []) as unknown as Record<string, unknown>[]).map(
       (t) => ({ ...oversteekDefaults, ...t }) as MaterialenConfig["msKabelTraces"][number],
     );
+    base.lsKabelTraces = ((raw.lsKabelTraces ?? []) as unknown as Record<string, unknown>[]).map(
+      (t) => ({ ...oversteekDefaults, lengteMeters: 0, ...t }) as MaterialenConfig["lsKabelTraces"][number],
+    );
     base.lsMoffen = ((raw.lsMoffen ?? []) as unknown as Record<string, unknown>[]).map(
-      (m) => ({ ...oversteekDefaults, ...m }) as MaterialenConfig["lsMoffen"][number],
+      (m) => ({ ...oversteekDefaults, opnieuwAantal: 1, ...m }) as MaterialenConfig["lsMoffen"][number],
     );
     base.provLsMoffen = ((raw.provLsMoffen ?? []) as unknown as Record<string, unknown>[]).map(
-      (m) => ({ ...oversteekDefaults, ...m }) as MaterialenConfig["lsMoffen"][number],
+      (m) => ({ ...oversteekDefaults, opnieuwAantal: 1, ...m }) as MaterialenConfig["lsMoffen"][number],
     );
     const savedRmuId = (raw.rmuConfig as { id?: string } | null | undefined)?.id ?? null;
     base.rmuConfig = savedRmuId
