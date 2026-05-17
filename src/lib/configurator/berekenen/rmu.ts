@@ -101,9 +101,35 @@ export function berekenRmuVelden(
   const velden = config.rmuVelden ?? [];
   const aantalKv = velden.filter((v) => v.veldType === "C" || v.veldType === "V").length;
 
+  // Hard guard: per kabeltype is er exact één toegestane HKS-steker.
+  // Voorkomt dat een verkeerd geseede regel beide stekers (240 + 630) tegelijk
+  // voor hetzelfde veld in de winkelwagen zet.
+  const STEKER_PER_KABEL: Record<string, string> = {
+    "240AL": "20040681", // Steker hks C XLPE 20kV 3x1x240
+    "630AL": "20040678", // Steker hks C XLPE 10-20kV 3x1x630
+  };
+  const ALLE_STEKERS = new Set(Object.values(STEKER_PER_KABEL));
+
   for (const veld of velden) {
+    const toegestaneSteker = veld.kabelType ? STEKER_PER_KABEL[veld.kabelType] : undefined;
     for (const r of regels) {
       if (!matchVeldRegel(r, veld, config, aantalKv)) continue;
+      const artNr = r.artikel?.artikel_nummer;
+      if (
+        artNr &&
+        ALLE_STEKERS.has(artNr) &&
+        toegestaneSteker &&
+        artNr !== toegestaneSteker
+      ) {
+        // Hard guard: skip + log. Niet bestellen voor dit kabeltype.
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[RMU guard] Steker ${artNr} geweigerd voor veld ${veld.veldNummer} ` +
+            `(kabelType=${veld.kabelType}, verwacht ${toegestaneSteker}). ` +
+            `Controleer rmu_veld_regels seed.`,
+        );
+        continue;
+      }
       const label = r.herkomst_label.includes("{veldNummer}")
         ? r.herkomst_label.replace("{veldNummer}", String(veld.veldNummer))
         : r.herkomst_label;
