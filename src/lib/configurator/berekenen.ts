@@ -32,7 +32,7 @@ export function berekenPreview(
   // Volgorde is bewust gelijk aan v0 (sectie-nummers 1-9).
   berekenStandaard(map, config, sd, caseType);     // 1 + 2
   berekenRmuBasis(map, config, sd, ctx);           // 3
-  berekenRmuVelden(map, config, ctx);              // 3b
+  berekenRmuVelden(map, config, sd, ctx);          // 3b
   berekenTrafo(map, config, sd, ctx);              // 3c + 3d (DB-driven)
   berekenMsMoffen(map, config, sd, ctx);           // 4
   berekenMsKabelTraces(map, config, sd);           // 4b (DB-driven)
