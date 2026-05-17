@@ -283,7 +283,7 @@ export function LsRekRegelsTab() {
 
   const save = useMutation({
     mutationFn: async (v: Partial<LsRekRegel>) => {
-      const payload: Record<string, unknown> = { ...v };
+      const payload: any = { ...v };
       for (const k of ["conditie_actie", "conditie_lsrek_type", "conditie_schroefpatroon", "conditie_kva", "hoeveelheid_formule"] as const) {
         if (payload[k] === "") payload[k] = null;
       }
@@ -291,7 +291,7 @@ export function LsRekRegelsTab() {
         const { error } = await supabase.from("ls_rek_regels").update(payload).eq("id", v.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("ls_rek_regels").insert(payload as never);
+        const { error } = await supabase.from("ls_rek_regels").insert(payload);
         if (error) throw error;
       }
     },
