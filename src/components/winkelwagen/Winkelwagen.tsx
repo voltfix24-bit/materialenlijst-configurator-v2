@@ -81,6 +81,9 @@ export function Winkelwagen({
   const [gekozenArtikel, setGekozenArtikel] = useState<ArtikelStam | null>(null);
   // Welke winkelwagen-secties zijn opengeklapt — standaard alles ingeklapt
   const [openSecties, setOpenSecties] = useState<Set<string>>(new Set());
+  // Per-item: uitgeklapt detailpaneel + lokale notitie (per case)
+  const [uitgeklapt, setUitgeklapt] = useState<Set<string>>(new Set());
+  const [notities, setNotities] = useState<Map<string, string>>(new Map());
   // Lokale filter voor zichtbare artikelen in de winkelwagen
   const [filter, setFilter] = useState("");
   const lijstRef = useRef<HTMLDivElement | null>(null);
