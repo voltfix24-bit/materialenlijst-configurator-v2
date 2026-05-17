@@ -455,6 +455,66 @@ export type Database = {
         }
         Relationships: []
       }
+      ls_rek_regels: {
+        Row: {
+          actief: boolean
+          artikel_id: string
+          conditie_actie: string | null
+          conditie_beveiliging_aanpassen: boolean | null
+          conditie_compact: boolean | null
+          conditie_kva: string | null
+          conditie_lsrek_type: string | null
+          conditie_ov_stuurpunt: boolean | null
+          conditie_renovatie: boolean | null
+          conditie_schroefpatroon: string | null
+          created_at: string
+          herkomst_label: string
+          hoeveelheid: number
+          hoeveelheid_formule: string | null
+          id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actief?: boolean
+          artikel_id: string
+          conditie_actie?: string | null
+          conditie_beveiliging_aanpassen?: boolean | null
+          conditie_compact?: boolean | null
+          conditie_kva?: string | null
+          conditie_lsrek_type?: string | null
+          conditie_ov_stuurpunt?: boolean | null
+          conditie_renovatie?: boolean | null
+          conditie_schroefpatroon?: string | null
+          created_at?: string
+          herkomst_label: string
+          hoeveelheid?: number
+          hoeveelheid_formule?: string | null
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actief?: boolean
+          artikel_id?: string
+          conditie_actie?: string | null
+          conditie_beveiliging_aanpassen?: boolean | null
+          conditie_compact?: boolean | null
+          conditie_kva?: string | null
+          conditie_lsrek_type?: string | null
+          conditie_ov_stuurpunt?: boolean | null
+          conditie_renovatie?: boolean | null
+          conditie_schroefpatroon?: string | null
+          created_at?: string
+          herkomst_label?: string
+          hoeveelheid?: number
+          hoeveelheid_formule?: string | null
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ms_mof_materialen: {
         Row: {
           artikel_id: string
