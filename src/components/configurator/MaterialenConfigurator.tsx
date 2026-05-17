@@ -6,7 +6,7 @@ import { PillGroup } from "@/components/ui-prim/PillGroup";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { Field, FieldRow, InfoBox } from "@/components/ui-prim/Field";
 import { useStamdata } from "@/lib/configurator/queries";
-import { berekenPreview, VULT_KABEL_SPECS } from "@/lib/configurator/berekenen";
+import { berekenPreview, vultKabelSpecsFromStamdata } from "@/lib/configurator/berekenen";
 import {
   buildRmuVelden,
   DEFAULT_INET_ARTIKELEN,
@@ -388,7 +388,7 @@ export function MaterialenConfigurator({
                     {showTrafo && <TrafoSection config={config} update={update} sd={sd} />}
                     {showVultKabel && (
                       <div className={cn(showTrafo && "border-t border-border pt-5")}>
-                        <VultKabelSection config={config} update={update} />
+                        <VultKabelSection config={config} update={update} sd={sd} />
                       </div>
                     )}
                   </div>
@@ -977,8 +977,9 @@ function TrafoSection({ config, update }: { config: MaterialenConfig; update: (p
   );
 }
 
-function VultKabelSection({ config, update }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void }) {
-  const spec = config.trafoKva ? VULT_KABEL_SPECS[config.trafoKva] : null;
+function VultKabelSection({ config, update, sd }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata> }) {
+  const specs = vultKabelSpecsFromStamdata(sd);
+  const spec = config.trafoKva ? specs[config.trafoKva] : null;
   const totaalMeters = spec ? Math.ceil(config.vultKabelAfstand * spec.aantalKabels) : 0;
   return (
     <div className="space-y-4">

@@ -246,9 +246,14 @@ type TrafoKabel = {
   id: string;
   trafo_kva: number;
   aantal_kabels: number;
-  kabel_doorsnede: number; // schema number, but spec says text — keep as number per existing schema
+  kabel_doorsnede: number;
   aantal_perskabelschoenen: number;
+  kabel_artikel_id: string | null;
   perskabelschoen_artikel_id: string | null;
+  muurbeugel_artikel_id: string | null;
+  omschrijving: string | null;
+  actief: boolean;
+  sort_order: number;
 };
 
 export function TrafoVultKabelTab() {
@@ -295,25 +300,28 @@ export function TrafoVultKabelTab() {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <Button onClick={() => { setEditing({ trafo_kva: 400, aantal_kabels: 1, kabel_doorsnede: 150, aantal_perskabelschoenen: 6 }); setOpen(true); }}>
+        <Button onClick={() => { setEditing({ trafo_kva: 400, aantal_kabels: 4, kabel_doorsnede: 300, aantal_perskabelschoenen: 8 }); setOpen(true); }}>
           <Plus className="h-4 w-4 mr-1" /> Trafo vult kabel toevoegen
         </Button>
       </div>
       <DataTable
-        headers={["Trafo kVA", "Aantal kabels", "Doorsnede", "# Perskabelschoenen", "Artikel", ""]}
+        headers={["kVA", "Aantal kabels", "Doorsnede", "Kabel", "# Pers", "Perskabelschoen", "Muurbeugel", "Omschrijving", ""]}
         rows={(data as TrafoKabel[]).map((t) => [
           t.trafo_kva,
           t.aantal_kabels,
           t.kabel_doorsnede,
+          <ArtikelLabel id={t.kabel_artikel_id} />,
           t.aantal_perskabelschoenen,
           <ArtikelLabel id={t.perskabelschoen_artikel_id} />,
+          <ArtikelLabel id={t.muurbeugel_artikel_id} />,
+          t.omschrijving ?? "",
           <RowActions onEdit={() => { setEditing(t); setOpen(true); }} onDelete={() => setToDelete(t)} />,
         ])}
         emptyIcon={Plug}
         emptyMessage="Nog geen trafo vult kabel configuraties"
         emptyDescription="Voeg kabelspecs toe per trafo type."
         emptyAction={
-          <Button onClick={() => { setEditing({ trafo_kva: 400, aantal_kabels: 1, kabel_doorsnede: 150, aantal_perskabelschoenen: 6 }); setOpen(true); }}>
+          <Button onClick={() => { setEditing({ trafo_kva: 400, aantal_kabels: 4, kabel_doorsnede: 300, aantal_perskabelschoenen: 8 }); setOpen(true); }}>
             <Plus className="h-4 w-4 mr-1" /> Eerste configuratie
           </Button>
         }
@@ -337,8 +345,17 @@ export function TrafoVultKabelTab() {
             <FormField label="Aantal perskabelschoenen">
               <Input type="number" value={editing.aantal_perskabelschoenen ?? 6} onChange={(e) => setEditing({ ...editing, aantal_perskabelschoenen: Number(e.target.value) })} className="h-9" />
             </FormField>
+            <FormField label="Kabel artikel">
+              <ArtikelZoeker value={editing.kabel_artikel_id ?? null} onChange={(id) => setEditing({ ...editing, kabel_artikel_id: id })} categorieSuggesties={["LS kabels"]} />
+            </FormField>
             <FormField label="Perskabelschoen artikel">
               <ArtikelZoeker value={editing.perskabelschoen_artikel_id ?? null} onChange={(id) => setEditing({ ...editing, perskabelschoen_artikel_id: id })} categorieSuggesties={["MS garnituren"]} />
+            </FormField>
+            <FormField label="Muurbeugel artikel">
+              <ArtikelZoeker value={editing.muurbeugel_artikel_id ?? null} onChange={(id) => setEditing({ ...editing, muurbeugel_artikel_id: id })} categorieSuggesties={["Bevestiging"]} />
+            </FormField>
+            <FormField label="Omschrijving (vrij)">
+              <Input value={editing.omschrijving ?? ""} onChange={(e) => setEditing({ ...editing, omschrijving: e.target.value })} className="h-9" />
             </FormField>
             <div className="flex justify-end pt-2">
               <Button onClick={() => save.mutate(editing)} disabled={save.isPending}>

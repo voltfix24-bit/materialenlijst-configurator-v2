@@ -182,6 +182,19 @@ export function useStamdata(caseType: string | undefined) {
     },
   });
 
+  const trafoVultKabelSpecs = useQuery({
+    queryKey: ["trafo_vult_kabel"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("trafo_vult_kabel")
+        .select("*, kabel_artikel:artikelen!trafo_vult_kabel_kabel_artikel_fk(*), perskabelschoen_artikel:artikelen!trafo_vult_kabel_pers_artikel_fk(*), muurbeugel_artikel:artikelen!trafo_vult_kabel_muurbeugel_artikel_fk(*)")
+        .eq("actief", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   return {
     artikelen,
     rmuConfigs,
@@ -199,6 +212,7 @@ export function useStamdata(caseType: string | undefined) {
     provRegels,
     msKabelRegels,
     rmuVeldRegels,
+    trafoVultKabelSpecs,
     isLoading:
       artikelen.isLoading ||
       rmuConfigs.isLoading ||

@@ -9,12 +9,11 @@ import { berekenTrafo } from "./berekenen/trafo";
 import { berekenMsMoffen, berekenMsKabelTraces } from "./berekenen/msMoffen";
 import { berekenLsMoffen } from "./berekenen/lsMoffen";
 import { berekenVultKabel } from "./berekenen/vultKabel";
+export { vultKabelSpecsFromStamdata, type VultKabelSpec } from "./berekenen/vultKabel";
 import { berekenLsRek } from "./berekenen/lsRek";
 import { berekenProvisorium } from "./berekenen/provisorium";
 import { berekenGgi } from "./berekenen/ggi";
 
-// Re-exports voor backwards compatibility met bestaande imports.
-export { VULT_KABEL_SPECS, type VultKabelSpec } from "./berekenen/vultKabel";
 
 export function berekenPreview(
   config: MaterialenConfig,
@@ -37,7 +36,7 @@ export function berekenPreview(
   berekenMsMoffen(map, config, sd, ctx);           // 4
   berekenMsKabelTraces(map, config, sd);           // 4b (DB-driven)
   berekenLsMoffen(map, config, sd, ctx);           // 5
-  berekenVultKabel(map, config, ctx);              // 6
+  berekenVultKabel(map, config, sd, ctx);          // 6 (DB-driven)
   berekenLsRek(map, config, sd, ctx);              // 7 (DB-driven)
   berekenProvisorium(map, config, sd, ctx);        // 8 (DB-driven)
   berekenGgi(map, config, sd, ctx);                // 9 (DB-driven)
