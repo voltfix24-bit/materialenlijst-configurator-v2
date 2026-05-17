@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import * as React from "react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Info, Package, Settings2, Zap, Wrench, ShieldCheck } from "lucide-react";
