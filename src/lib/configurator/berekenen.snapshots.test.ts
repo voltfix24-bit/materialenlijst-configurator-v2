@@ -53,6 +53,7 @@ interface StamdataOverrides {
   ggiRegels?: unknown[];
   trafoRegels?: unknown[];
   lsRekRegels?: unknown[];
+  provRegels?: unknown[];
 }
 
 // Vaste seed van GGI- en Trafo-regels, identiek aan de DB-seed in productie.
@@ -150,6 +151,40 @@ const DEFAULT_LS_REK_REGELS = [
   artikel: art(nr as string),
 }));
 
+// Provisorium-regels — identiek aan DB-seed.
+const DEFAULT_PROV_REGELS = [
+  ["20039303", 1, "perFVeld",        "Provisorium T-veld eindsluiting",       "Magnefix", null],
+  ["20041682", 1, "perFVeld",        "Provisorium F-veld eindsluiting",       "ABB",      null],
+  ["20041682", 1, "perFVeld",        "Provisorium F-veld eindsluiting",       "Siemens",  null],
+  ["20019483", 1, "perFVeld*3",      "Provisorium buispatroon",               "Magnefix", "250"],
+  ["20019484", 1, "perFVeld*3",      "Provisorium buispatroon",               "Magnefix", "400"],
+  ["20019485", 1, "perFVeld*3",      "Provisorium buispatroon",               "Magnefix", "630"],
+  ["20041591", 1, "perFVeld*3",      "Provisorium buispatroon",               "ABB",      "250"],
+  ["20041593", 1, "perFVeld*3",      "Provisorium buispatroon",               "ABB",      "400"],
+  ["20041651", 1, "perFVeld*3",      "Provisorium buispatroon",               "ABB",      "630"],
+  ["20041591", 1, "perFVeld*3",      "Provisorium buispatroon",               "Siemens",  "250"],
+  ["20041593", 1, "perFVeld*3",      "Provisorium buispatroon",               "Siemens",  "400"],
+  ["20041651", 1, "perFVeld*3",      "Provisorium buispatroon",               "Siemens",  "630"],
+  ["20039648", 1, "provInbMsKabels", "Prov in-bedrijfname MS eindsluiting",   "Magnefix", null],
+  ["20018032", 1, "provInbMsKabels", "Prov in-bedrijfname MS afschermset",    "Magnefix", null],
+  ["20029905", 1, "ifInbMsThen1",    "Prov in-bedrijfname MS doos onderdelen","Magnefix", null],
+  ["20040681", 1, "provInbMsKabels", "Prov in-bedrijfname MS eindsluiting",   "ABB",      null],
+  ["20040681", 1, "provInbMsKabels", "Prov in-bedrijfname MS eindsluiting",   "Siemens",  null],
+  ["20018004", 1, "provInbLsKabels", "Prov in-bedrijfname LS kabelinlegklem", null,       null],
+  ["20042042", 1, "provInbLsKabels", "Prov in-bedrijfname LS K56 klem",       null,       null],
+].map(([nr, qty, formule, label, merk, kva], i) => ({
+  id: `prov-${i}`,
+  conditie_merk: merk as string | null,
+  conditie_kva: kva as string | null,
+  artikel_id: `art-${nr}`,
+  hoeveelheid: qty as number,
+  hoeveelheid_formule: formule as string | null,
+  herkomst_label: label as string,
+  sort_order: i,
+  actief: true,
+  artikel: art(nr as string),
+}));
+
 function makeStamdata(o: StamdataOverrides = {}): Stamdata {
   const wrap = <T>(data: T[]) => ({ data, isLoading: false } as unknown as Stamdata["artikelen"]);
   const arts = (o.artikelNummers ?? []).map((n) => art(n));
@@ -167,6 +202,7 @@ function makeStamdata(o: StamdataOverrides = {}): Stamdata {
     ggiRegels: wrap(o.ggiRegels ?? DEFAULT_GGI_REGELS),
     trafoRegels: wrap(o.trafoRegels ?? DEFAULT_TRAFO_REGELS),
     lsRekRegels: wrap(o.lsRekRegels ?? DEFAULT_LS_REK_REGELS),
+    provRegels: wrap(o.provRegels ?? DEFAULT_PROV_REGELS),
     isLoading: false,
   } as unknown as Stamdata;
 }

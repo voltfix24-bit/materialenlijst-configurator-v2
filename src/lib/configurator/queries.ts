@@ -143,6 +143,19 @@ export function useStamdata(caseType: string | undefined) {
     },
   });
 
+  const provRegels = useQuery({
+    queryKey: ["prov_regels"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prov_regels")
+        .select("*, artikel:artikel_id(*)")
+        .eq("actief", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   return {
     artikelen,
     rmuConfigs,
@@ -157,6 +170,7 @@ export function useStamdata(caseType: string | undefined) {
     ggiRegels,
     trafoRegels,
     lsRekRegels,
+    provRegels,
     isLoading:
       artikelen.isLoading ||
       rmuConfigs.isLoading ||
