@@ -860,7 +860,15 @@ export type Database = {
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rmu_veld_regels_artikel_id_fkey"
+            columns: ["artikel_id"]
+            isOneToOne: false
+            referencedRelation: "artikelen"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rmu_zekeringen: {
         Row: {
