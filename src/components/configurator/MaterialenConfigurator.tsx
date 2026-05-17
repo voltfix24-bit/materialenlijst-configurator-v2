@@ -1956,6 +1956,22 @@ function LsMofKaart({
           />
         </Field>
       )}
+
+      {isProv && mof.kanZwaaien === false && (
+        <Field label="Hoeveel keer opnieuw?">
+          <div className="flex items-center gap-3">
+            <Stepper
+              value={mof.opnieuwAantal ?? 1}
+              onChange={(v) => onChange({ opnieuwAantal: Math.max(1, v) })}
+              min={1}
+              max={10}
+            />
+            <span className="text-xs text-muted-foreground">
+              → mofset × {1 + Math.max(1, mof.opnieuwAantal ?? 1)} (1 tijdelijk + {Math.max(1, mof.opnieuwAantal ?? 1)} opnieuw)
+            </span>
+          </div>
+        </Field>
+      )}
     </div>
   );
 }
