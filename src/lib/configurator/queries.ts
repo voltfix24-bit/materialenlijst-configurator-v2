@@ -156,6 +156,19 @@ export function useStamdata(caseType: string | undefined) {
     },
   });
 
+  const msKabelRegels = useQuery({
+    queryKey: ["ms_kabel_regels"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ms_kabel_regels")
+        .select("*, artikel:artikel_id(*)")
+        .eq("actief", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   return {
     artikelen,
     rmuConfigs,
@@ -171,6 +184,7 @@ export function useStamdata(caseType: string | undefined) {
     trafoRegels,
     lsRekRegels,
     provRegels,
+    msKabelRegels,
     isLoading:
       artikelen.isLoading ||
       rmuConfigs.isLoading ||
