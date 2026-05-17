@@ -431,24 +431,7 @@ export function berekenPreview(config: MaterialenConfig, sd: Stamdata, caseType:
         const bpNr = buispatroonProv[config.provRmuMerk]?.[config.provZekeringKva ?? ""];
         if (bpNr) add(map, findArtNr(bpNr), 3, "Provisorium buispatroon", "provisorium");
       }
-      if (veld.veldType === "C" || veld.veldType === "V") {
-        if (config.provRmuMerk === "Magnefix") {
-          add(map, findArtNr("20039648"), 1, `Provisorium K-veld ${veld.veldNummer} eindsluiting`, "provisorium");
-          add(map, findArtNr("20018032"), 1, `Provisorium K-veld ${veld.veldNummer} afschermset`, "provisorium");
-        } else {
-          if (veld.kabelType === "240AL")
-            add(map, findArtNr("20040681"), 1, `Provisorium ${veld.veldType}-veld eindsluiting`, "provisorium");
-          else if (veld.kabelType === "630AL")
-            add(map, findArtNr("20040678"), 1, `Provisorium ${veld.veldType}-veld eindsluiting`, "provisorium");
-        }
-      }
-    }
-    if (config.provRmuMerk === "Magnefix") {
-      const aantalK = (config.provRmuVelden ?? []).filter(
-        (v) => v.veldType === "C" || v.veldType === "V",
-      ).length;
-      const doosNr = aantalK <= 2 ? "20029904" : "20029905";
-      add(map, findArtNr(doosNr), 1, "Provisorium doos onderdelen", "provisorium");
+      // C/V-veld eindsluitingen en doos onderdelen lopen via in-bedrijfname (provInbMsKabels)
     }
 
     if (config.provLsMoffenActief) {
