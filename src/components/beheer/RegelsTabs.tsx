@@ -684,8 +684,10 @@ export function MsKabelRegelsTab() {
 }
 
 // === RMU veld regels ===
+// Vriendelijke versie staat in RmuVeldRegelsTab.tsx
+export { RmuVeldRegelsTab } from "./RmuVeldRegelsTab";
 
-type RmuVeldRegel = {
+type _RmuVeldRegel_unused = {
   id: string;
   conditie_merk: string | null;
   conditie_is_inet: boolean | null;
