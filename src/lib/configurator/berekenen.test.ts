@@ -26,13 +26,14 @@ function makeStamdata(): Stamdata {
     rmuConfigs: empty,
     rmuVeldArtikelen: empty,
     rmuZekeringen: empty,
-    
     msMofTypes: empty,
     msMofMaterialen: empty,
     lsMofTypes: empty,
     lsMofMaterialen: empty,
     standaardTemplates: templates,
     stationVaste: empty,
+    ggiRegels: empty,
+    trafoRegels: empty,
     isLoading: false,
   } as unknown as Stamdata;
 }
