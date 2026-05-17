@@ -418,6 +418,7 @@ function lsMof(opts: Partial<LsMof> = {}): LsMof {
     ringklemHandmatig: false,
     aantal: 1,
     kanZwaaien: null,
+    opnieuwAantal: 1,
     kabelLengteMeters: 0,
     heeftOversteek: false,
     aantalOversteken: 0,
