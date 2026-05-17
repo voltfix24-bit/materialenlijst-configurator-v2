@@ -54,6 +54,7 @@ interface StamdataOverrides {
   trafoRegels?: unknown[];
   lsRekRegels?: unknown[];
   provRegels?: unknown[];
+  msKabelRegels?: unknown[];
 }
 
 // Vaste seed van GGI- en Trafo-regels, identiek aan de DB-seed in productie.
@@ -185,6 +186,30 @@ const DEFAULT_PROV_REGELS = [
   artikel: art(nr as string),
 }));
 
+// MS kabel-regels seed — identiek aan DB-seed.
+// Tuple: [kabelType, oversteek, nr, qty, formule, label]
+const DEFAULT_MS_KABEL_REGELS = [
+  ["240AL_singel", null,  "20039484", 1, "KabelMeters",        "MS kabel"],
+  ["630AL_singel", null,  "20027992", 1, "KabelMeters",        "MS kabel"],
+  ["3x240AL",      null,  "20027989", 1, "KabelMeters",        "MS kabel"],
+  [null,           null,  "20018148", 1, "RollenBeschermband", "MS kabel beschermband"],
+  ["240AL_singel", true,  "20036049", 1, "TotaalBuizen",       "MS kabel oversteek"],
+  ["630AL_singel", true,  "20036049", 1, "TotaalBuizen",       "MS kabel oversteek"],
+  ["3x240AL",      true,  "20028640", 1, "TotaalBuizen",       "MS kabel oversteek"],
+  [null,           true,  "20043703", 1, "GeotextielAantal",   "MS kabel oversteek geotextiel"],
+].map(([kt, ov, nr, qty, formule, label], i) => ({
+  id: `mskab-${i}`,
+  conditie_kabel_type: kt as string | null,
+  conditie_oversteek: ov as boolean | null,
+  artikel_id: `art-${nr}`,
+  hoeveelheid: qty as number,
+  hoeveelheid_formule: formule as string | null,
+  herkomst_label: label as string,
+  sort_order: i,
+  actief: true,
+  artikel: art(nr as string),
+}));
+
 function makeStamdata(o: StamdataOverrides = {}): Stamdata {
   const wrap = <T>(data: T[]) => ({ data, isLoading: false } as unknown as Stamdata["artikelen"]);
   const arts = (o.artikelNummers ?? []).map((n) => art(n));
@@ -203,6 +228,7 @@ function makeStamdata(o: StamdataOverrides = {}): Stamdata {
     trafoRegels: wrap(o.trafoRegels ?? DEFAULT_TRAFO_REGELS),
     lsRekRegels: wrap(o.lsRekRegels ?? DEFAULT_LS_REK_REGELS),
     provRegels: wrap(o.provRegels ?? DEFAULT_PROV_REGELS),
+    msKabelRegels: wrap(o.msKabelRegels ?? DEFAULT_MS_KABEL_REGELS),
     isLoading: false,
   } as unknown as Stamdata;
 }

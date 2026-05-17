@@ -6,7 +6,7 @@ import { ArtikelenTab } from "@/components/beheer/ArtikelenTab";
 import { RmuTab } from "@/components/beheer/RmuTab";
 import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
 import { StandaardMaterialenTab, VasteArtikelenTab } from "@/components/beheer/OverigeTabs";
-import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab } from "@/components/beheer/RegelsTabs";
+import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab } from "@/components/beheer/RegelsTabs";
 
 export const Route = createFileRoute("/beheer")({
   component: BeheerPage,
@@ -23,6 +23,7 @@ const TABS = [
   { key: "trafo_regels", label: "Trafo regels" },
   { key: "lsrek_regels", label: "LS-rek regels" },
   { key: "prov_regels", label: "Provisorium regels" },
+  { key: "ms_kabel_regels", label: "MS kabel regels" },
   { key: "ggi", label: "GGI artikelen" },
 ] as const;
 
@@ -62,6 +63,7 @@ function BeheerPage() {
       {tab === "trafo_regels" && <TrafoRegelsTab />}
       {tab === "lsrek_regels" && <LsRekRegelsTab />}
       {tab === "prov_regels" && <ProvRegelsTab />}
+      {tab === "ms_kabel_regels" && <MsKabelRegelsTab />}
       {tab === "ggi" && <GgiRegelsTab />}
       
     </div>

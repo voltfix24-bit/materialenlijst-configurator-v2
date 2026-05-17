@@ -35,7 +35,7 @@ export function berekenPreview(
   berekenRmuVelden(map, config, ctx);              // 3b
   berekenTrafo(map, config, sd, ctx);              // 3c + 3d (DB-driven)
   berekenMsMoffen(map, config, sd, ctx);           // 4
-  berekenMsKabelTraces(map, config, ctx);          // 4b
+  berekenMsKabelTraces(map, config, sd);           // 4b (DB-driven)
   berekenLsMoffen(map, config, sd, ctx);           // 5
   berekenVultKabel(map, config, ctx);              // 6
   berekenLsRek(map, config, sd, ctx);              // 7 (DB-driven)

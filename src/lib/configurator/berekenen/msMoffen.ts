@@ -2,7 +2,6 @@ import type { MaterialenConfig, MsMofConfig } from "../types";
 import type { Stamdata } from "../queries";
 import { evaluateFormula } from "../formula";
 import { add, type ArtikelLike, type BerekenCtx, type PreviewMap } from "./shared";
-import { MS_KABEL } from "./artikelnummers";
 
 /** Sectie 4: MS moffen (tijdelijk + eventueel definitief bij provisorium). */
 export function berekenMsMoffen(
@@ -34,41 +33,54 @@ export function berekenMsMoffen(
   }
 }
 
-/** Sectie 4b: MS kabel traces (kabel + beschermband + oversteek). */
+interface MsKabelRegel {
+  conditie_kabel_type: string | null;
+  conditie_oversteek: boolean | null;
+  hoeveelheid: number | string;
+  hoeveelheid_formule: string | null;
+  herkomst_label: string;
+  artikel?: ArtikelLike["artikel"];
+}
+
+/** Sectie 4b: MS kabel traces — DB-driven via ms_kabel_regels. */
 export function berekenMsKabelTraces(
   map: PreviewMap,
   config: MaterialenConfig,
-  ctx: BerekenCtx,
+  sd: Stamdata,
 ): void {
-  const { findArtNr } = ctx;
-  for (const trace of config.msKabelTraces ?? []) {
+  const regels = (sd.msKabelRegels.data ?? []) as unknown as MsKabelRegel[];
+  if (regels.length === 0) return;
+
+  for (let i = 0; i < (config.msKabelTraces ?? []).length; i++) {
+    const trace = config.msKabelTraces[i];
     if (!trace.kabelType || trace.lengteMeters <= 0) continue;
-    const idx = config.msKabelTraces.indexOf(trace) + 1;
+    const idx = i + 1;
     const isSingel = trace.kabelType === "240AL_singel" || trace.kabelType === "630AL_singel";
-    const kabelMeters = isSingel ? trace.lengteMeters * 3 : trace.lengteMeters;
+    const heeftOversteek =
+      trace.heeftOversteek && trace.oversteekMeters > 0 && trace.aantalOversteken > 0;
 
-    if (trace.kabelType === "240AL_singel")
-      add(map, findArtNr(MS_KABEL.K_240AL_SINGEL), kabelMeters, `MS kabel trace ${idx}`, "msVerbindingen");
-    else if (trace.kabelType === "630AL_singel")
-      add(map, findArtNr(MS_KABEL.K_630AL_SINGEL), kabelMeters, `MS kabel trace ${idx}`, "msVerbindingen");
-    else if (trace.kabelType === "3x240AL")
-      add(map, findArtNr(MS_KABEL.K_3X240AL), kabelMeters, `MS kabel trace ${idx}`, "msVerbindingen");
+    const buizenPerOversteek = heeftOversteek ? Math.ceil(trace.oversteekMeters / 6) : 0;
+    const vars: Record<string, number> = {
+      LengteMeters: trace.lengteMeters,
+      KabelMeters: isSingel ? trace.lengteMeters * 3 : trace.lengteMeters,
+      OversteekMeters: trace.oversteekMeters,
+      AantalOversteken: trace.aantalOversteken,
+      RollenBeschermband: Math.ceil(trace.lengteMeters / 40),
+      BuizenPerOversteek: buizenPerOversteek,
+      TotaalBuizen: buizenPerOversteek * trace.aantalOversteken,
+      GeotextielAantal: trace.aantalOversteken * 2,
+    };
 
-    const rollen = Math.ceil(trace.lengteMeters / 40);
-    add(map, findArtNr(MS_KABEL.BESCHERMBAND), rollen, `MS kabel beschermband trace ${idx}`, "msVerbindingen");
+    for (const r of regels) {
+      if (r.conditie_kabel_type !== null && r.conditie_kabel_type !== trace.kabelType) continue;
+      if (r.conditie_oversteek === true && !heeftOversteek) continue;
+      if (r.conditie_oversteek === false && heeftOversteek) continue;
 
-    if (trace.heeftOversteek && trace.oversteekMeters > 0 && trace.aantalOversteken > 0) {
-      const buizenPerOversteek = Math.ceil(trace.oversteekMeters / 6);
-      const totaalBuizen = buizenPerOversteek * trace.aantalOversteken;
-      const buisNr = isSingel ? MS_KABEL.BUIS_SINGEL : MS_KABEL.BUIS_TRIPLE;
-      add(map, findArtNr(buisNr), totaalBuizen, `MS kabel oversteek trace ${idx}`, "msVerbindingen");
-      add(
-        map,
-        findArtNr(MS_KABEL.GEOTEXTIEL),
-        trace.aantalOversteken * 2,
-        `MS kabel oversteek geotextiel trace ${idx}`,
-        "msVerbindingen",
-      );
+      const qty = r.hoeveelheid_formule
+        ? evaluateFormula(r.hoeveelheid_formule, vars)
+        : Number(r.hoeveelheid);
+      if (qty <= 0) continue;
+      add(map, r.artikel, qty, `${r.herkomst_label} trace ${idx}`, "msVerbindingen");
     }
   }
 }
