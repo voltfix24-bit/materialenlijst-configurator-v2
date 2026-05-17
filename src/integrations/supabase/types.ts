@@ -604,6 +604,48 @@ export type Database = {
           },
         ]
       }
+      prov_regels: {
+        Row: {
+          actief: boolean
+          artikel_id: string
+          conditie_kva: string | null
+          conditie_merk: string | null
+          created_at: string
+          herkomst_label: string
+          hoeveelheid: number
+          hoeveelheid_formule: string | null
+          id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actief?: boolean
+          artikel_id: string
+          conditie_kva?: string | null
+          conditie_merk?: string | null
+          created_at?: string
+          herkomst_label: string
+          hoeveelheid?: number
+          hoeveelheid_formule?: string | null
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actief?: boolean
+          artikel_id?: string
+          conditie_kva?: string | null
+          conditie_merk?: string | null
+          created_at?: string
+          herkomst_label?: string
+          hoeveelheid?: number
+          hoeveelheid_formule?: string | null
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rmu_configuraties: {
         Row: {
           aantal_c: number
