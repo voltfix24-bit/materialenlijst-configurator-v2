@@ -55,6 +55,7 @@ interface StamdataOverrides {
   lsRekRegels?: unknown[];
   provRegels?: unknown[];
   msKabelRegels?: unknown[];
+  rmuVeldRegels?: unknown[];
 }
 
 // Vaste seed van GGI- en Trafo-regels, identiek aan de DB-seed in productie.
@@ -210,6 +211,61 @@ const DEFAULT_MS_KABEL_REGELS = [
   artikel: art(nr as string),
 }));
 
+// RMU veld-regels seed — identiek aan DB-seed (Magnefix / ABB / Siemens).
+const DEFAULT_RMU_VELD_REGELS = [
+  ["Magnefix", null,  "F", null, null, null,    null,  null,   null, null, "20039303", 1, "Magnefix T-veld eindsluiting",              "rmu"],
+  ["ABB",      null,  "F", null, null, null,    null,  null,   null, null, "20041682", 1, "RMU F-veld eindsluiting",                   "rmu"],
+  ["Siemens",  null,  "F", null, null, null,    null,  null,   null, null, "20041682", 1, "RMU F-veld eindsluiting",                   "rmu"],
+  [null,       null,  "F", null, null, null,    null,  "7.25", null, null, "20032539", 1, "Trafo kabel 7,25m",                         "trafo"],
+  [null,       null,  "F", null, null, null,    null,  "10",   null, null, "20032541", 1, "Trafo kabel 10m",                           "trafo"],
+  ["Magnefix", null,  "F", null, null, null,    "250", null,   null, null, "20019483", 3, "Magnefix buispatroon",                      "rmu"],
+  ["Magnefix", null,  "F", null, null, null,    "400", null,   null, null, "20019484", 3, "Magnefix buispatroon",                      "rmu"],
+  ["Magnefix", null,  "F", null, null, null,    "630", null,   null, null, "20019485", 3, "Magnefix buispatroon",                      "rmu"],
+  ["ABB",      null,  "F", null, null, null,    "250", null,   null, null, "20041591", 3, "RMU buispatroon",                           "rmu"],
+  ["ABB",      null,  "F", null, null, null,    "400", null,   null, null, "20041593", 3, "RMU buispatroon",                           "rmu"],
+  ["ABB",      null,  "F", null, null, null,    "630", null,   null, null, "20041651", 3, "RMU buispatroon",                           "rmu"],
+  ["Siemens",  null,  "F", null, null, null,    "250", null,   null, null, "20041591", 3, "RMU buispatroon",                           "rmu"],
+  ["Siemens",  null,  "F", null, null, null,    "400", null,   null, null, "20041593", 3, "RMU buispatroon",                           "rmu"],
+  ["Siemens",  null,  "F", null, null, null,    "630", null,   null, null, "20041651", 3, "RMU buispatroon",                           "rmu"],
+  ["Magnefix", null,  "C", null, null, null,    null,  null,   null, null, "20039648", 1, "Magnefix K-veld {veldNummer} eindsluiting", "rmu"],
+  ["Magnefix", null,  "V", null, null, null,    null,  null,   null, null, "20039648", 1, "Magnefix K-veld {veldNummer} eindsluiting", "rmu"],
+  ["Magnefix", null,  "C", null, null, null,    null,  null,   null, null, "20018032", 1, "Magnefix K-veld {veldNummer} afschermset",  "rmu"],
+  ["Magnefix", null,  "V", null, null, null,    null,  null,   null, null, "20018032", 1, "Magnefix K-veld {veldNummer} afschermset",  "rmu"],
+  ["Magnefix", null,  "C", true, null, null,    null,  null,   null, 2,    "20029904", 1, "Magnefix doos met onderdelen",              "rmu"],
+  ["Magnefix", null,  "C", true, null, null,    null,  null,   3,    null, "20029905", 1, "Magnefix doos met onderdelen",              "rmu"],
+  ["ABB",      null,  "C", null, false, "240AL", null, null,   null, null, "20040681", 1, "RMU C-veld eindsluiting",                   "rmu"],
+  ["ABB",      null,  "V", null, false, "240AL", null, null,   null, null, "20040681", 1, "RMU V-veld eindsluiting",                   "rmu"],
+  ["Siemens",  null,  "C", null, false, "240AL", null, null,   null, null, "20040681", 1, "RMU C-veld eindsluiting",                   "rmu"],
+  ["Siemens",  null,  "V", null, false, "240AL", null, null,   null, null, "20040681", 1, "RMU V-veld eindsluiting",                   "rmu"],
+  ["ABB",      null,  "C", null, false, "630AL", null, null,   null, null, "20040678", 1, "RMU C-veld eindsluiting",                   "rmu"],
+  ["ABB",      null,  "V", null, false, "630AL", null, null,   null, null, "20040678", 1, "RMU V-veld eindsluiting",                   "rmu"],
+  ["Siemens",  null,  "C", null, false, "630AL", null, null,   null, null, "20040678", 1, "RMU C-veld eindsluiting",                   "rmu"],
+  ["Siemens",  null,  "V", null, false, "630AL", null, null,   null, null, "20040678", 1, "RMU V-veld eindsluiting",                   "rmu"],
+  ["ABB",      true,  "V", null, false, "630AL", null, null,   null, null, "20043486", 1, "Ombouwset CT 630AL V-veld",                 "rmu"],
+  ["Siemens",  true,  "V", null, false, "630AL", null, null,   null, null, "20043486", 1, "Ombouwset CT 630AL V-veld",                 "rmu"],
+  ["ABB",      false, "V", null, false, "630AL", null, null,   null, null, "20043756", 1, "Ombouwset CT 630AL V-veld",                 "rmu"],
+  ["Siemens",  false, "V", null, false, "630AL", null, null,   null, null, "20043756", 1, "Ombouwset CT 630AL V-veld",                 "rmu"],
+].map(([merk, inet, vt, vn1, res, kt, kva, kl, kvmin, kvmax, nr, qty, lbl, sectie], i) => ({
+  id: `rmuveld-${i}`,
+  conditie_merk: merk as string | null,
+  conditie_is_inet: inet as boolean | null,
+  conditie_veld_type: vt as string | null,
+  conditie_veld_nummer_is_1: vn1 as boolean | null,
+  conditie_is_reserve: res as boolean | null,
+  conditie_kabel_type: kt as string | null,
+  conditie_kva: kva as string | null,
+  conditie_trafo_kabel_lengte: kl as string | null,
+  conditie_aantal_kv_min: kvmin as number | null,
+  conditie_aantal_kv_max: kvmax as number | null,
+  artikel_id: `art-${nr}`,
+  hoeveelheid: qty as number,
+  herkomst_label: lbl as string,
+  sectie: sectie as string,
+  sort_order: i,
+  actief: true,
+  artikel: art(nr as string),
+}));
+
 function makeStamdata(o: StamdataOverrides = {}): Stamdata {
   const wrap = <T>(data: T[]) => ({ data, isLoading: false } as unknown as Stamdata["artikelen"]);
   const arts = (o.artikelNummers ?? []).map((n) => art(n));
@@ -229,6 +285,7 @@ function makeStamdata(o: StamdataOverrides = {}): Stamdata {
     lsRekRegels: wrap(o.lsRekRegels ?? DEFAULT_LS_REK_REGELS),
     provRegels: wrap(o.provRegels ?? DEFAULT_PROV_REGELS),
     msKabelRegels: wrap(o.msKabelRegels ?? DEFAULT_MS_KABEL_REGELS),
+    rmuVeldRegels: wrap(o.rmuVeldRegels ?? DEFAULT_RMU_VELD_REGELS),
     isLoading: false,
   } as unknown as Stamdata;
 }

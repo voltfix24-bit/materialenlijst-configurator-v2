@@ -1,13 +1,24 @@
-import type { MaterialenConfig } from "../types";
+import type { MaterialenConfig, RmuVeldConfig } from "../types";
 import type { Stamdata } from "../queries";
 import { evaluateFormula } from "../formula";
 import { add, type ArtikelLike, type BerekenCtx, type PreviewMap } from "./shared";
-import {
-  TRAFO_KABEL,
-  BUISPATROON_MAGNEFIX,
-  BUISPATROON_ABB_SIEMENS,
-  RMU_EINDSLUITING,
-} from "./artikelnummers";
+
+interface RmuVeldRegel {
+  conditie_merk: string | null;
+  conditie_is_inet: boolean | null;
+  conditie_veld_type: string | null;
+  conditie_veld_nummer_is_1: boolean | null;
+  conditie_is_reserve: boolean | null;
+  conditie_kabel_type: string | null;
+  conditie_kva: string | null;
+  conditie_trafo_kabel_lengte: string | null;
+  conditie_aantal_kv_min: number | null;
+  conditie_aantal_kv_max: number | null;
+  hoeveelheid: number | string;
+  herkomst_label: string;
+  sectie: string;
+  artikel?: ArtikelLike["artikel"];
+}
 
 /** Sectie 3: RMU basis + veld-formules + zekeringen. */
 export function berekenRmuBasis(
@@ -50,72 +61,59 @@ export function berekenRmuBasis(
   }
 }
 
-/** Sectie 3b: RMU veld-specifieke artikelen (Magnefix / ABB / Siemens) + I-Net. */
+/** Matcht één regel tegen één veld + config-context. */
+function matchVeldRegel(
+  r: RmuVeldRegel,
+  veld: RmuVeldConfig,
+  config: MaterialenConfig,
+  aantalKv: number,
+): boolean {
+  if (r.conditie_merk !== null && r.conditie_merk !== config.rmuMerk) return false;
+  if (r.conditie_is_inet !== null && r.conditie_is_inet !== (config.rmuInet === "ja")) return false;
+  if (r.conditie_veld_type !== null && r.conditie_veld_type !== veld.veldType) return false;
+  if (r.conditie_veld_nummer_is_1 === true && veld.veldNummer !== 1) return false;
+  if (r.conditie_is_reserve !== null && r.conditie_is_reserve !== !!veld.isReserve) return false;
+  if (r.conditie_kabel_type !== null && r.conditie_kabel_type !== (veld.kabelType ?? "")) return false;
+  if (r.conditie_kva !== null && r.conditie_kva !== (config.trafoKva ?? "")) return false;
+  if (r.conditie_trafo_kabel_lengte !== null && r.conditie_trafo_kabel_lengte !== (config.trafoKabelLengte ?? "")) return false;
+  if (r.conditie_aantal_kv_min !== null && aantalKv < r.conditie_aantal_kv_min) return false;
+  if (r.conditie_aantal_kv_max !== null && aantalKv > r.conditie_aantal_kv_max) return false;
+  return true;
+}
+
+/**
+ * Sectie 3b: RMU veld-specifieke artikelen (Magnefix / ABB / Siemens) + I-Net.
+ *
+ * Alle artikelen + condities komen uit `rmu_veld_regels`. Voor elke
+ * veld × regel-combinatie wordt geëvalueerd. Het label kan
+ * `{veldNummer}` bevatten voor per-veld nummering. I-Net engineer-input
+ * artikelen blijven in code (per-case data).
+ */
 export function berekenRmuVelden(
   map: PreviewMap,
   config: MaterialenConfig,
+  sd: Stamdata,
   ctx: BerekenCtx,
 ): void {
   if (!config.rmuConfig) return;
-  const isInetCfg = config.rmuInet === "ja";
-  const isMagnefix = config.rmuMerk === "Magnefix";
   const { findArtNr } = ctx;
+  const regels = (sd.rmuVeldRegels.data ?? []) as unknown as RmuVeldRegel[];
+  const velden = config.rmuVelden ?? [];
+  const aantalKv = velden.filter((v) => v.veldType === "C" || v.veldType === "V").length;
 
-  for (const veld of config.rmuVelden ?? []) {
-    // ── MAGNEFIX ─────────────────────────────────────────
-    if (isMagnefix) {
-      if (veld.veldType === "F") {
-        add(map, findArtNr(RMU_EINDSLUITING.MAGNEFIX_T_VELD), 1, "Magnefix T-veld eindsluiting", "rmu");
-        if (config.trafoKabelLengte === "7.25") {
-          add(map, findArtNr(TRAFO_KABEL.L_7_25), 1, "Trafo kabel 7,25m", "trafo");
-        } else if (config.trafoKabelLengte === "10") {
-          add(map, findArtNr(TRAFO_KABEL.L_10), 1, "Trafo kabel 10m", "trafo");
-        }
-        const mpNr = BUISPATROON_MAGNEFIX[config.trafoKva ?? ""];
-        if (mpNr) add(map, findArtNr(mpNr), 3, "Magnefix buispatroon", "rmu");
-      }
-      if (veld.veldType === "C" || veld.veldType === "V") {
-        add(map, findArtNr(RMU_EINDSLUITING.MAGNEFIX_K_VELD), 1, `Magnefix K-veld ${veld.veldNummer} eindsluiting`, "rmu");
-        add(map, findArtNr(RMU_EINDSLUITING.MAGNEFIX_AFSCHERM), 1, `Magnefix K-veld ${veld.veldNummer} afschermset`, "rmu");
-      }
-      if (veld.veldType === "C" && veld.veldNummer === 1) {
-        const aantalK = (config.rmuVelden ?? []).filter(
-          (v) => v.veldType === "C" || v.veldType === "V",
-        ).length;
-        // Behoud bestaand gedrag: ≤2 → 20029904, anders 20029905
-        const doosNr = aantalK <= 2 ? "20029904" : RMU_EINDSLUITING.MAGNEFIX_DOOS;
-        add(map, findArtNr(doosNr), 1, "Magnefix doos met onderdelen", "rmu");
-      }
-      continue;
-    }
-
-    // ── ABB / SIEMENS ────────────────────────────────────
-    if (veld.veldType === "F") {
-      add(map, findArtNr(RMU_EINDSLUITING.ABB_F_VELD), 1, "RMU F-veld eindsluiting", "rmu");
-      if (config.trafoKabelLengte === "7.25") {
-        add(map, findArtNr(TRAFO_KABEL.L_7_25), 1, "Trafo kabel 7,25m", "trafo");
-      } else if (config.trafoKabelLengte === "10") {
-        add(map, findArtNr(TRAFO_KABEL.L_10), 1, "Trafo kabel 10m", "trafo");
-      }
-      const bpNr = BUISPATROON_ABB_SIEMENS[config.trafoKva ?? ""];
-      if (bpNr) add(map, findArtNr(bpNr), 3, "RMU buispatroon", "rmu");
-    }
-
-    if ((veld.veldType === "C" || veld.veldType === "V") && !veld.isReserve) {
-      if (veld.kabelType === "240AL") {
-        add(map, findArtNr(RMU_EINDSLUITING.ABB_CV_240AL), 1, `RMU ${veld.veldType}-veld eindsluiting`, "rmu");
-      } else if (veld.kabelType === "630AL") {
-        add(map, findArtNr(RMU_EINDSLUITING.ABB_CV_630AL), 1, `RMU ${veld.veldType}-veld eindsluiting`, "rmu");
-        if (veld.veldType === "V") {
-          const ombouw = isInetCfg ? RMU_EINDSLUITING.OMBOUW_CT_INET : RMU_EINDSLUITING.OMBOUW_CT_GEEN;
-          add(map, findArtNr(ombouw), 1, "Ombouwset CT 630AL V-veld", "rmu");
-        }
-      }
+  for (const veld of velden) {
+    for (const r of regels) {
+      if (!matchVeldRegel(r, veld, config, aantalKv)) continue;
+      const label = r.herkomst_label.includes("{veldNummer}")
+        ? r.herkomst_label.replace("{veldNummer}", String(veld.veldNummer))
+        : r.herkomst_label;
+      const sectie = (r.sectie as "rmu" | "trafo") ?? "rmu";
+      add(map, r.artikel, Number(r.hoeveelheid), label, sectie);
     }
   }
 
-  // I-Net vaste artikelen
-  if (isInetCfg) {
+  // I-Net vaste artikelen (engineer-input per case)
+  if (config.rmuInet === "ja") {
     for (const ia of config.iNetArtikelen ?? []) {
       if (ia.hoeveelheid > 0) {
         add(map, findArtNr(ia.artikel_nummer), ia.hoeveelheid, "I-Net", "rmu");

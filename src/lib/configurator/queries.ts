@@ -169,6 +169,19 @@ export function useStamdata(caseType: string | undefined) {
     },
   });
 
+  const rmuVeldRegels = useQuery({
+    queryKey: ["rmu_veld_regels"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rmu_veld_regels")
+        .select("*, artikel:artikel_id(*)")
+        .eq("actief", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   return {
     artikelen,
     rmuConfigs,
@@ -185,6 +198,7 @@ export function useStamdata(caseType: string | undefined) {
     lsRekRegels,
     provRegels,
     msKabelRegels,
+    rmuVeldRegels,
     isLoading:
       artikelen.isLoading ||
       rmuConfigs.isLoading ||
