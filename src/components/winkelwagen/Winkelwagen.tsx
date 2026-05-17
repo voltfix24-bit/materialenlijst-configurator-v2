@@ -756,33 +756,52 @@ function WinkelwagenRij({
 
       {/* Acties — alleen op hover */}
       <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        {item.herkomst.length > 0 && !isVerwijderd && (
+        {item.bijdragen.length > 0 && !isVerwijderd && (
           <Popover>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 onClick={(e) => e.stopPropagation()}
                 className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors"
-                aria-label="Toon herkomst"
+                aria-label="Toon bronoverzicht"
               >
-                {item.herkomst.length > 1 ? (
-                  <span className="text-[10px] font-mono">{item.herkomst.length}</span>
+                {item.bijdragen.length > 1 ? (
+                  <span className="text-[10px] font-mono">{item.bijdragen.length}</span>
                 ) : (
                   <Info className="w-3 h-3" />
                 )}
               </button>
             </PopoverTrigger>
-            <PopoverContent side="left" align="start" className="w-72 p-3">
-              <div className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide">
-                Herkomst ({item.herkomst.length})
+            <PopoverContent side="left" align="start" className="w-80 p-3">
+              <div className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide flex items-center justify-between">
+                <span>Bronoverzicht</span>
+                <span className="font-mono text-foreground">
+                  Σ {item.hoeveelheid} {item.eenheid}
+                </span>
               </div>
               <ul className="space-y-1.5">
-                {item.herkomst.map((h, i) => (
-                  <li key={i} className="text-sm flex gap-2">
-                    <span className="text-muted-foreground font-mono text-xs shrink-0 mt-0.5">{i + 1}.</span>
-                    <span className="break-words">{h}</span>
-                  </li>
-                ))}
+                {item.bijdragen.map((b, i) => {
+                  const def = PREVIEW_SECTIE_DEFS.find((d) => d.key === b.sectie);
+                  return (
+                    <li key={i} className="text-xs flex items-start gap-2">
+                      <span
+                        className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
+                        style={{ background: def?.color ?? "#999" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="font-medium break-words">{b.herkomst}</span>
+                          <span className="font-mono tabular-nums text-foreground shrink-0">
+                            {b.hoeveelheid} {item.eenheid}
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
+                          {def?.label ?? b.sectie}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </PopoverContent>
           </Popover>
