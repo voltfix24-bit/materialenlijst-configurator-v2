@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ConfirmDelete, DataTable, FormDialog, FormField, FormRow, RowActions } from "./shared";
 import { ArtikelZoeker } from "./ArtikelZoeker";
 import { ArtikelLabel } from "./RmuTab";
+import { LsRekTestPaneel } from "./LsRekTestPaneel";
 
 // === GGI artikelen ===
 
@@ -311,6 +312,7 @@ export function LsRekRegelsTab() {
 
   return (
     <div className="space-y-3">
+      <LsRekTestPaneel />
       <div className="flex justify-end">
         <Button onClick={startNew}><Plus className="h-4 w-4 mr-1" /> LS-rek regel toevoegen</Button>
       </div>
