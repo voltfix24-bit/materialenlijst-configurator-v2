@@ -7,7 +7,7 @@ import { berekenStandaard } from "./berekenen/standaard";
 import { berekenRmuBasis, berekenRmuVelden } from "./berekenen/rmu";
 import { berekenTrafo } from "./berekenen/trafo";
 import { berekenMsMoffen, berekenMsKabelTraces } from "./berekenen/msMoffen";
-import { berekenLsMoffen } from "./berekenen/lsMoffen";
+import { berekenLsMoffen, berekenLsKabelTraces } from "./berekenen/lsMoffen";
 import { berekenVultKabel } from "./berekenen/vultKabel";
 export { vultKabelSpecsFromStamdata, type VultKabelSpec } from "./berekenen/vultKabel";
 import { berekenLsRek } from "./berekenen/lsRek";
