@@ -389,6 +389,24 @@ export function Winkelwagen({
     });
   };
 
+  const toggleUitgeklapt = (nr: string) => {
+    setUitgeklapt((prev) => {
+      const s = new Set(prev);
+      if (s.has(nr)) s.delete(nr);
+      else s.add(nr);
+      return s;
+    });
+  };
+
+  const zetNotitie = (nr: string, v: string) => {
+    setNotities((prev) => {
+      const m = new Map(prev);
+      if (v.trim()) m.set(nr, v);
+      else m.delete(nr);
+      return m;
+    });
+  };
+
   // Welke secties hebben nieuwe items terwijl ze ingeklapt zijn → groene puls
   const sectiesMetNieuw = useMemo(() => {
     const s = new Set<string>();
