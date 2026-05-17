@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ConfirmDelete, DataTable, FormDialog, FormField, FormRow, RowActions } from "./shared";
 import { ArtikelZoeker } from "./ArtikelZoeker";
 import { ArtikelLabel } from "./RmuTab";
+import { LsRekTestPaneel } from "./LsRekTestPaneel";
 
 // === GGI artikelen ===
 
