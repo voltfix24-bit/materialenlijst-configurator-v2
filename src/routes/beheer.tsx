@@ -6,7 +6,7 @@ import { ArtikelenTab } from "@/components/beheer/ArtikelenTab";
 import { RmuTab } from "@/components/beheer/RmuTab";
 import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
 import { StandaardMaterialenTab, VasteArtikelenTab } from "@/components/beheer/OverigeTabs";
-import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab } from "@/components/beheer/RegelsTabs";
+import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 
 export const Route = createFileRoute("/beheer")({
   component: BeheerPage,
