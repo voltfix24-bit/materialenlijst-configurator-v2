@@ -56,6 +56,7 @@ interface StamdataOverrides {
   provRegels?: unknown[];
   msKabelRegels?: unknown[];
   rmuVeldRegels?: unknown[];
+  trafoVultKabelSpecs?: unknown[];
 }
 
 // Vaste seed van GGI- en Trafo-regels, identiek aan de DB-seed in productie.
@@ -264,6 +265,27 @@ const DEFAULT_RMU_VELD_REGELS = [
   sort_order: i,
   actief: true,
   artikel: art(nr as string),
+}));
+
+// Vult-kabel specs seed — identiek aan DB-seed.
+// Tuple: [kva, aantalKabels, doorsnede, kabelNr, aantalPers, persNr, muurNr, oms]
+const DEFAULT_VULT_KABEL_SPECS = [
+  [250, 4, 185, "20030299", 8,  "20000986", "20042739", "4× 1x185mm² Cu (enkelvoudig)"],
+  [400, 4, 300, "20030300", 8,  "20017790", "20042739", "4× 1x300mm² Cu (enkelvoudig)"],
+  [630, 8, 185, "20030299", 16, "20000986", "20042739", "8× 1x185mm² Cu (dubbel uitgevoerd)"],
+  [1000,8, 300, "20030300", 16, "20017790", "20042739", "8× 1x300mm² Cu (dubbel uitgevoerd)"],
+].map(([kva, ak, dn, knr, ap, pnr, mnr, oms], i) => ({
+  id: `vk-${i}`,
+  trafo_kva: kva as number,
+  aantal_kabels: ak as number,
+  kabel_doorsnede: dn as number,
+  aantal_perskabelschoenen: ap as number,
+  omschrijving: oms as string,
+  sort_order: i,
+  actief: true,
+  kabel_artikel: art(knr as string),
+  perskabelschoen_artikel: art(pnr as string),
+  muurbeugel_artikel: art(mnr as string),
 }));
 
 function makeStamdata(o: StamdataOverrides = {}): Stamdata {
