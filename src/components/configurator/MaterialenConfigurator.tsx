@@ -1262,9 +1262,9 @@ function MofFormulier({
       mt.bestaand_type === mof.bestaandType &&
       mof.bestaandDoorsnede! >= (mt.bestaand_doorsnede_min ?? 0) &&
       mof.bestaandDoorsnede! <= (mt.bestaand_doorsnede_max ?? 9999) &&
-      (mt.nieuwe_type === null || mt.nieuwe_type === mof.nieuwType || mt.nieuwe_type === "beide") &&
-      (mt.nieuwe_doorsnede_min === null || mof.nieuwDoorsnede! >= mt.nieuwe_doorsnede_min) &&
-      (mt.nieuwe_doorsnede_max === null || mof.nieuwDoorsnede! <= mt.nieuwe_doorsnede_max),
+      (mt.nieuwe_type === mof.nieuwType || mt.nieuwe_type === "beide") &&
+      mof.nieuwDoorsnede! >= (mt.nieuwe_doorsnede_min ?? 0) &&
+      mof.nieuwDoorsnede! <= (mt.nieuwe_doorsnede_max ?? 9999),
     );
   }, [mof, msMofTypes]);
 
