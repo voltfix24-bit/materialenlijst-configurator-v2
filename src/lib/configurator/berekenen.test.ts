@@ -38,6 +38,7 @@ function makeStamdata(): Stamdata {
     provRegels: empty,
     msKabelRegels: empty,
     rmuVeldRegels: empty,
+    trafoVultKabelSpecs: empty,
     isLoading: false,
   } as unknown as Stamdata;
 }
