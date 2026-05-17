@@ -39,7 +39,7 @@ export function berekenPreview(
   berekenLsMoffen(map, config, sd, ctx);           // 5
   berekenVultKabel(map, config, ctx);              // 6
   berekenLsRek(map, config, sd, ctx);              // 7 (DB-driven)
-  berekenProvisorium(map, config, sd, ctx);        // 8
+  berekenProvisorium(map, config, sd, ctx);        // 8 (DB-driven)
   berekenGgi(map, config, sd, ctx);                // 9 (DB-driven)
 
   return Array.from(map.values()).sort(

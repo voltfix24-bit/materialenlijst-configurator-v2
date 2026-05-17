@@ -35,6 +35,7 @@ function makeStamdata(): Stamdata {
     ggiRegels: empty,
     trafoRegels: empty,
     lsRekRegels: empty,
+    provRegels: empty,
     isLoading: false,
   } as unknown as Stamdata;
 }

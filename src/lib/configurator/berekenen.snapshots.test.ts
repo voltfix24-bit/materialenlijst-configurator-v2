@@ -53,6 +53,7 @@ interface StamdataOverrides {
   ggiRegels?: unknown[];
   trafoRegels?: unknown[];
   lsRekRegels?: unknown[];
+  provRegels?: unknown[];
 }
 
 // Vaste seed van GGI- en Trafo-regels, identiek aan de DB-seed in productie.
