@@ -43,6 +43,24 @@ function CaseDetailPage() {
     },
   });
 
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const apply = () => {
+      const h = Math.round(el.getBoundingClientRect().height);
+      document.documentElement.style.setProperty("--app-header-h", `${h}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    window.addEventListener("resize", apply);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", apply);
+    };
+  }, []);
+
   const [naam, setNaam] = useState("");
   const [isDirty, setIsDirty] = useState(false);
   const [completed, setCompleted] = useState(0);
@@ -187,7 +205,7 @@ function CaseDetailPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Eén header-rij: identiteit + status tabs links, acties rechts */}
-      <div className="flex items-center gap-4 px-4 sm:px-6 py-3 border-b border-border bg-card flex-shrink-0">
+      <div ref={headerRef} className="flex items-center gap-4 px-4 sm:px-6 py-3 border-b border-border bg-card flex-shrink-0">
         <button onClick={goBack} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex-shrink-0">
           <ArrowLeft className="h-4 w-4 text-muted-foreground" />
         </button>
