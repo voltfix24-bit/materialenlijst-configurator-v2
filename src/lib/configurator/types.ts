@@ -328,6 +328,7 @@ export const emptyConfig = (): MaterialenConfig => ({
   msKabelTraces: [],
   lsMoffenActief: false,
   lsMoffen: [],
+  lsKabelTraces: [],
   isCompactStation: false,
   ggiVervangen: false,
   provRmuMerk: "",
