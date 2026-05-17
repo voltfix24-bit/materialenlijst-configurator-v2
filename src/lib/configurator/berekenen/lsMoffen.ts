@@ -21,7 +21,10 @@ export function berekenLsMoffen(
   const { findArtNr } = ctx;
   for (const lm of config.lsMoffen) {
     if (!lm.type || !lm.bestaandType) continue;
-    const fases = ctx.isProvisorum && lm.kanZwaaien === false ? 2 : 1;
+    // "Kan kabel worden omgezwaaid? → Nee — opnieuw" verdubbelt (of vermenigvuldigt
+    // met opnieuwAantal) de moffenset: 1 tijdelijke + N nieuwe.
+    const extra = lm.kanZwaaien === false ? Math.max(1, lm.opnieuwAantal ?? 1) : 0;
+    const fases = 1 + extra;
     const mult = lm.aantal * fases;
 
     const lt = zoekLsMofType(
