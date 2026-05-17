@@ -128,7 +128,17 @@ export interface LsMof {
   ringklemHandmatig: boolean;
   aantal: number;
   kanZwaaien: boolean | null;
+  /** Aantal keer dat de mofset opnieuw gemaakt moet worden (extra bovenop de tijdelijke). Default 1. */
+  opnieuwAantal: number;
   kabelLengteMeters: number;
+  heeftOversteek: boolean;
+  aantalOversteken: number;
+  oversteekMeters: number;
+}
+
+export interface LsKabelTrace {
+  id: string;
+  lengteMeters: number;
   heeftOversteek: boolean;
   aantalOversteken: number;
   oversteekMeters: number;
@@ -195,6 +205,7 @@ export interface MaterialenConfig {
   msKabelTraces: MsKabelTrace[];
   lsMoffenActief: boolean;
   lsMoffen: LsMof[];
+  lsKabelTraces: LsKabelTrace[];
   rmuVelden: RmuVeldConfig[];
   iNetArtikelen: INetArtikel[];
   isCompactStation: boolean;
@@ -278,7 +289,16 @@ export const newLsMof = (): LsMof => ({
   ringklemHandmatig: false,
   aantal: 1,
   kanZwaaien: null,
+  opnieuwAantal: 1,
   kabelLengteMeters: 0,
+  heeftOversteek: false,
+  aantalOversteken: 1,
+  oversteekMeters: 0,
+});
+
+export const newLsKabelTrace = (): LsKabelTrace => ({
+  id: crypto.randomUUID(),
+  lengteMeters: 0,
   heeftOversteek: false,
   aantalOversteken: 1,
   oversteekMeters: 0,
@@ -308,6 +328,7 @@ export const emptyConfig = (): MaterialenConfig => ({
   msKabelTraces: [],
   lsMoffenActief: false,
   lsMoffen: [],
+  lsKabelTraces: [],
   isCompactStation: false,
   ggiVervangen: false,
   provRmuMerk: "",

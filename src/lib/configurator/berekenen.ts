@@ -7,7 +7,7 @@ import { berekenStandaard } from "./berekenen/standaard";
 import { berekenRmuBasis, berekenRmuVelden } from "./berekenen/rmu";
 import { berekenTrafo } from "./berekenen/trafo";
 import { berekenMsMoffen, berekenMsKabelTraces } from "./berekenen/msMoffen";
-import { berekenLsMoffen } from "./berekenen/lsMoffen";
+import { berekenLsMoffen, berekenLsKabelTraces } from "./berekenen/lsMoffen";
 import { berekenVultKabel } from "./berekenen/vultKabel";
 export { vultKabelSpecsFromStamdata, type VultKabelSpec } from "./berekenen/vultKabel";
 import { berekenLsRek } from "./berekenen/lsRek";
@@ -36,6 +36,7 @@ export function berekenPreview(
   berekenMsMoffen(map, config, sd, ctx);           // 4
   berekenMsKabelTraces(map, config, sd);           // 4b (DB-driven)
   berekenLsMoffen(map, config, sd, ctx);           // 5
+  berekenLsKabelTraces(map, config, ctx);          // 5b
   berekenVultKabel(map, config, sd, ctx);          // 6 (DB-driven)
   berekenLsRek(map, config, sd, ctx);              // 7 (DB-driven)
   berekenProvisorium(map, config, sd, ctx);        // 8 (DB-driven)
