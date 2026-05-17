@@ -104,18 +104,45 @@ export function useStamdata(caseType: string | undefined) {
     },
   });
 
+  const ggiRegels = useQuery({
+    queryKey: ["ggi_artikelen"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ggi_artikelen")
+        .select("*, artikel:artikel_id(*)")
+        .eq("actief", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const trafoRegels = useQuery({
+    queryKey: ["trafo_regels"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("trafo_regels")
+        .select("*, artikel:artikel_id(*)")
+        .eq("actief", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   return {
     artikelen,
     rmuConfigs,
     rmuVeldArtikelen,
     rmuZekeringen,
-    
     msMofTypes,
     msMofMaterialen,
     lsMofTypes,
     lsMofMaterialen,
     standaardTemplates,
     stationVaste,
+    ggiRegels,
+    trafoRegels,
     isLoading:
       artikelen.isLoading ||
       rmuConfigs.isLoading ||

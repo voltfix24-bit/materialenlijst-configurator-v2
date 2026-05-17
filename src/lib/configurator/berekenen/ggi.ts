@@ -1,11 +1,16 @@
 import type { MaterialenConfig } from "../types";
-import { add, type BerekenCtx, type PreviewMap } from "./shared";
-import { GGI_ARTIKELEN } from "./artikelnummers";
+import type { Stamdata } from "../queries";
+import { add, type ArtikelLike, type BerekenCtx, type PreviewMap } from "./shared";
 
-/** Sectie 9: GGI vervangen. */
-export function berekenGgi(map: PreviewMap, config: MaterialenConfig, ctx: BerekenCtx): void {
+/** Sectie 9: GGI vervangen — leest regels uit `ggi_artikelen`. */
+export function berekenGgi(
+  map: PreviewMap,
+  config: MaterialenConfig,
+  sd: Stamdata,
+  ctx: BerekenCtx,
+): void {
   if (!ctx.isRenovatie || !config.ggiVervangen) return;
-  for (const g of GGI_ARTIKELEN) {
-    add(map, ctx.findArtNr(g.nr), g.qty, "GGI", "ggi");
+  for (const r of sd.ggiRegels.data ?? []) {
+    add(map, (r as ArtikelLike).artikel, Number(r.hoeveelheid), "GGI", "ggi");
   }
 }
