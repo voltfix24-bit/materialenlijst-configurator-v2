@@ -362,6 +362,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ggi_artikelen: {
+        Row: {
+          actief: boolean
+          artikel_id: string
+          created_at: string
+          hoeveelheid: number
+          id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actief?: boolean
+          artikel_id: string
+          created_at?: string
+          hoeveelheid?: number
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actief?: boolean
+          artikel_id?: string
+          created_at?: string
+          hoeveelheid?: number
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ls_mof_materialen: {
         Row: {
           artikel_id: string
@@ -714,6 +744,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trafo_regels: {
+        Row: {
+          actief: boolean
+          artikel_id: string
+          conditie_actie: string | null
+          conditie_kabel_lengte: string | null
+          conditie_kva: string | null
+          created_at: string
+          herkomst_label: string
+          hoeveelheid: number
+          id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actief?: boolean
+          artikel_id: string
+          conditie_actie?: string | null
+          conditie_kabel_lengte?: string | null
+          conditie_kva?: string | null
+          created_at?: string
+          herkomst_label: string
+          hoeveelheid?: number
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actief?: boolean
+          artikel_id?: string
+          conditie_actie?: string | null
+          conditie_kabel_lengte?: string | null
+          conditie_kva?: string | null
+          created_at?: string
+          herkomst_label?: string
+          hoeveelheid?: number
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       trafo_vult_kabel: {
         Row: {
