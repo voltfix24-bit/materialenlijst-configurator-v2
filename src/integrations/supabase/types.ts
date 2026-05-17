@@ -515,6 +515,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ms_kabel_regels: {
+        Row: {
+          actief: boolean
+          artikel_id: string
+          conditie_kabel_type: string | null
+          conditie_oversteek: boolean | null
+          created_at: string
+          herkomst_label: string
+          hoeveelheid: number
+          hoeveelheid_formule: string | null
+          id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actief?: boolean
+          artikel_id: string
+          conditie_kabel_type?: string | null
+          conditie_oversteek?: boolean | null
+          created_at?: string
+          herkomst_label: string
+          hoeveelheid?: number
+          hoeveelheid_formule?: string | null
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actief?: boolean
+          artikel_id?: string
+          conditie_kabel_type?: string | null
+          conditie_oversteek?: boolean | null
+          created_at?: string
+          herkomst_label?: string
+          hoeveelheid?: number
+          hoeveelheid_formule?: string | null
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ms_mof_materialen: {
         Row: {
           artikel_id: string
