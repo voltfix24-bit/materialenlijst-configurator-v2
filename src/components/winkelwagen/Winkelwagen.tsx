@@ -509,6 +509,10 @@ export function Winkelwagen({
                       isNieuw={nieuwNrs.has(it.artikel_nummer)}
                       isVerwijderd={false}
                       isOverride={overrides.has(it.artikel_nummer)}
+                      isExpanded={uitgeklapt.has(it.artikel_nummer)}
+                      notitie={notities.get(it.artikel_nummer) ?? ""}
+                      onToggleExpand={() => toggleUitgeklapt(it.artikel_nummer)}
+                      onNotitieChange={(v) => zetNotitie(it.artikel_nummer, v)}
                       onChange={(v) => wijzigHoeveelheid(it, v)}
                       onDelete={() => verwijderItem(it)}
                     />
@@ -521,6 +525,10 @@ export function Winkelwagen({
                       isNieuw={false}
                       isVerwijderd={true}
                       isOverride={false}
+                      isExpanded={false}
+                      notitie=""
+                      onToggleExpand={() => {}}
+                      onNotitieChange={() => {}}
                       onChange={() => {}}
                       onDelete={() => {}}
                     />
