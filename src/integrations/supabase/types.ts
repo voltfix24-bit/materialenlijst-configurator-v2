@@ -1004,28 +1004,70 @@ export type Database = {
         Row: {
           aantal_kabels: number
           aantal_perskabelschoenen: number
+          actief: boolean
+          created_at: string
           id: string
+          kabel_artikel_id: string | null
           kabel_doorsnede: number
+          muurbeugel_artikel_id: string | null
+          omschrijving: string | null
           perskabelschoen_artikel_id: string | null
+          sort_order: number
           trafo_kva: number
+          updated_at: string
         }
         Insert: {
           aantal_kabels?: number
           aantal_perskabelschoenen?: number
+          actief?: boolean
+          created_at?: string
           id?: string
+          kabel_artikel_id?: string | null
           kabel_doorsnede: number
+          muurbeugel_artikel_id?: string | null
+          omschrijving?: string | null
           perskabelschoen_artikel_id?: string | null
+          sort_order?: number
           trafo_kva: number
+          updated_at?: string
         }
         Update: {
           aantal_kabels?: number
           aantal_perskabelschoenen?: number
+          actief?: boolean
+          created_at?: string
           id?: string
+          kabel_artikel_id?: string | null
           kabel_doorsnede?: number
+          muurbeugel_artikel_id?: string | null
+          omschrijving?: string | null
           perskabelschoen_artikel_id?: string | null
+          sort_order?: number
           trafo_kva?: number
+          updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "trafo_vult_kabel_kabel_artikel_fk"
+            columns: ["kabel_artikel_id"]
+            isOneToOne: false
+            referencedRelation: "artikelen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trafo_vult_kabel_muurbeugel_artikel_fk"
+            columns: ["muurbeugel_artikel_id"]
+            isOneToOne: false
+            referencedRelation: "artikelen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trafo_vult_kabel_pers_artikel_fk"
+            columns: ["perskabelschoen_artikel_id"]
+            isOneToOne: false
+            referencedRelation: "artikelen"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trafo_vult_kabel_perskabelschoen_artikel_id_fkey"
             columns: ["perskabelschoen_artikel_id"]
