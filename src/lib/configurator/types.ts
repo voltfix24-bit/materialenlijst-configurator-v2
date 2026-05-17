@@ -238,6 +238,12 @@ export const PREVIEW_SECTIE_DEFS: PreviewSectieDef[] = [
   { key: "ggi", label: "GGI", color: "#64748b" },
 ];
 
+export interface PreviewBijdrage {
+  herkomst: string;
+  sectie: PreviewSectie;
+  hoeveelheid: number;
+}
+
 export interface PreviewItem {
   artikel_id: string;
   artikel_nummer: string;
@@ -248,6 +254,8 @@ export interface PreviewItem {
   niet_bestellen: boolean;
   herkomst: string[];
   sectie: PreviewSectie;
+  /** Per-bron uitsplitsing van de hoeveelheid (welke berekening leverde wat). */
+  bijdragen: PreviewBijdrage[];
 }
 
 export const newRichting = (): MsRichting => ({
