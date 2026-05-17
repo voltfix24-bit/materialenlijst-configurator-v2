@@ -65,6 +65,7 @@ function BeheerPage() {
       {tab === "lsrek_regels" && <LsRekRegelsTab />}
       {tab === "prov_regels" && <ProvRegelsTab />}
       {tab === "ms_kabel_regels" && <MsKabelRegelsTab />}
+      {tab === "rmu_veld_regels" && <RmuVeldRegelsTab />}
       {tab === "ggi" && <GgiRegelsTab />}
       
     </div>
