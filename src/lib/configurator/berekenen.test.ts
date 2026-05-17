@@ -37,6 +37,7 @@ function makeStamdata(): Stamdata {
     lsRekRegels: empty,
     provRegels: empty,
     msKabelRegels: empty,
+    rmuVeldRegels: empty,
     isLoading: false,
   } as unknown as Stamdata;
 }
