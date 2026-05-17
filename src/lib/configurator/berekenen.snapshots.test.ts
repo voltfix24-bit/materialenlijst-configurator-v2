@@ -228,6 +228,7 @@ function makeStamdata(o: StamdataOverrides = {}): Stamdata {
     trafoRegels: wrap(o.trafoRegels ?? DEFAULT_TRAFO_REGELS),
     lsRekRegels: wrap(o.lsRekRegels ?? DEFAULT_LS_REK_REGELS),
     provRegels: wrap(o.provRegels ?? DEFAULT_PROV_REGELS),
+    msKabelRegels: wrap(o.msKabelRegels ?? DEFAULT_MS_KABEL_REGELS),
     isLoading: false,
   } as unknown as Stamdata;
 }
