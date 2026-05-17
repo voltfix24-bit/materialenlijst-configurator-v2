@@ -1,42 +1,69 @@
 import type { MaterialenConfig } from "../types";
-import { add, type BerekenCtx, type PreviewMap } from "./shared";
-import { LS_REK, LS_REK_MESPATROON, OV_STUURPUNT } from "./artikelnummers";
+import type { Stamdata } from "../queries";
+import { add, type ArtikelLike, type BerekenCtx, type PreviewMap } from "./shared";
 
-/** Sectie 7: LS-rek (vervangen / gehandhaafd) + OV-stuurpunt + zekeringen + kabelklemmen. */
-export function berekenLsRek(map: PreviewMap, config: MaterialenConfig, ctx: BerekenCtx): void {
+interface LsRekRegel {
+  conditie_compact: boolean | null;
+  conditie_renovatie: boolean | null;
+  conditie_actie: string | null;
+  conditie_lsrek_type: string | null;
+  conditie_beveiliging_aanpassen: boolean | null;
+  conditie_ov_stuurpunt: boolean | null;
+  conditie_schroefpatroon: string | null;
+  conditie_kva: string | null;
+  hoeveelheid: number | string;
+  hoeveelheid_formule: string | null;
+  herkomst_label: string;
+  artikel?: ArtikelLike["artikel"];
+}
+
+/** Evalueert een hoeveelheid-formule tegen de huidige config. */
+function evalFormule(formule: string | null, fallback: number, config: MaterialenConfig): number {
+  if (!formule) return fallback;
+  switch (formule) {
+    case "lsRekExtraStroken":
+      return config.lsRekExtraStroken ?? 0;
+    case "lsRekAanSluitenKabels":
+      return config.lsRekAanSluitenKabels ?? 0;
+    case "lsRekAanSluitenKabels*2":
+      return (config.lsRekAanSluitenKabels ?? 0) * 2;
+    default:
+      return fallback;
+  }
+}
+
+/**
+ * Sectie 7: LS-rek + OV-stuurpunt + LS zekeringen + kabelbevestigingsklemmen.
+ *
+ * Statisch deel (LS-rek bakken, mespatronen, OV-stuurpunt, kabelklemmen)
+ * komt uit `ls_rek_regels`. Het dynamische deel — door engineer ingevulde
+ * `lsRekBeveiligingen` artikelnummers — blijft in code omdat het pure
+ * per-case input is.
+ */
+export function berekenLsRek(
+  map: PreviewMap,
+  config: MaterialenConfig,
+  sd: Stamdata,
+  ctx: BerekenCtx,
+): void {
   const { findArtNr, isCompact, isRenovatie } = ctx;
+  const regels = (sd.lsRekRegels.data ?? []) as unknown as LsRekRegel[];
 
-  if (!isCompact && config.lsRekActie && isRenovatie) {
-    if (config.lsRekActie === "vervangen") {
-      if (config.lsRekType === "8") add(map, findArtNr(LS_REK.R_8), 1, "LS-rek 8 richtingen", "lsRek");
-      else if (config.lsRekType === "12") add(map, findArtNr(LS_REK.R_12), 1, "LS-rek 12 richtingen", "lsRek");
+  for (const r of regels) {
+    if (r.conditie_compact !== null && r.conditie_compact !== isCompact) continue;
+    if (r.conditie_renovatie !== null && r.conditie_renovatie !== isRenovatie) continue;
+    if (r.conditie_actie !== null && r.conditie_actie !== config.lsRekActie) continue;
+    if (r.conditie_lsrek_type !== null && r.conditie_lsrek_type !== config.lsRekType) continue;
+    if (r.conditie_beveiliging_aanpassen === true && !config.lsRekBeveiligingAanpassen) continue;
+    if (r.conditie_ov_stuurpunt === true && !config.lsRekOvStuurpunt) continue;
+    if (r.conditie_schroefpatroon !== null && r.conditie_schroefpatroon !== config.lsRekSchroefpatroon) continue;
+    if (r.conditie_kva !== null && r.conditie_kva !== (config.trafoKva ?? "")) continue;
 
-      if (config.lsRekExtraStroken > 0) {
-        add(map, findArtNr(LS_REK.EXTRA_STRO), config.lsRekExtraStroken, "LS-rek extra stroken", "lsRek");
-      }
-
-      const mpNr = LS_REK_MESPATROON[config.trafoKva ?? ""];
-      if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging voedende strook", "lsRek");
-    }
-
-    if (config.lsRekActie === "gehandhaafd" && config.lsRekBeveiligingAanpassen) {
-      const mpNr = LS_REK_MESPATROON[config.trafoKva ?? ""];
-      if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging aanpassen", "lsRek");
-    }
-
-    if (config.lsRekOvStuurpunt) {
-      if (config.lsRekSchroefpatroon === "35A") add(map, findArtNr(OV_STUURPUNT.SCHROEF_35A), 3, "OV-stuurpunt schroefpatroon", "lsRek");
-      else if (config.lsRekSchroefpatroon === "50A") add(map, findArtNr(OV_STUURPUNT.SCHROEF_50A), 3, "OV-stuurpunt schroefpatroon", "lsRek");
-
-      add(map, findArtNr(OV_STUURPUNT.ROUTER), 1, "OV-stuurpunt router", "lsRek");
-      add(map, findArtNr(OV_STUURPUNT.ROUTER_BEUG), 1, "OV-stuurpunt beugel router", "lsRek");
-      add(map, findArtNr(OV_STUURPUNT.FLEX_OV), 1, "OV-stuurpunt FlexOV device", "lsRek");
-      add(map, findArtNr(OV_STUURPUNT.FLEX_BEUG), 1, "OV-stuurpunt beugel FlexOV", "lsRek");
-      add(map, findArtNr(OV_STUURPUNT.ETHERNET), 1, "OV-stuurpunt kabel ethernet", "lsRek");
-    }
+    const qty = evalFormule(r.hoeveelheid_formule, Number(r.hoeveelheid), config);
+    add(map, r.artikel, qty, r.herkomst_label, "lsRek");
   }
 
-  // LS zekeringen per richting
+  // Dynamische per-richting beveiligingen (engineer-input artikelnummers)
   const lsZekeringActief =
     isCompact ||
     (isRenovatie && config.lsRekActie === "vervangen") ||
@@ -45,22 +72,5 @@ export function berekenLsRek(map: PreviewMap, config: MaterialenConfig, ctx: Ber
     for (const artNr of config.lsRekBeveiligingen ?? []) {
       if (artNr) add(map, findArtNr(artNr), 3, "LS richting beveiliging", "lsRek");
     }
-  }
-
-  // Mespatroon LS-rek bij compact: altijd 3×
-  if (isCompact) {
-    const mpNr = LS_REK_MESPATROON[config.trafoKva ?? ""];
-    if (mpNr) add(map, findArtNr(mpNr), 3, "LS-rek beveiliging voedende strook", "lsRek");
-  }
-
-  // LS-rek kabelbevestigingsklemmen
-  if (config.lsRekAanSluitenKabels > 0 && (isCompact || (config.lsRekActie === "vervangen" && isRenovatie))) {
-    const n = config.lsRekAanSluitenKabels;
-    if (isCompact) {
-      add(map, findArtNr(LS_REK.K56_U), n * 2, "LS-rek kabelbevestigingsklem K56 U", "lsRek");
-    } else {
-      add(map, findArtNr(LS_REK.K56), n, "LS-rek kabelbevestigingsklem K56", "lsRek");
-    }
-    add(map, findArtNr(LS_REK.KABELINLEG), n, "LS-rek kabelinlegklem", "lsRek");
   }
 }
