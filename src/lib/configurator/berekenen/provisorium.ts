@@ -8,14 +8,39 @@ import {
   type LsMofTypeRow,
   type PreviewMap,
 } from "./shared";
-import {
-  PROV_BUISPATROON,
-  PROV_IN_BEDRIJFNAME,
-  RMU_EINDSLUITING,
-  LS_KABEL,
-} from "./artikelnummers";
+import { LS_KABEL } from "./artikelnummers";
 
-/** Sectie 8: Provisorium (RMU velden + LS moffen + in-bedrijfname MS/LS). */
+interface ProvRegel {
+  conditie_merk: string | null;
+  conditie_kva: string | null;
+  hoeveelheid: number | string;
+  hoeveelheid_formule: string | null;
+  herkomst_label: string;
+  artikel?: ArtikelLike["artikel"];
+}
+
+/** Evalueert een provisorium-formule tegen de huidige config. */
+function evalFormule(formule: string | null, fallback: number, config: MaterialenConfig): number {
+  if (!formule) return fallback;
+  const fVelden = (config.provRmuVelden ?? []).filter((v) => v.veldType === "F").length;
+  const inbMs = config.provInbMsKabels ?? 0;
+  const inbLs = config.provInbLsKabels ?? 0;
+  switch (formule) {
+    case "perFVeld":       return fVelden;
+    case "perFVeld*3":     return fVelden * 3;
+    case "provInbMsKabels": return inbMs;
+    case "provInbLsKabels": return inbLs;
+    case "ifInbMsThen1":   return inbMs > 0 ? 1 : 0;
+    default:               return fallback;
+  }
+}
+
+/**
+ * Sectie 8: Provisorium (RMU velden + LS moffen + in-bedrijfname MS/LS).
+ *
+ * DB-driven statische regels uit `prov_regels`. De LS-moffen-loop (variabel
+ * per case, leest al uit `ls_mof_types`/`ls_mof_materialen`) blijft in code.
+ */
 export function berekenProvisorium(
   map: PreviewMap,
   config: MaterialenConfig,
@@ -24,21 +49,17 @@ export function berekenProvisorium(
 ): void {
   if (!ctx.isProvisorum || !config.provRmuConfig) return;
   const { findArtNr } = ctx;
+  const regels = (sd.provRegels.data ?? []) as unknown as ProvRegel[];
 
-  // Buispatronen + F-veld eindsluiting (C/V-eindsluitingen lopen via in-bedrijfname)
-  for (const veld of config.provRmuVelden ?? []) {
-    if (veld.veldType === "F") {
-      if (config.provRmuMerk === "Magnefix") {
-        add(map, findArtNr(RMU_EINDSLUITING.MAGNEFIX_T_VELD), 1, "Provisorium T-veld eindsluiting", "provisorium");
-      } else {
-        add(map, findArtNr(RMU_EINDSLUITING.ABB_F_VELD), 1, "Provisorium F-veld eindsluiting", "provisorium");
-      }
-      const bpNr = PROV_BUISPATROON[config.provRmuMerk]?.[config.provZekeringKva ?? ""];
-      if (bpNr) add(map, findArtNr(bpNr), 3, "Provisorium buispatroon", "provisorium");
-    }
+  // Statische regels (F-veld eindsluitingen, buispatronen, in-bedrijfname)
+  for (const r of regels) {
+    if (r.conditie_merk !== null && r.conditie_merk !== config.provRmuMerk) continue;
+    if (r.conditie_kva !== null && r.conditie_kva !== (config.provZekeringKva ?? "")) continue;
+    const qty = evalFormule(r.hoeveelheid_formule, Number(r.hoeveelheid), config);
+    add(map, r.artikel, qty, r.herkomst_label, "provisorium");
   }
 
-  // Provisorium LS moffen
+  // Provisorium LS moffen (dynamisch, per case)
   if (config.provLsMoffenActief) {
     for (const lm of config.provLsMoffen) {
       if (!lm.type || !lm.bestaandType) continue;
@@ -60,24 +81,5 @@ export function berekenProvisorium(
         add(map, findArtNr(LS_KABEL), lm.kabelLengteMeters * lm.aantal, "Provisorium LS kabel", "provisorium");
       }
     }
-  }
-
-  // In-bedrijfname MS eindsluitingen
-  if ((config.provInbMsKabels ?? 0) > 0) {
-    const n = config.provInbMsKabels ?? 0;
-    if (config.provRmuMerk === "Magnefix") {
-      add(map, findArtNr(PROV_IN_BEDRIJFNAME.MAGNEFIX_EINDSLUITING), n, "Prov in-bedrijfname MS eindsluiting", "provisorium");
-      add(map, findArtNr(PROV_IN_BEDRIJFNAME.MAGNEFIX_AFSCHERM), n, "Prov in-bedrijfname MS afschermset", "provisorium");
-      add(map, findArtNr(PROV_IN_BEDRIJFNAME.MAGNEFIX_DOOS), 1, "Prov in-bedrijfname MS doos onderdelen", "provisorium");
-    } else {
-      add(map, findArtNr(PROV_IN_BEDRIJFNAME.ABB_EINDSLUITING), n, "Prov in-bedrijfname MS eindsluiting", "provisorium");
-    }
-  }
-
-  // In-bedrijfname LS eindsluitingen
-  if ((config.provInbLsKabels ?? 0) > 0) {
-    const n = config.provInbLsKabels ?? 0;
-    add(map, findArtNr(PROV_IN_BEDRIJFNAME.LS_KABELINLEG), n, "Prov in-bedrijfname LS kabelinlegklem", "provisorium");
-    add(map, findArtNr(PROV_IN_BEDRIJFNAME.LS_K56), n, "Prov in-bedrijfname LS K56 klem", "provisorium");
   }
 }
