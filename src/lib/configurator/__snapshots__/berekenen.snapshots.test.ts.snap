@@ -1,0 +1,614 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`berekenPreview — snapshot regressies > 01 NSA renovatie leeg → alleen lege output (geen templates/station) 1`] = `[]`;
+
+exports[`berekenPreview — snapshot regressies > 02 NSA renovatie + trafo nieuw 400kVA + vultkabel 5m 1`] = `
+[
+  {
+    "herkomst": "Trafo afschermplaat",
+    "nr": "20011412",
+    "qty": 1,
+    "sectie": "trafo",
+  },
+  {
+    "herkomst": "Trafo soepele verbinding",
+    "nr": "20017534",
+    "qty": 1,
+    "sectie": "trafo",
+  },
+  {
+    "herkomst": "Vult kabel perskabelschoenen",
+    "nr": "20017790",
+    "qty": 8,
+    "sectie": "vultKabel",
+  },
+  {
+    "herkomst": "Trafo afschermkap",
+    "nr": "20019614",
+    "qty": 3,
+    "sectie": "trafo",
+  },
+  {
+    "herkomst": "Trafo U-profiel",
+    "nr": "20019629",
+    "qty": 2,
+    "sectie": "trafo",
+  },
+  {
+    "herkomst": "Vult kabel",
+    "nr": "20030300",
+    "qty": 20,
+    "sectie": "vultKabel",
+  },
+  {
+    "herkomst": "Vult kabel muurbeugel",
+    "nr": "20042739",
+    "qty": 1,
+    "sectie": "vultKabel",
+  },
+  {
+    "herkomst": "Trafo",
+    "nr": "26001120",
+    "qty": 1,
+    "sectie": "trafo",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 03 Compact station — LS-rek mespatroon + LS zekeringen + K56 U 1`] = `
+[
+  {
+    "herkomst": "LS-rek kabelinlegklem",
+    "nr": "20018004",
+    "qty": 4,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "LS richting beveiliging",
+    "nr": "20036622",
+    "qty": 3,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "LS richting beveiliging",
+    "nr": "20036623",
+    "qty": 3,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "LS-rek beveiliging voedende strook",
+    "nr": "20036624",
+    "qty": 3,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "LS-rek kabelbevestigingsklem K56 U",
+    "nr": "20042043",
+    "qty": 8,
+    "sectie": "lsRek",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 04 Renovatie NSA — LS-rek vervangen 8 richtingen + extra stroken + OV 35A 1`] = `
+[
+  {
+    "herkomst": "OV-stuurpunt schroefpatroon",
+    "nr": "20001107",
+    "qty": 3,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "LS-rek kabelinlegklem",
+    "nr": "20018004",
+    "qty": 3,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "LS-rek extra stroken",
+    "nr": "20020042",
+    "qty": 2,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "LS-rek beveiliging voedende strook | LS richting beveiliging",
+    "nr": "20036623",
+    "qty": 6,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "OV-stuurpunt FlexOV device",
+    "nr": "20039993",
+    "qty": 1,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "OV-stuurpunt beugel FlexOV",
+    "nr": "20039994",
+    "qty": 1,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "OV-stuurpunt router",
+    "nr": "20040148",
+    "qty": 1,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "OV-stuurpunt kabel ethernet",
+    "nr": "20040149",
+    "qty": 1,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "OV-stuurpunt beugel router",
+    "nr": "20040188",
+    "qty": 1,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "LS-rek kabelbevestigingsklem K56",
+    "nr": "20042042",
+    "qty": 3,
+    "sectie": "lsRek",
+  },
+  {
+    "herkomst": "LS-rek 8 richtingen",
+    "nr": "20050813",
+    "qty": 1,
+    "sectie": "lsRek",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 05 Renovatie NSA — LS-rek gehandhaafd + beveiliging aanpassen 250kVA 1`] = `
+[
+  {
+    "herkomst": "LS-rek beveiliging aanpassen | LS richting beveiliging",
+    "nr": "20036622",
+    "qty": 6,
+    "sectie": "lsRek",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 06 Renovatie prov — Magnefix RMU 1F+2C, trafokabel 7.25m, 400kVA 1`] = `
+[
+  {
+    "herkomst": "Magnefix K-veld 1 afschermset | Magnefix K-veld 2 afschermset",
+    "nr": "20018032",
+    "qty": 2,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "Magnefix buispatroon",
+    "nr": "20019484",
+    "qty": 3,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "Magnefix doos met onderdelen",
+    "nr": "20029904",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "Trafo kabel 7,25m",
+    "nr": "20032539",
+    "qty": 1,
+    "sectie": "trafo",
+  },
+  {
+    "herkomst": "Magnefix T-veld eindsluiting",
+    "nr": "20039303",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "Magnefix K-veld 1 eindsluiting | Magnefix K-veld 2 eindsluiting",
+    "nr": "20039648",
+    "qty": 2,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "Telcon kabel bevestigingsklem",
+    "nr": "20044290",
+    "qty": 8,
+    "sectie": "trafo",
+  },
+  {
+    "herkomst": "Bodemplaat Magnefix TEST",
+    "nr": "RMU-BODEM",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU frame",
+    "nr": "RMU-FRAME",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU",
+    "nr": "RMU-MAIN",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 07 Renovatie prov — ABB RMU 1F, 250kVA, trafokabel 10m 1`] = `
+[
+  {
+    "herkomst": "Trafo kabel 10m",
+    "nr": "20032541",
+    "qty": 1,
+    "sectie": "trafo",
+  },
+  {
+    "herkomst": "RMU buispatroon",
+    "nr": "20041591",
+    "qty": 3,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU F-veld eindsluiting",
+    "nr": "20041682",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "Telcon kabel bevestigingsklem",
+    "nr": "20044290",
+    "qty": 8,
+    "sectie": "trafo",
+  },
+  {
+    "herkomst": "Bodemplaat ABB TEST",
+    "nr": "RMU-BODEM",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU frame",
+    "nr": "RMU-FRAME",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU",
+    "nr": "RMU-MAIN",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 08 Renovatie prov — ABB CV 240AL + 630AL V-veld inet (ombouwset 20043486) 1`] = `
+[
+  {
+    "herkomst": "RMU V-veld eindsluiting",
+    "nr": "20040678",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU C-veld eindsluiting",
+    "nr": "20040681",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU buispatroon",
+    "nr": "20041593",
+    "qty": 3,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU F-veld eindsluiting",
+    "nr": "20041682",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "Ombouwset CT 630AL V-veld",
+    "nr": "20043486",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "Bodemplaat ABB TEST",
+    "nr": "RMU-BODEM",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU frame",
+    "nr": "RMU-FRAME",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU",
+    "nr": "RMU-MAIN",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 09 Renovatie prov — ABB 630AL V-veld NIET-inet (ombouwset 20043756) 1`] = `
+[
+  {
+    "herkomst": "RMU V-veld eindsluiting",
+    "nr": "20040678",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU buispatroon",
+    "nr": "20041593",
+    "qty": 3,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU F-veld eindsluiting",
+    "nr": "20041682",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "Ombouwset CT 630AL V-veld",
+    "nr": "20043756",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "Bodemplaat ABB TEST",
+    "nr": "RMU-BODEM",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU frame",
+    "nr": "RMU-FRAME",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+  {
+    "herkomst": "RMU",
+    "nr": "RMU-MAIN",
+    "qty": 1,
+    "sectie": "rmu",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 10 CS met prov — Magnefix provisorium + in-bedrijfname 3 MS + 2 LS 1`] = `
+[
+  {
+    "herkomst": "Prov in-bedrijfname LS kabelinlegklem",
+    "nr": "20018004",
+    "qty": 2,
+    "sectie": "provisorium",
+  },
+  {
+    "herkomst": "Prov in-bedrijfname MS afschermset",
+    "nr": "20018032",
+    "qty": 3,
+    "sectie": "provisorium",
+  },
+  {
+    "herkomst": "Provisorium buispatroon",
+    "nr": "20019484",
+    "qty": 3,
+    "sectie": "provisorium",
+  },
+  {
+    "herkomst": "Prov in-bedrijfname MS doos onderdelen",
+    "nr": "20029905",
+    "qty": 1,
+    "sectie": "provisorium",
+  },
+  {
+    "herkomst": "Provisorium T-veld eindsluiting",
+    "nr": "20039303",
+    "qty": 1,
+    "sectie": "provisorium",
+  },
+  {
+    "herkomst": "Prov in-bedrijfname MS eindsluiting",
+    "nr": "20039648",
+    "qty": 3,
+    "sectie": "provisorium",
+  },
+  {
+    "herkomst": "Prov in-bedrijfname LS K56 klem",
+    "nr": "20042042",
+    "qty": 2,
+    "sectie": "provisorium",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 11 CS met prov — ABB provisorium + in-bedrijfname 4 MS kabels 1`] = `
+[
+  {
+    "herkomst": "Prov in-bedrijfname MS eindsluiting",
+    "nr": "20040681",
+    "qty": 4,
+    "sectie": "provisorium",
+  },
+  {
+    "herkomst": "Provisorium buispatroon",
+    "nr": "20041591",
+    "qty": 3,
+    "sectie": "provisorium",
+  },
+  {
+    "herkomst": "Provisorium F-veld eindsluiting",
+    "nr": "20041682",
+    "qty": 1,
+    "sectie": "provisorium",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 12 Renovatie prov — provRmuConfig=null skipt in-bedrijfname blok volledig 1`] = `[]`;
+
+exports[`berekenPreview — snapshot regressies > 13 Compact prov — Magnefix in-bedrijfname 1 kabel → doos altijd 1 1`] = `
+[
+  {
+    "herkomst": "Prov in-bedrijfname MS afschermset",
+    "nr": "20018032",
+    "qty": 1,
+    "sectie": "provisorium",
+  },
+  {
+    "herkomst": "Prov in-bedrijfname MS doos onderdelen",
+    "nr": "20029905",
+    "qty": 1,
+    "sectie": "provisorium",
+  },
+  {
+    "herkomst": "Prov in-bedrijfname MS eindsluiting",
+    "nr": "20039648",
+    "qty": 1,
+    "sectie": "provisorium",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 14 MS kabel trace 240AL singel 50m + oversteek 12m × 2 1`] = `
+[
+  {
+    "herkomst": "MS kabel beschermband trace 1",
+    "nr": "20018148",
+    "qty": 2,
+    "sectie": "msVerbindingen",
+  },
+  {
+    "herkomst": "MS kabel oversteek trace 1",
+    "nr": "20036049",
+    "qty": 4,
+    "sectie": "msVerbindingen",
+  },
+  {
+    "herkomst": "MS kabel trace 1",
+    "nr": "20039484",
+    "qty": 150,
+    "sectie": "msVerbindingen",
+  },
+  {
+    "herkomst": "MS kabel oversteek geotextiel trace 1",
+    "nr": "20043703",
+    "qty": 4,
+    "sectie": "msVerbindingen",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 15 MS kabel trace 3x240AL 80m geen oversteek 1`] = `
+[
+  {
+    "herkomst": "MS kabel beschermband trace 1",
+    "nr": "20018148",
+    "qty": 2,
+    "sectie": "msVerbindingen",
+  },
+  {
+    "herkomst": "MS kabel trace 1",
+    "nr": "20027989",
+    "qty": 80,
+    "sectie": "msVerbindingen",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 16 LS moffen actief — aftakmof + ringklem + kabel 20m 1`] = `
+[
+  {
+    "herkomst": "LS kabel",
+    "nr": "20009692",
+    "qty": 20,
+    "sectie": "lsVerbindingen",
+  },
+  {
+    "herkomst": "LS aftakmof ringklem",
+    "nr": "20041574",
+    "qty": 2,
+    "sectie": "lsVerbindingen",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 17 GGI vervangen bij renovatie_nsa → 7 artikelen vaste hoeveelheden 1`] = `
+[
+  {
+    "herkomst": "GGI",
+    "nr": "20019149",
+    "qty": 100,
+    "sectie": "ggi",
+  },
+  {
+    "herkomst": "GGI",
+    "nr": "20019177",
+    "qty": 4,
+    "sectie": "ggi",
+  },
+  {
+    "herkomst": "GGI",
+    "nr": "20029657",
+    "qty": 10,
+    "sectie": "ggi",
+  },
+  {
+    "herkomst": "GGI",
+    "nr": "20038289",
+    "qty": 5,
+    "sectie": "ggi",
+  },
+  {
+    "herkomst": "GGI",
+    "nr": "20039090",
+    "qty": 2,
+    "sectie": "ggi",
+  },
+  {
+    "herkomst": "GGI",
+    "nr": "20041319",
+    "qty": 4,
+    "sectie": "ggi",
+  },
+  {
+    "herkomst": "GGI",
+    "nr": "20050552",
+    "qty": 5,
+    "sectie": "ggi",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 18 Trafo actie=draaien 250kVA → aansluitvlag 20038832 1`] = `
+[
+  {
+    "herkomst": "Aansluitvlag trafo",
+    "nr": "20038832",
+    "qty": 1,
+    "sectie": "trafo",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 19 Trafo actie=blijft 1000kVA → aansluitvlag 20042706 1`] = `
+[
+  {
+    "herkomst": "Aansluitvlag trafo",
+    "nr": "20042706",
+    "qty": 1,
+    "sectie": "trafo",
+  },
+]
+`;
+
+exports[`berekenPreview — snapshot regressies > 20 MS richting niet-prov (renovatie_nsa) zonder mof → geen MS verbindingen 1`] = `[]`;
