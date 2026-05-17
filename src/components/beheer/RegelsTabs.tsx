@@ -291,7 +291,7 @@ export function LsRekRegelsTab() {
         const { error } = await supabase.from("ls_rek_regels").update(payload).eq("id", v.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("ls_rek_regels").insert(payload as any);
+        const { error } = await supabase.from("ls_rek_regels").insert(payload as never);
         if (error) throw error;
       }
     },
