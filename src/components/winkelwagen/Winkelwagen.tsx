@@ -579,6 +579,10 @@ export function Winkelwagen({
                       isNieuw={nieuwNrs.has(t.artikel_nummer)}
                       isVerwijderd={false}
                       isOverride={false}
+                      isExpanded={uitgeklapt.has(t.artikel_nummer)}
+                      notitie={notities.get(t.artikel_nummer) ?? ""}
+                      onToggleExpand={() => toggleUitgeklapt(t.artikel_nummer)}
+                      onNotitieChange={(v) => zetNotitie(t.artikel_nummer, v)}
                       onChange={(v) =>
                         setToegevoegd((prev) =>
                           prev.map((x) => (x.artikel_nummer === t.artikel_nummer ? { ...x, hoeveelheid: v } : x)),
