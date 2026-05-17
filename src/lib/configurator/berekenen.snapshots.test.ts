@@ -285,6 +285,7 @@ function makeStamdata(o: StamdataOverrides = {}): Stamdata {
     lsRekRegels: wrap(o.lsRekRegels ?? DEFAULT_LS_REK_REGELS),
     provRegels: wrap(o.provRegels ?? DEFAULT_PROV_REGELS),
     msKabelRegels: wrap(o.msKabelRegels ?? DEFAULT_MS_KABEL_REGELS),
+    rmuVeldRegels: wrap(o.rmuVeldRegels ?? DEFAULT_RMU_VELD_REGELS),
     isLoading: false,
   } as unknown as Stamdata;
 }
