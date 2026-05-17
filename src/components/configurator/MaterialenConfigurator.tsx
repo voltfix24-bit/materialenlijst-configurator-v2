@@ -1886,11 +1886,12 @@ function LsMofKaart({
             suffix=" m"
           />
           {mof.kabelLengteMeters > 0 && (() => {
-            const fases = isProv && mof.kanZwaaien === false ? 2 : 1;
+            const extra = mof.kanZwaaien === false ? Math.max(1, mof.opnieuwAantal ?? 1) : 0;
+            const fases = 1 + extra;
             const totaal = mof.kabelLengteMeters * mof.aantal * fases;
             return (
               <span className="text-xs text-muted-foreground">
-                = {totaal}m kabel totaal{fases === 2 ? " (tijdelijk + definitief)" : ""}
+                = {totaal}m kabel totaal{fases > 1 ? ` (1 tijdelijk + ${extra}× opnieuw)` : ""}
               </span>
             );
           })()}
