@@ -30,7 +30,7 @@ export function berekenTrafo(
 ): void {
   if (ctx.isCompact) return;
   const sectie: PreviewSectie = "trafo";
-  const regels = (sd.trafoRegels.data ?? []) as TrafoRegel[];
+  const regels = (sd.trafoRegels.data ?? []) as unknown as TrafoRegel[];
 
   for (const r of regels) {
     if (r.conditie_actie != null) {

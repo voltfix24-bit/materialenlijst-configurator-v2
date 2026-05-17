@@ -11,6 +11,6 @@ export function berekenGgi(
 ): void {
   if (!ctx.isRenovatie || !config.ggiVervangen) return;
   for (const r of sd.ggiRegels.data ?? []) {
-    add(map, (r as ArtikelLike).artikel, Number(r.hoeveelheid), "GGI", "ggi");
+    add(map, (r as unknown as ArtikelLike).artikel, Number(r.hoeveelheid), "GGI", "ggi");
   }
 }
