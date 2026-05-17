@@ -50,7 +50,59 @@ interface StamdataOverrides {
   lsMofMaterialen?: unknown[];
   standaardTemplates?: unknown[];
   stationVaste?: unknown[];
+  ggiRegels?: unknown[];
+  trafoRegels?: unknown[];
 }
+
+// Vaste seed van GGI- en Trafo-regels, identiek aan de DB-seed in productie.
+// Hierdoor blijven snapshots ongewijzigd nu deze domeinen DB-driven zijn.
+const DEFAULT_GGI_REGELS = [
+  { nr: "20039090", qty: 2 },
+  { nr: "20041319", qty: 4 },
+  { nr: "20019149", qty: 100 },
+  { nr: "20019177", qty: 4 },
+  { nr: "20029657", qty: 10 },
+  { nr: "20050552", qty: 5 },
+  { nr: "20038289", qty: 5 },
+].map((r, i) => ({
+  id: `ggi-${i}`,
+  artikel_id: `art-${r.nr}`,
+  hoeveelheid: r.qty,
+  sort_order: i,
+  actief: true,
+  artikel: art(r.nr),
+}));
+
+const DEFAULT_TRAFO_REGELS = [
+  ["nieuw", "250", null, "26001090", 1, "Trafo"],
+  ["nieuw", "400", null, "26001120", 1, "Trafo"],
+  ["nieuw", "630", null, "26001150", 1, "Trafo"],
+  ["nieuw", null,  null, "20019629", 2, "Trafo U-profiel"],
+  ["nieuw", null,  null, "20011412", 1, "Trafo afschermplaat"],
+  ["nieuw", null,  null, "20019614", 3, "Trafo afschermkap"],
+  ["nieuw", null,  null, "20017534", 1, "Trafo soepele verbinding"],
+  ["draaien", "250",  null, "20038832", 1, "Aansluitvlag trafo"],
+  ["draaien", "400",  null, "20038832", 1, "Aansluitvlag trafo"],
+  ["draaien", "630",  null, "20042706", 1, "Aansluitvlag trafo"],
+  ["draaien", "1000", null, "20042706", 1, "Aansluitvlag trafo"],
+  ["blijft",  "250",  null, "20038832", 1, "Aansluitvlag trafo"],
+  ["blijft",  "400",  null, "20038832", 1, "Aansluitvlag trafo"],
+  ["blijft",  "630",  null, "20042706", 1, "Aansluitvlag trafo"],
+  ["blijft",  "1000", null, "20042706", 1, "Aansluitvlag trafo"],
+  [null, null, "7.25", "20044290", 8, "Telcon kabel bevestigingsklem"],
+  [null, null, "10",   "20044290", 8, "Telcon kabel bevestigingsklem"],
+].map(([actie, kva, kabel, nr, qty, label], i) => ({
+  id: `trafo-${i}`,
+  conditie_actie: actie as string | null,
+  conditie_kva: kva as string | null,
+  conditie_kabel_lengte: kabel as string | null,
+  artikel_id: `art-${nr}`,
+  hoeveelheid: qty as number,
+  herkomst_label: label as string,
+  sort_order: i,
+  actief: true,
+  artikel: art(nr as string),
+}));
 
 function makeStamdata(o: StamdataOverrides = {}): Stamdata {
   const wrap = <T>(data: T[]) => ({ data, isLoading: false } as unknown as Stamdata["artikelen"]);
@@ -66,6 +118,8 @@ function makeStamdata(o: StamdataOverrides = {}): Stamdata {
     lsMofMaterialen: wrap(o.lsMofMaterialen ?? []),
     standaardTemplates: wrap(o.standaardTemplates ?? []),
     stationVaste: wrap(o.stationVaste ?? []),
+    ggiRegels: wrap(o.ggiRegels ?? DEFAULT_GGI_REGELS),
+    trafoRegels: wrap(o.trafoRegels ?? DEFAULT_TRAFO_REGELS),
     isLoading: false,
   } as unknown as Stamdata;
 }

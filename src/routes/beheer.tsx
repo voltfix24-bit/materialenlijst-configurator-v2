@@ -6,6 +6,7 @@ import { ArtikelenTab } from "@/components/beheer/ArtikelenTab";
 import { RmuTab } from "@/components/beheer/RmuTab";
 import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
 import { StandaardMaterialenTab, VasteArtikelenTab } from "@/components/beheer/OverigeTabs";
+import { GgiRegelsTab, TrafoRegelsTab } from "@/components/beheer/RegelsTabs";
 
 export const Route = createFileRoute("/beheer")({
   component: BeheerPage,
@@ -19,6 +20,8 @@ const TABS = [
   { key: "ls_mof", label: "LS mof types" },
   { key: "standaard", label: "Standaard materialen" },
   { key: "vast", label: "Vaste artikelen per subtype" },
+  { key: "trafo_regels", label: "Trafo regels" },
+  { key: "ggi", label: "GGI artikelen" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -54,6 +57,8 @@ function BeheerPage() {
       {tab === "ls_mof" && <LsMofTab />}
       {tab === "standaard" && <StandaardMaterialenTab />}
       {tab === "vast" && <VasteArtikelenTab />}
+      {tab === "trafo_regels" && <TrafoRegelsTab />}
+      {tab === "ggi" && <GgiRegelsTab />}
       
     </div>
   );

@@ -5,7 +5,7 @@ import type { Stamdata } from "./queries";
 import { makeFindArtNr, type BerekenCtx, type PreviewMap } from "./berekenen/shared";
 import { berekenStandaard } from "./berekenen/standaard";
 import { berekenRmuBasis, berekenRmuVelden } from "./berekenen/rmu";
-import { berekenTrafo, berekenTelconBevklem } from "./berekenen/trafo";
+import { berekenTrafo } from "./berekenen/trafo";
 import { berekenMsMoffen, berekenMsKabelTraces } from "./berekenen/msMoffen";
 import { berekenLsMoffen } from "./berekenen/lsMoffen";
 import { berekenVultKabel } from "./berekenen/vultKabel";
@@ -33,15 +33,14 @@ export function berekenPreview(
   berekenStandaard(map, config, sd, caseType);     // 1 + 2
   berekenRmuBasis(map, config, sd, ctx);           // 3
   berekenRmuVelden(map, config, ctx);              // 3b
-  berekenTrafo(map, config, ctx);                  // 3c
-  berekenTelconBevklem(map, config, ctx);          // 3d
+  berekenTrafo(map, config, sd, ctx);              // 3c + 3d (DB-driven)
   berekenMsMoffen(map, config, sd, ctx);           // 4
   berekenMsKabelTraces(map, config, ctx);          // 4b
   berekenLsMoffen(map, config, sd, ctx);           // 5
   berekenVultKabel(map, config, ctx);              // 6
   berekenLsRek(map, config, ctx);                  // 7
   berekenProvisorium(map, config, sd, ctx);        // 8
-  berekenGgi(map, config, ctx);                    // 9
+  berekenGgi(map, config, sd, ctx);                // 9 (DB-driven)
 
   return Array.from(map.values()).sort(
     (a, b) =>
