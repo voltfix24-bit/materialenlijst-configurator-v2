@@ -22,6 +22,9 @@ export function add(
   if (ex) {
     ex.hoeveelheid += qty;
     if (!ex.herkomst.includes(herkomst)) ex.herkomst.push(herkomst);
+    const exB = ex.bijdragen.find((b) => b.herkomst === herkomst && b.sectie === sectie);
+    if (exB) exB.hoeveelheid += qty;
+    else ex.bijdragen.push({ herkomst, sectie, hoeveelheid: qty });
     if (nietBestellen) ex.niet_bestellen = true;
   } else {
     map.set(key, {
@@ -34,6 +37,7 @@ export function add(
       niet_bestellen: nietBestellen,
       herkomst: [herkomst],
       sectie,
+      bijdragen: [{ herkomst, sectie, hoeveelheid: qty }],
     });
   }
 }
