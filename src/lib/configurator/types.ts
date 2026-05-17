@@ -288,7 +288,16 @@ export const newLsMof = (): LsMof => ({
   ringklemHandmatig: false,
   aantal: 1,
   kanZwaaien: null,
+  opnieuwAantal: 1,
   kabelLengteMeters: 0,
+  heeftOversteek: false,
+  aantalOversteken: 1,
+  oversteekMeters: 0,
+});
+
+export const newLsKabelTrace = (): LsKabelTrace => ({
+  id: crypto.randomUUID(),
+  lengteMeters: 0,
   heeftOversteek: false,
   aantalOversteken: 1,
   oversteekMeters: 0,
