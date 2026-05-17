@@ -14,7 +14,7 @@ export const Route = createFileRoute("/beheer")({
   component: BeheerPage,
 });
 
-type Tab = { key: string; label: string; render: () => JSX.Element };
+type Tab = { key: string; label: string; render: () => React.ReactElement };
 type Groep = { key: string; label: string; icon: typeof Package; beschrijving: string; tabs: Tab[] };
 
 const GROEPEN: Groep[] = [
