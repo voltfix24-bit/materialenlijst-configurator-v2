@@ -33,13 +33,22 @@ export function berekenMsMoffen(
   }
 }
 
+interface MsKabelRegel {
+  conditie_kabel_type: string | null;
+  conditie_oversteek: boolean | null;
+  hoeveelheid: number | string;
+  hoeveelheid_formule: string | null;
+  herkomst_label: string;
+  artikel?: ArtikelLike["artikel"];
+}
+
 /** Sectie 4b: MS kabel traces — DB-driven via ms_kabel_regels. */
 export function berekenMsKabelTraces(
   map: PreviewMap,
   config: MaterialenConfig,
   sd: Stamdata,
 ): void {
-  const regels = sd.msKabelRegels.data ?? [];
+  const regels = (sd.msKabelRegels.data ?? []) as unknown as MsKabelRegel[];
   if (regels.length === 0) return;
 
   for (let i = 0; i < (config.msKabelTraces ?? []).length; i++) {
@@ -63,9 +72,7 @@ export function berekenMsKabelTraces(
     };
 
     for (const r of regels) {
-      // Conditie: kabel type
-      if (r.conditie_kabel_type && r.conditie_kabel_type !== trace.kabelType) continue;
-      // Conditie: oversteek vereist
+      if (r.conditie_kabel_type !== null && r.conditie_kabel_type !== trace.kabelType) continue;
       if (r.conditie_oversteek === true && !heeftOversteek) continue;
       if (r.conditie_oversteek === false && heeftOversteek) continue;
 
@@ -73,8 +80,7 @@ export function berekenMsKabelTraces(
         ? evaluateFormula(r.hoeveelheid_formule, vars)
         : Number(r.hoeveelheid);
       if (qty <= 0) continue;
-      const label = `${r.herkomst_label} trace ${idx}`;
-      add(map, (r as ArtikelLike).artikel, qty, label, "msVerbindingen");
+      add(map, r.artikel, qty, `${r.herkomst_label} trace ${idx}`, "msVerbindingen");
     }
   }
 }
