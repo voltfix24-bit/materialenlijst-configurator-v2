@@ -205,6 +205,7 @@ export interface MaterialenConfig {
   msKabelTraces: MsKabelTrace[];
   lsMoffenActief: boolean;
   lsMoffen: LsMof[];
+  lsKabelTraces: LsKabelTrace[];
   rmuVelden: RmuVeldConfig[];
   iNetArtikelen: INetArtikel[];
   isCompactStation: boolean;
