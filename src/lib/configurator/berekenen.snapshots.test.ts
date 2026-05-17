@@ -189,13 +189,13 @@ const DEFAULT_PROV_REGELS = [
 // MS kabel-regels seed — identiek aan DB-seed.
 // Tuple: [kabelType, oversteek, nr, qty, formule, label]
 const DEFAULT_MS_KABEL_REGELS = [
-  ["240AL_singel", null,  "20039484", 1, "KabelMeters",        "MS kabel 240AL singel"],
-  ["630AL_singel", null,  "20027992", 1, "KabelMeters",        "MS kabel 630AL singel"],
-  ["3x240AL",      null,  "20027989", 1, "KabelMeters",        "MS kabel 3x240AL"],
+  ["240AL_singel", null,  "20039484", 1, "KabelMeters",        "MS kabel"],
+  ["630AL_singel", null,  "20027992", 1, "KabelMeters",        "MS kabel"],
+  ["3x240AL",      null,  "20027989", 1, "KabelMeters",        "MS kabel"],
   [null,           null,  "20018148", 1, "RollenBeschermband", "MS kabel beschermband"],
-  ["240AL_singel", true,  "20036049", 1, "TotaalBuizen",       "MS kabel oversteek buis"],
-  ["630AL_singel", true,  "20036049", 1, "TotaalBuizen",       "MS kabel oversteek buis"],
-  ["3x240AL",      true,  "20028640", 1, "TotaalBuizen",       "MS kabel oversteek buis"],
+  ["240AL_singel", true,  "20036049", 1, "TotaalBuizen",       "MS kabel oversteek"],
+  ["630AL_singel", true,  "20036049", 1, "TotaalBuizen",       "MS kabel oversteek"],
+  ["3x240AL",      true,  "20028640", 1, "TotaalBuizen",       "MS kabel oversteek"],
   [null,           true,  "20043703", 1, "GeotextielAantal",   "MS kabel oversteek geotextiel"],
 ].map(([kt, ov, nr, qty, formule, label], i) => ({
   id: `mskab-${i}`,
