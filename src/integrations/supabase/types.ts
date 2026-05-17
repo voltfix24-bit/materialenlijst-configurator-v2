@@ -793,6 +793,75 @@ export type Database = {
           },
         ]
       }
+      rmu_veld_regels: {
+        Row: {
+          actief: boolean
+          artikel_id: string
+          conditie_aantal_kv_max: number | null
+          conditie_aantal_kv_min: number | null
+          conditie_is_inet: boolean | null
+          conditie_is_reserve: boolean | null
+          conditie_kabel_type: string | null
+          conditie_kva: string | null
+          conditie_merk: string | null
+          conditie_trafo_kabel_lengte: string | null
+          conditie_veld_nummer_is_1: boolean | null
+          conditie_veld_type: string | null
+          created_at: string
+          herkomst_label: string
+          hoeveelheid: number
+          hoeveelheid_formule: string | null
+          id: string
+          sectie: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actief?: boolean
+          artikel_id: string
+          conditie_aantal_kv_max?: number | null
+          conditie_aantal_kv_min?: number | null
+          conditie_is_inet?: boolean | null
+          conditie_is_reserve?: boolean | null
+          conditie_kabel_type?: string | null
+          conditie_kva?: string | null
+          conditie_merk?: string | null
+          conditie_trafo_kabel_lengte?: string | null
+          conditie_veld_nummer_is_1?: boolean | null
+          conditie_veld_type?: string | null
+          created_at?: string
+          herkomst_label: string
+          hoeveelheid?: number
+          hoeveelheid_formule?: string | null
+          id?: string
+          sectie?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actief?: boolean
+          artikel_id?: string
+          conditie_aantal_kv_max?: number | null
+          conditie_aantal_kv_min?: number | null
+          conditie_is_inet?: boolean | null
+          conditie_is_reserve?: boolean | null
+          conditie_kabel_type?: string | null
+          conditie_kva?: string | null
+          conditie_merk?: string | null
+          conditie_trafo_kabel_lengte?: string | null
+          conditie_veld_nummer_is_1?: boolean | null
+          conditie_veld_type?: string | null
+          created_at?: string
+          herkomst_label?: string
+          hoeveelheid?: number
+          hoeveelheid_formule?: string | null
+          id?: string
+          sectie?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rmu_zekeringen: {
         Row: {
           artikel_id: string
