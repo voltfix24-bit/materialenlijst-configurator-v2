@@ -55,6 +55,7 @@ interface StamdataOverrides {
   lsRekRegels?: unknown[];
   provRegels?: unknown[];
   msKabelRegels?: unknown[];
+  rmuVeldRegels?: unknown[];
 }
 
 // Vaste seed van GGI- en Trafo-regels, identiek aan de DB-seed in productie.
