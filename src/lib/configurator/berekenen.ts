@@ -38,7 +38,7 @@ export function berekenPreview(
   berekenMsKabelTraces(map, config, ctx);          // 4b
   berekenLsMoffen(map, config, sd, ctx);           // 5
   berekenVultKabel(map, config, ctx);              // 6
-  berekenLsRek(map, config, ctx);                  // 7
+  berekenLsRek(map, config, sd, ctx);              // 7 (DB-driven)
   berekenProvisorium(map, config, sd, ctx);        // 8
   berekenGgi(map, config, sd, ctx);                // 9 (DB-driven)
 

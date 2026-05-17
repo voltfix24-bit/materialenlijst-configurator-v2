@@ -52,6 +52,7 @@ interface StamdataOverrides {
   stationVaste?: unknown[];
   ggiRegels?: unknown[];
   trafoRegels?: unknown[];
+  lsRekRegels?: unknown[];
 }
 
 // Vaste seed van GGI- en Trafo-regels, identiek aan de DB-seed in productie.
@@ -104,6 +105,51 @@ const DEFAULT_TRAFO_REGELS = [
   artikel: art(nr as string),
 }));
 
+// LS-rek regels seed — identiek aan de DB-seed in productie.
+// Tuple-vorm: [compact, renov, actie, lsrekType, bevAanpassen, ovStuurpunt, schroef, kva, nr, qty, formule, label]
+const DEFAULT_LS_REK_REGELS = [
+  [false, true, "vervangen",   "8",  null, null, null, null,  "20050813", 1, null,                       "LS-rek 8 richtingen"],
+  [false, true, "vervangen",   "12", null, null, null, null,  "20050761", 1, null,                       "LS-rek 12 richtingen"],
+  [false, true, "vervangen",   null, null, null, null, null,  "20020042", 1, "lsRekExtraStroken",        "LS-rek extra stroken"],
+  [false, true, "vervangen",   null, null, null, null, "250", "20036622", 3, null,                       "LS-rek beveiliging voedende strook"],
+  [false, true, "vervangen",   null, null, null, null, "400", "20036623", 3, null,                       "LS-rek beveiliging voedende strook"],
+  [false, true, "vervangen",   null, null, null, null, "630", "20036624", 3, null,                       "LS-rek beveiliging voedende strook"],
+  [false, true, "gehandhaafd", null, true, null, null, "250", "20036622", 3, null,                       "LS-rek beveiliging aanpassen"],
+  [false, true, "gehandhaafd", null, true, null, null, "400", "20036623", 3, null,                       "LS-rek beveiliging aanpassen"],
+  [false, true, "gehandhaafd", null, true, null, null, "630", "20036624", 3, null,                       "LS-rek beveiliging aanpassen"],
+  [false, true, null,          null, null, true, "35A", null, "20001107", 3, null,                       "OV-stuurpunt schroefpatroon"],
+  [false, true, null,          null, null, true, "50A", null, "20001108", 3, null,                       "OV-stuurpunt schroefpatroon"],
+  [false, true, null,          null, null, true, null,  null, "20040148", 1, null,                       "OV-stuurpunt router"],
+  [false, true, null,          null, null, true, null,  null, "20040188", 1, null,                       "OV-stuurpunt beugel router"],
+  [false, true, null,          null, null, true, null,  null, "20039993", 1, null,                       "OV-stuurpunt FlexOV device"],
+  [false, true, null,          null, null, true, null,  null, "20039994", 1, null,                       "OV-stuurpunt beugel FlexOV"],
+  [false, true, null,          null, null, true, null,  null, "20040149", 1, null,                       "OV-stuurpunt kabel ethernet"],
+  [true,  null, null,          null, null, null, null, "250", "20036622", 3, null,                       "LS-rek beveiliging voedende strook"],
+  [true,  null, null,          null, null, null, null, "400", "20036623", 3, null,                       "LS-rek beveiliging voedende strook"],
+  [true,  null, null,          null, null, null, null, "630", "20036624", 3, null,                       "LS-rek beveiliging voedende strook"],
+  [true,  null, null,          null, null, null, null, null,  "20042043", 1, "lsRekAanSluitenKabels*2",  "LS-rek kabelbevestigingsklem K56 U"],
+  [true,  null, null,          null, null, null, null, null,  "20018004", 1, "lsRekAanSluitenKabels",    "LS-rek kabelinlegklem"],
+  [false, true, "vervangen",   null, null, null, null, null,  "20042042", 1, "lsRekAanSluitenKabels",    "LS-rek kabelbevestigingsklem K56"],
+  [false, true, "vervangen",   null, null, null, null, null,  "20018004", 1, "lsRekAanSluitenKabels",    "LS-rek kabelinlegklem"],
+].map(([c, r, a, t, ba, ov, sch, kva, nr, qty, formule, label], i) => ({
+  id: `lsrek-${i}`,
+  conditie_compact: c as boolean | null,
+  conditie_renovatie: r as boolean | null,
+  conditie_actie: a as string | null,
+  conditie_lsrek_type: t as string | null,
+  conditie_beveiliging_aanpassen: ba as boolean | null,
+  conditie_ov_stuurpunt: ov as boolean | null,
+  conditie_schroefpatroon: sch as string | null,
+  conditie_kva: kva as string | null,
+  artikel_id: `art-${nr}`,
+  hoeveelheid: qty as number,
+  hoeveelheid_formule: formule as string | null,
+  herkomst_label: label as string,
+  sort_order: i,
+  actief: true,
+  artikel: art(nr as string),
+}));
+
 function makeStamdata(o: StamdataOverrides = {}): Stamdata {
   const wrap = <T>(data: T[]) => ({ data, isLoading: false } as unknown as Stamdata["artikelen"]);
   const arts = (o.artikelNummers ?? []).map((n) => art(n));
@@ -120,6 +166,7 @@ function makeStamdata(o: StamdataOverrides = {}): Stamdata {
     stationVaste: wrap(o.stationVaste ?? []),
     ggiRegels: wrap(o.ggiRegels ?? DEFAULT_GGI_REGELS),
     trafoRegels: wrap(o.trafoRegels ?? DEFAULT_TRAFO_REGELS),
+    lsRekRegels: wrap(o.lsRekRegels ?? DEFAULT_LS_REK_REGELS),
     isLoading: false,
   } as unknown as Stamdata;
 }
