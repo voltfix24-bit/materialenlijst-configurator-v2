@@ -68,3 +68,35 @@ export function berekenLsMoffen(
     }
   }
 }
+
+/**
+ * Sectie 5b: LS-kabel traces — vaste artikelen, alleen lengte invullen.
+ * Werkt identiek aan MS-trace: kabel × meters + (optioneel) PVC 110mm
+ * beschermbuis × ceil(m/6) × n oversteken + geotextiel × n × 2.
+ */
+export function berekenLsKabelTraces(
+  map: PreviewMap,
+  config: MaterialenConfig,
+  ctx: BerekenCtx,
+): void {
+  const { findArtNr } = ctx;
+  for (let i = 0; i < (config.lsKabelTraces ?? []).length; i++) {
+    const trace = config.lsKabelTraces[i];
+    if (trace.lengteMeters <= 0) continue;
+    const idx = i + 1;
+    add(map, findArtNr(LS_KABEL), trace.lengteMeters, `LS kabel trace ${idx}`, "lsVerbindingen");
+
+    if (trace.heeftOversteek && trace.oversteekMeters > 0 && trace.aantalOversteken > 0) {
+      const buizenPerOversteek = Math.ceil(trace.oversteekMeters / 6);
+      const totaalBuizen = buizenPerOversteek * trace.aantalOversteken;
+      add(map, findArtNr(LS_OVERSTEEK_BUIS), totaalBuizen, `LS kabel trace ${idx} oversteek`, "lsVerbindingen");
+      add(
+        map,
+        findArtNr(LS_OVERSTEEK_GEOTEXTIEL),
+        trace.aantalOversteken * 2,
+        `LS kabel trace ${idx} oversteek geotextiel`,
+        "lsVerbindingen",
+      );
+    }
+  }
+}
