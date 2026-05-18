@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, ClipboardList, Download, Info, Loader2, Plus, Search, StickyNote, Trash2, X } from "lucide-react";
+import { ChevronDown, ClipboardList, Download, Info, Loader2, Plus, Search, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -81,9 +81,6 @@ export function Winkelwagen({
   const [gekozenArtikel, setGekozenArtikel] = useState<ArtikelStam | null>(null);
   // Welke winkelwagen-secties zijn opengeklapt — standaard alles ingeklapt
   const [openSecties, setOpenSecties] = useState<Set<string>>(new Set());
-  // Per-item: uitgeklapt detailpaneel + lokale notitie (per case)
-  const [uitgeklapt, setUitgeklapt] = useState<Set<string>>(new Set());
-  const [notities, setNotities] = useState<Map<string, string>>(new Map());
   // Lokale filter voor zichtbare artikelen in de winkelwagen
   const [filter, setFilter] = useState("");
   const lijstRef = useRef<HTMLDivElement | null>(null);
@@ -98,8 +95,6 @@ export function Winkelwagen({
     setDialoogData(null);
     setPendingRevert(null);
     setOpenSecties(new Set());
-    setUitgeklapt(new Set());
-    setNotities(new Map());
   }, [caseId]);
 
   // Sync: zodra de engineer een configurator-sectie opent, open de bijbehorende
@@ -389,24 +384,6 @@ export function Winkelwagen({
     });
   };
 
-  const toggleUitgeklapt = (nr: string) => {
-    setUitgeklapt((prev) => {
-      const s = new Set(prev);
-      if (s.has(nr)) s.delete(nr);
-      else s.add(nr);
-      return s;
-    });
-  };
-
-  const zetNotitie = (nr: string, v: string) => {
-    setNotities((prev) => {
-      const m = new Map(prev);
-      if (v.trim()) m.set(nr, v);
-      else m.delete(nr);
-      return m;
-    });
-  };
-
   // Welke secties hebben nieuwe items terwijl ze ingeklapt zijn → groene puls
   const sectiesMetNieuw = useMemo(() => {
     const s = new Set<string>();
@@ -509,10 +486,6 @@ export function Winkelwagen({
                       isNieuw={nieuwNrs.has(it.artikel_nummer)}
                       isVerwijderd={false}
                       isOverride={overrides.has(it.artikel_nummer)}
-                      isExpanded={uitgeklapt.has(it.artikel_nummer)}
-                      notitie={notities.get(it.artikel_nummer) ?? ""}
-                      onToggleExpand={() => toggleUitgeklapt(it.artikel_nummer)}
-                      onNotitieChange={(v) => zetNotitie(it.artikel_nummer, v)}
                       onChange={(v) => wijzigHoeveelheid(it, v)}
                       onDelete={() => verwijderItem(it)}
                     />
@@ -525,10 +498,6 @@ export function Winkelwagen({
                       isNieuw={false}
                       isVerwijderd={true}
                       isOverride={false}
-                      isExpanded={false}
-                      notitie=""
-                      onToggleExpand={() => {}}
-                      onNotitieChange={() => {}}
                       onChange={() => {}}
                       onDelete={() => {}}
                     />
@@ -579,10 +548,6 @@ export function Winkelwagen({
                       isNieuw={nieuwNrs.has(t.artikel_nummer)}
                       isVerwijderd={false}
                       isOverride={false}
-                      isExpanded={uitgeklapt.has(t.artikel_nummer)}
-                      notitie={notities.get(t.artikel_nummer) ?? ""}
-                      onToggleExpand={() => toggleUitgeklapt(t.artikel_nummer)}
-                      onNotitieChange={(v) => zetNotitie(t.artikel_nummer, v)}
                       onChange={(v) =>
                         setToegevoegd((prev) =>
                           prev.map((x) => (x.artikel_nummer === t.artikel_nummer ? { ...x, hoeveelheid: v } : x)),
@@ -700,10 +665,6 @@ function WinkelwagenRij({
   isNieuw,
   isVerwijderd,
   isOverride,
-  isExpanded,
-  notitie,
-  onToggleExpand,
-  onNotitieChange,
   onChange,
   onDelete,
 }: {
@@ -712,210 +673,151 @@ function WinkelwagenRij({
   isNieuw: boolean;
   isVerwijderd: boolean;
   isOverride: boolean;
-  isExpanded: boolean;
-  notitie: string;
-  onToggleExpand: () => void;
-  onNotitieChange: (v: string) => void;
   onChange: (v: number) => void;
   onDelete: () => void;
 }) {
   const minHoeveelheid = 0;
-  // Compacte herkomst-samenvatting (eerste bron + "+N" indien meerdere)
-  const herkomstSamenvatting = (() => {
-    if (item.bijdragen.length === 0) return item.herkomst.join(", ");
-    const eerste = item.bijdragen[0].herkomst;
-    const rest = item.bijdragen.length - 1;
-    return rest > 0 ? `${eerste} +${rest}` : eerste;
-  })();
-  const heeftNotitie = notitie.trim().length > 0;
-
   return (
     <div
       className={cn(
-        "rounded-md transition-all duration-500",
+        "flex items-center gap-2 py-1 px-1.5 rounded-md transition-all duration-500 group",
         !isVerwijderd && "hover:bg-muted/40",
-        item.niet_bestellen && !isVerwijderd && "opacity-50",
+        item.niet_bestellen && !isVerwijderd && "opacity-50 line-through",
         isNieuw && !isVerwijderd && "bg-success/10 ring-1 ring-success/30",
         isOverride && !isVerwijderd && !isNieuw && "bg-primary/5 ring-1 ring-primary/30",
-        isVerwijderd && "bg-destructive/10 ring-1 ring-destructive/30 opacity-70 animate-fade-out",
-        isExpanded && !isVerwijderd && "bg-muted/40 ring-1 ring-border",
+        isVerwijderd && "bg-destructive/10 ring-1 ring-destructive/30 line-through opacity-70 animate-fade-out",
       )}
     >
-      {/* Hoofdrij */}
-      <div className={cn("flex items-center gap-2 py-1 px-1.5 group", item.niet_bestellen && !isVerwijderd && "line-through", isVerwijderd && "line-through")}>
-        {/* Sectie kleurblokje */}
-        <div className="w-0.5 h-4 rounded-full flex-shrink-0" style={{ background: color }} />
+      {/* Sectie kleurblokje */}
+      <div className="w-0.5 h-4 rounded-full flex-shrink-0" style={{ background: color }} />
 
-        {/* Expand toggle */}
+      {/* Artikelnummer — vaste breedte, klikbaar voor kopiëren */}
+      <span
+        className="font-mono text-[10px] text-primary/80 flex-shrink-0 w-[72px] cursor-pointer hover:text-primary transition-colors truncate"
+        onClick={() => navigator.clipboard?.writeText(item.artikel_nummer)}
+        title={`${item.artikel_nummer} — ${item.korte_omschrijving}`}
+      >
+        {item.artikel_nummer}
+      </span>
+
+      {/* Omschrijving — truncate, met hover card voor volledige tekst */}
+      <HoverCard openDelay={250} closeDelay={80}>
+        <HoverCardTrigger asChild>
+          <span
+            className="text-[11px] text-foreground/85 flex-1 min-w-0 truncate leading-tight cursor-help"
+          >
+            {item.korte_omschrijving}
+          </span>
+        </HoverCardTrigger>
+        <HoverCardContent
+          side="top"
+          align="start"
+          className="w-auto max-w-xs p-2 text-xs leading-snug"
+        >
+          <div className="font-mono text-[10px] text-primary mb-1">{item.artikel_nummer}</div>
+          <div className="text-foreground">{item.korte_omschrijving}</div>
+        </HoverCardContent>
+      </HoverCard>
+
+      {/* Stepper of weergave */}
+      {isVerwijderd ? (
+        <span className="font-mono text-[12px] tabular-nums text-destructive flex-shrink-0">
+          {item.hoeveelheid}
+        </span>
+      ) : (
+        <div className="flex items-center gap-0.5 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => onChange(Math.max(minHoeveelheid, item.hoeveelheid - 1))}
+            disabled={item.hoeveelheid <= minHoeveelheid}
+            className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-bold"
+            aria-label="Verlaag"
+          >
+            −
+          </button>
+          <span className="w-8 text-center text-[12px] font-mono font-medium tabular-nums">
+            {item.hoeveelheid}
+          </span>
+          <button
+            type="button"
+            onClick={() => onChange(item.hoeveelheid + 1)}
+            className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-xs font-bold"
+            aria-label="Verhoog"
+          >
+            +
+          </button>
+        </div>
+      )}
+
+      {/* Eenheid klein */}
+      <span className="text-[9px] text-muted-foreground/60 flex-shrink-0 w-6 text-center uppercase">
+        {item.eenheid}
+      </span>
+
+      {/* Acties — alleen op hover */}
+      <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        {item.bijdragen.length > 0 && !isVerwijderd && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors"
+                aria-label="Toon bronoverzicht"
+              >
+                {item.bijdragen.length > 1 ? (
+                  <span className="text-[10px] font-mono">{item.bijdragen.length}</span>
+                ) : (
+                  <Info className="w-3 h-3" />
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="left" align="start" className="w-80 p-3">
+              <div className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide flex items-center justify-between">
+                <span>Bronoverzicht</span>
+                <span className="font-mono text-foreground">
+                  Σ {item.hoeveelheid} {item.eenheid}
+                </span>
+              </div>
+              <ul className="space-y-1.5">
+                {item.bijdragen.map((b, i) => {
+                  const def = PREVIEW_SECTIE_DEFS.find((d) => d.key === b.sectie);
+                  return (
+                    <li key={i} className="text-xs flex items-start gap-2">
+                      <span
+                        className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
+                        style={{ background: def?.color ?? "#999" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="font-medium break-words">{b.herkomst}</span>
+                          <span className="font-mono tabular-nums text-foreground shrink-0">
+                            {b.hoeveelheid} {item.eenheid}
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
+                          {def?.label ?? b.sectie}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </PopoverContent>
+          </Popover>
+        )}
         {!isVerwijderd && (
           <button
             type="button"
-            onClick={onToggleExpand}
-            className={cn(
-              "w-4 h-4 rounded flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors flex-shrink-0",
-              isExpanded && "text-foreground",
-            )}
-            aria-label={isExpanded ? "Inklappen" : "Details tonen"}
-            aria-expanded={isExpanded}
+            onClick={onDelete}
+            className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+            aria-label="Verwijder artikel"
+            title="Verwijder artikel"
           >
-            <ChevronRight className={cn("w-3 h-3 transition-transform", isExpanded && "rotate-90")} />
+            <Trash2 className="w-3 h-3" />
           </button>
         )}
-
-        {/* Artikelnummer — vaste breedte, klikbaar voor kopiëren */}
-        <span
-          className="font-mono text-[10px] text-primary/80 flex-shrink-0 w-[72px] cursor-pointer hover:text-primary transition-colors truncate"
-          onClick={() => navigator.clipboard?.writeText(item.artikel_nummer)}
-          title={`${item.artikel_nummer} — ${item.korte_omschrijving}`}
-        >
-          {item.artikel_nummer}
-        </span>
-
-        {/* Omschrijving — truncate, met hover card voor volledige tekst */}
-        <HoverCard openDelay={250} closeDelay={80}>
-          <HoverCardTrigger asChild>
-            <span className="text-[11px] text-foreground/85 flex-1 min-w-0 truncate leading-tight cursor-help">
-              {item.korte_omschrijving}
-            </span>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" align="start" className="w-auto max-w-xs p-2 text-xs leading-snug">
-            <div className="font-mono text-[10px] text-primary mb-1">{item.artikel_nummer}</div>
-            <div className="text-foreground">{item.korte_omschrijving}</div>
-          </HoverCardContent>
-        </HoverCard>
-
-        {/* Notitie-indicator */}
-        {heeftNotitie && !isVerwijderd && (
-          <StickyNote
-            className="w-3 h-3 text-accent flex-shrink-0"
-            aria-label="Heeft notitie"
-          />
-        )}
-
-        {/* Stepper of weergave */}
-        {isVerwijderd ? (
-          <span className="font-mono text-[12px] tabular-nums text-destructive flex-shrink-0">{item.hoeveelheid}</span>
-        ) : (
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => onChange(Math.max(minHoeveelheid, item.hoeveelheid - 1))}
-              disabled={item.hoeveelheid <= minHoeveelheid}
-              className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-bold"
-              aria-label="Verlaag"
-            >
-              −
-            </button>
-            <span className="w-8 text-center text-[12px] font-mono font-medium tabular-nums">{item.hoeveelheid}</span>
-            <button
-              type="button"
-              onClick={() => onChange(item.hoeveelheid + 1)}
-              className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-xs font-bold"
-              aria-label="Verhoog"
-            >
-              +
-            </button>
-          </div>
-        )}
-
-        {/* Eenheid klein */}
-        <span className="text-[9px] text-muted-foreground/60 flex-shrink-0 w-6 text-center uppercase">{item.eenheid}</span>
-
-        {/* Acties — alleen op hover */}
-        <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          {item.bijdragen.length > 0 && !isVerwijderd && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors"
-                  aria-label="Toon bronoverzicht"
-                >
-                  {item.bijdragen.length > 1 ? (
-                    <span className="text-[10px] font-mono">{item.bijdragen.length}</span>
-                  ) : (
-                    <Info className="w-3 h-3" />
-                  )}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent side="left" align="start" className="w-80 p-3">
-                <div className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide flex items-center justify-between">
-                  <span>Bronoverzicht</span>
-                  <span className="font-mono text-foreground">
-                    Σ {item.hoeveelheid} {item.eenheid}
-                  </span>
-                </div>
-                <ul className="space-y-1.5">
-                  {item.bijdragen.map((b, i) => {
-                    const def = PREVIEW_SECTIE_DEFS.find((d) => d.key === b.sectie);
-                    return (
-                      <li key={i} className="text-xs flex items-start gap-2">
-                        <span
-                          className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
-                          style={{ background: def?.color ?? "#999" }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline justify-between gap-2">
-                            <span className="font-medium break-words">{b.herkomst}</span>
-                            <span className="font-mono tabular-nums text-foreground shrink-0">
-                              {b.hoeveelheid} {item.eenheid}
-                            </span>
-                          </div>
-                          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
-                            {def?.label ?? b.sectie}
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </PopoverContent>
-            </Popover>
-          )}
-          {!isVerwijderd && (
-            <button
-              type="button"
-              onClick={onDelete}
-              className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
-              aria-label="Verwijder artikel"
-              title="Verwijder artikel"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
-          )}
-        </div>
       </div>
-
-      {/* Compacte detailregel — altijd zichtbaar onder de hoofdrij */}
-      {!isVerwijderd && item.bijdragen.length > 0 && (
-        <div className="flex items-center gap-2 pl-[88px] pr-2 pb-1 text-[10px] text-muted-foreground/80 leading-tight">
-          <span className="font-mono uppercase tracking-wider text-muted-foreground/60">Bron:</span>
-          <span className="truncate" title={item.bijdragen.map((b) => `${b.herkomst} (${b.hoeveelheid} ${item.eenheid})`).join(" · ")}>
-            {herkomstSamenvatting}
-          </span>
-          <span className="ml-auto font-mono tabular-nums text-muted-foreground/60 flex-shrink-0">
-            Σ {item.hoeveelheid} {item.eenheid}
-          </span>
-        </div>
-      )}
-
-      {/* Uitklap: notitie */}
-      {isExpanded && !isVerwijderd && (
-        <div className="px-3 pb-2 pt-1 border-t border-border/50 space-y-1.5">
-          <label className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            <StickyNote className="w-3 h-3" />
-            Notitie
-          </label>
-          <textarea
-            value={notitie}
-            onChange={(e) => onNotitieChange(e.target.value)}
-            placeholder="Voeg een notitie toe voor dit artikel (alleen voor jezelf, in deze sessie)…"
-            rows={2}
-            className="w-full text-[11px] rounded-md border border-border bg-card px-2 py-1.5 focus:outline-none focus:border-primary/40 resize-y leading-snug"
-          />
-        </div>
-      )}
     </div>
   );
 }
