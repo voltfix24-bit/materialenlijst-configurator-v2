@@ -326,10 +326,57 @@ export const PREVIEW_SECTIE_DEFS: PreviewSectieDef[] = [
   },
 ];
 
+export type BronTabel =
+  | "standaard_materialen_templates"
+  | "station_vaste_artikelen"
+  | "ggi_artikelen"
+  | "rmu_configuraties"
+  | "rmu_veld_artikelen"
+  | "rmu_zekeringen"
+  | "rmu_veld_regels"
+  | "trafo_regels"
+  | "trafo_vult_kabel"
+  | "ms_mof_types"
+  | "ms_mof_materialen"
+  | "ms_kabel_regels"
+  | "ls_mof_types"
+  | "ls_mof_materialen"
+  | "ls_rek_regels"
+  | "prov_regels";
+
+export interface BronTabelDef {
+  beheerGroep: string;
+  beheerTab: string;
+  label: string;
+}
+
+export const BRON_TABEL_DEFS: Record<BronTabel, BronTabelDef> = {
+  standaard_materialen_templates: { beheerGroep: "standaard", beheerTab: "standaard", label: "Standaard materialen" },
+  station_vaste_artikelen:        { beheerGroep: "standaard", beheerTab: "vast", label: "Vaste artikelen per subtype" },
+  ggi_artikelen:                  { beheerGroep: "standaard", beheerTab: "ggi", label: "GGI artikelen" },
+  rmu_configuraties:              { beheerGroep: "hardware",  beheerTab: "rmu", label: "RMU configuratie" },
+  rmu_veld_artikelen:             { beheerGroep: "hardware",  beheerTab: "rmu", label: "RMU veld artikelen" },
+  rmu_zekeringen:                 { beheerGroep: "hardware",  beheerTab: "rmu", label: "RMU zekeringen" },
+  rmu_veld_regels:                { beheerGroep: "automations", beheerTab: "rmu_veld_regels", label: "RMU veld regels" },
+  trafo_regels:                   { beheerGroep: "automations", beheerTab: "trafo_regels", label: "Trafo regels" },
+  trafo_vult_kabel:               { beheerGroep: "automations", beheerTab: "trafo_regels", label: "Trafo vult-kabel" },
+  ms_mof_types:                   { beheerGroep: "hardware",  beheerTab: "ms_mof", label: "MS mof types" },
+  ms_mof_materialen:              { beheerGroep: "hardware",  beheerTab: "ms_mof", label: "MS mof materialen" },
+  ms_kabel_regels:                { beheerGroep: "automations", beheerTab: "ms_kabel_regels", label: "MS kabel regels" },
+  ls_mof_types:                   { beheerGroep: "hardware",  beheerTab: "ls_mof", label: "LS mof types" },
+  ls_mof_materialen:              { beheerGroep: "hardware",  beheerTab: "ls_mof", label: "LS mof materialen" },
+  ls_rek_regels:                  { beheerGroep: "automations", beheerTab: "lsrek_regels", label: "LS-rek regels" },
+  prov_regels:                    { beheerGroep: "automations", beheerTab: "prov_regels", label: "Provisorium regels" },
+};
+
 export interface PreviewBijdrage {
   herkomst: string;
   sectie: PreviewSectie;
   hoeveelheid: number;
+  /** Tabel waaruit deze bijdrage komt (voor deep-link naar beheer). */
+  bronTabel?: BronTabel;
+  /** ID van de specifieke regel/rij in die tabel. */
+  bronId?: string;
 }
 
 export interface PreviewItem {
@@ -342,7 +389,6 @@ export interface PreviewItem {
   niet_bestellen: boolean;
   herkomst: string[];
   sectie: PreviewSectie;
-  /** Per-bron uitsplitsing van de hoeveelheid (welke berekening leverde wat). */
   bijdragen: PreviewBijdrage[];
 }
 
