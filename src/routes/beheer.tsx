@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Info, Package, Settings2, Zap, Wrench, ShieldCheck } from "lucide-react";
 import { AssortimentTab } from "@/components/beheer/AssortimentTab";
@@ -11,7 +11,14 @@ import { StandaardMaterialenTab, VasteArtikelenTab } from "@/components/beheer/O
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 
+type BeheerSearch = { groep?: string; tab?: string; artikel?: string };
+
 export const Route = createFileRoute("/beheer")({
+  validateSearch: (s: Record<string, unknown>): BeheerSearch => ({
+    groep: typeof s.groep === "string" ? s.groep : undefined,
+    tab: typeof s.tab === "string" ? s.tab : undefined,
+    artikel: typeof s.artikel === "string" ? s.artikel : undefined,
+  }),
   component: BeheerPage,
 });
 
