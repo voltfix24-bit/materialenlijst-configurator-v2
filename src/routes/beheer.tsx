@@ -186,6 +186,13 @@ function BeheerPage() {
         ))}
       </div>
 
+      {search.artikel && (
+        <div className="mb-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+          Geopend vanuit winkelwagen — zoek hier naar artikel{" "}
+          <strong className="font-mono">{search.artikel}</strong>.
+        </div>
+      )}
+
       {tab.render()}
     </div>
   );
