@@ -4,6 +4,7 @@ import { evaluateFormula } from "../formula";
 import { add, type ArtikelLike, type BerekenCtx, type PreviewMap } from "./shared";
 
 interface RmuVeldRegel {
+  id: string;
   conditie_merk: string | null;
   conditie_is_inet: boolean | null;
   conditie_veld_type: string | null;
@@ -29,9 +30,10 @@ export function berekenRmuBasis(
 ): void {
   if (!config.rmuConfig || ctx.isCompact) return;
   const rmu = config.rmuConfig;
-  add(map, rmu.rmu_artikel, 1, "RMU", "rmu");
-  add(map, rmu.frame_artikel, 1, "RMU frame", "rmu");
-  add(map, rmu.bodemplaat_artikel, 1, `Bodemplaat ${rmu.merk} ${rmu.code}`, "rmu");
+  const cfgBron = { tabel: "rmu_configuraties" as const, id: rmu.id };
+  add(map, rmu.rmu_artikel, 1, "RMU", "rmu", cfgBron);
+  add(map, rmu.frame_artikel, 1, "RMU frame", "rmu", cfgBron);
+  add(map, rmu.bodemplaat_artikel, 1, `Bodemplaat ${rmu.merk} ${rmu.code}`, "rmu", cfgBron);
 
   const isInet = rmu.is_inet;
   const merk = rmu.merk;
@@ -51,13 +53,20 @@ export function berekenRmuBasis(
     const qty = va.hoeveelheid_formule
       ? evaluateFormula(va.hoeveelheid_formule, { N: n })
       : Number(va.hoeveelheid) * n;
-    add(map, (va as ArtikelLike).artikel, qty, `RMU velden ${va.veld_type}`, "rmu");
+    add(map, (va as ArtikelLike).artikel, qty, `RMU velden ${va.veld_type}`, "rmu", {
+      tabel: "rmu_veld_artikelen",
+      id: (va as { id?: string }).id,
+    });
   }
 
   if (config.trafoKva) {
     const kva = Number(config.trafoKva);
     const z = (sd.rmuZekeringen.data ?? []).find((x) => x.merk === rmu.merk && x.trafo_kva === kva);
-    if (z) add(map, (z as ArtikelLike).artikel, Number(z.hoeveelheid), `RMU zekering ${kva}kVA`, "rmu");
+    if (z)
+      add(map, (z as ArtikelLike).artikel, Number(z.hoeveelheid), `RMU zekering ${kva}kVA`, "rmu", {
+        tabel: "rmu_zekeringen",
+        id: (z as { id?: string }).id,
+      });
   }
 }
 
@@ -134,7 +143,10 @@ export function berekenRmuVelden(
         ? r.herkomst_label.replace("{veldNummer}", String(veld.veldNummer))
         : r.herkomst_label;
       const sectie = (r.sectie as "rmu" | "trafo") ?? "rmu";
-      add(map, r.artikel, Number(r.hoeveelheid), label, sectie);
+      add(map, r.artikel, Number(r.hoeveelheid), label, sectie, {
+        tabel: "rmu_veld_regels",
+        id: r.id,
+      });
     }
   }
 

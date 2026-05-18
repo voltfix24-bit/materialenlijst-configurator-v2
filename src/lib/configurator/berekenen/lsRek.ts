@@ -3,6 +3,7 @@ import type { Stamdata } from "../queries";
 import { add, type ArtikelLike, type BerekenCtx, type PreviewMap } from "./shared";
 
 interface LsRekRegel {
+  id: string;
   conditie_compact: boolean | null;
   conditie_renovatie: boolean | null;
   conditie_actie: string | null;
@@ -60,7 +61,7 @@ export function berekenLsRek(
     if (r.conditie_kva !== null && r.conditie_kva !== (config.trafoKva ?? "")) continue;
 
     const qty = evalFormule(r.hoeveelheid_formule, Number(r.hoeveelheid), config);
-    add(map, r.artikel, qty, r.herkomst_label, "lsRek");
+    add(map, r.artikel, qty, r.herkomst_label, "lsRek", { tabel: "ls_rek_regels", id: r.id });
   }
 
   // Dynamische per-richting beveiligingen (engineer-input artikelnummers)

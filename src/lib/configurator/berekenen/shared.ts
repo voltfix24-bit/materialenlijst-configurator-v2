@@ -1,4 +1,4 @@
-import type { Artikel, PreviewItem, PreviewSectie } from "../types";
+import type { Artikel, BronTabel, PreviewItem, PreviewSectie } from "../types";
 import type { Stamdata } from "../queries";
 
 export interface ArtikelLike { artikel?: Artikel | null }
@@ -7,6 +7,11 @@ export type LsMofTypeRow = { id: string; type: string; bestaand_type: string };
 
 export type PreviewMap = Map<string, PreviewItem>;
 
+export interface BronRef {
+  tabel: BronTabel;
+  id?: string;
+}
+
 /** Voegt een artikel toe aan de preview-map of telt op bij bestaande regel. */
 export function add(
   map: PreviewMap,
@@ -14,6 +19,7 @@ export function add(
   qty: number,
   herkomst: string,
   sectie: PreviewSectie,
+  bron?: BronRef,
   nietBestellen = false,
 ): void {
   if (!artikel || qty <= 0) return;
@@ -22,9 +28,22 @@ export function add(
   if (ex) {
     ex.hoeveelheid += qty;
     if (!ex.herkomst.includes(herkomst)) ex.herkomst.push(herkomst);
-    const exB = ex.bijdragen.find((b) => b.herkomst === herkomst && b.sectie === sectie);
+    const exB = ex.bijdragen.find(
+      (b) =>
+        b.herkomst === herkomst &&
+        b.sectie === sectie &&
+        b.bronTabel === bron?.tabel &&
+        b.bronId === bron?.id,
+    );
     if (exB) exB.hoeveelheid += qty;
-    else ex.bijdragen.push({ herkomst, sectie, hoeveelheid: qty });
+    else
+      ex.bijdragen.push({
+        herkomst,
+        sectie,
+        hoeveelheid: qty,
+        bronTabel: bron?.tabel,
+        bronId: bron?.id,
+      });
     if (nietBestellen) ex.niet_bestellen = true;
   } else {
     map.set(key, {
@@ -37,7 +56,15 @@ export function add(
       niet_bestellen: nietBestellen,
       herkomst: [herkomst],
       sectie,
-      bijdragen: [{ herkomst, sectie, hoeveelheid: qty }],
+      bijdragen: [
+        {
+          herkomst,
+          sectie,
+          hoeveelheid: qty,
+          bronTabel: bron?.tabel,
+          bronId: bron?.id,
+        },
+      ],
     });
   }
 }

@@ -14,13 +14,19 @@ export function berekenMsMoffen(
     if (!mof.mofTypeId) return;
     const mt = (sd.msMofTypes.data ?? []).find((m) => m.id === mof.mofTypeId);
     if (!mt) return;
-    add(map, (mt as ArtikelLike).artikel, 1, label, "msVerbindingen");
+    add(map, (mt as ArtikelLike).artikel, 1, label, "msVerbindingen", {
+      tabel: "ms_mof_types",
+      id: mt.id,
+    });
     const mats = (sd.msMofMaterialen.data ?? []).filter((m) => m.mof_type_id === mt.id);
     for (const ma of mats) {
       const qty = ma.hoeveelheid_formule
         ? evaluateFormula(ma.hoeveelheid_formule, { N: 1 })
         : Number(ma.hoeveelheid);
-      add(map, (ma as ArtikelLike).artikel, qty, label, "msVerbindingen");
+      add(map, (ma as ArtikelLike).artikel, qty, label, "msVerbindingen", {
+        tabel: "ms_mof_materialen",
+        id: (ma as { id?: string }).id,
+      });
     }
   };
 
@@ -34,6 +40,7 @@ export function berekenMsMoffen(
 }
 
 interface MsKabelRegel {
+  id: string;
   conditie_kabel_type: string | null;
   conditie_oversteek: boolean | null;
   hoeveelheid: number | string;
@@ -80,7 +87,10 @@ export function berekenMsKabelTraces(
         ? evaluateFormula(r.hoeveelheid_formule, vars)
         : Number(r.hoeveelheid);
       if (qty <= 0) continue;
-      add(map, r.artikel, qty, `${r.herkomst_label} trace ${idx}`, "msVerbindingen");
+      add(map, r.artikel, qty, `${r.herkomst_label} trace ${idx}`, "msVerbindingen", {
+        tabel: "ms_kabel_regels",
+        id: r.id,
+      });
     }
   }
 }

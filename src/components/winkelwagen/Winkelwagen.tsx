@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSectie } from "@/lib/configurator/types";
+import { BRON_TABEL_DEFS, PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSectie } from "@/lib/configurator/types";
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
 import type { CorrectieDialoogData, CorrectieScope } from "@/lib/leersysteem/types";
 import { CorrectieDialoog } from "./CorrectieDialoog";
@@ -782,6 +782,14 @@ function WinkelwagenRij({
               <ul className="space-y-2.5">
                 {item.bijdragen.map((b, i) => {
                   const def = PREVIEW_SECTIE_DEFS.find((d) => d.key === b.sectie);
+                  const bronDef = b.bronTabel ? BRON_TABEL_DEFS[b.bronTabel] : null;
+                  const groep = bronDef?.beheerGroep ?? def?.beheerGroep;
+                  const tab = bronDef?.beheerTab ?? def?.beheerTab;
+                  const linkParams = new URLSearchParams();
+                  if (groep) linkParams.set("groep", groep);
+                  if (tab) linkParams.set("tab", tab);
+                  linkParams.set("artikel", item.artikel_nummer);
+                  if (b.bronId) linkParams.set("row", b.bronId);
                   return (
                     <li key={i} className="text-xs flex items-start gap-2">
                       <span
@@ -797,20 +805,25 @@ function WinkelwagenRij({
                         </div>
                         <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70 mb-1">
                           {def?.label ?? b.sectie}
+                          {bronDef && (
+                            <span className="ml-1 text-muted-foreground/50 normal-case">
+                              · {bronDef.label}
+                            </span>
+                          )}
                         </div>
                         {def?.uitleg && (
                           <p className="text-[11px] text-muted-foreground leading-snug">
                             {def.uitleg}
                           </p>
                         )}
-                        {def && (
+                        {(groep || tab) && (
                           <a
-                            href={`/beheer?groep=${def.beheerGroep}&tab=${def.beheerTab}&artikel=${item.artikel_nummer}`}
+                            href={`/beheer?${linkParams.toString()}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-[10px] font-medium text-primary hover:underline mt-1"
                           >
-                            Open beheer →
+                            {b.bronId ? "Open exacte regel →" : "Open beheer →"}
                           </a>
                         )}
                       </div>
@@ -818,12 +831,19 @@ function WinkelwagenRij({
                   );
                 })}
               </ul>
-              {item.bijdragen.length > 1 && (
-                <div className="mt-3 pt-2 border-t border-border text-[10px] text-muted-foreground leading-snug">
-                  <strong className="text-foreground">Let op:</strong> dit artikel komt uit{" "}
-                  {item.bijdragen.length} verschillende bronnen — controleer of dat klopt of dat er sprake is van dubbeltelling.
-                </div>
-              )}
+              {(() => {
+                const uniekeBronnen = new Set(
+                  item.bijdragen.map((b) => `${b.bronTabel ?? "?"}:${b.bronId ?? b.herkomst}`),
+                );
+                if (uniekeBronnen.size <= 1) return null;
+                return (
+                  <div className="mt-3 pt-2 border-t border-border text-[10px] text-muted-foreground leading-snug">
+                    <strong className="text-foreground">Let op:</strong> dit artikel komt uit{" "}
+                    {uniekeBronnen.size} verschillende regels — controleer of dat klopt of dat er
+                    sprake is van dubbeltelling.
+                  </div>
+                );
+              })()}
             </PopoverContent>
           </Popover>
         )}

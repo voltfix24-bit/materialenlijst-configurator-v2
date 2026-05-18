@@ -12,6 +12,7 @@ export interface VultKabelSpec {
 }
 
 interface VultKabelRow {
+  id: string;
   trafo_kva: number;
   aantal_kabels: number;
   kabel_doorsnede: number;
@@ -56,10 +57,11 @@ export function berekenVultKabel(
   })[];
   const row = rows.find((r) => String(r.trafo_kva) === config.trafoKva);
   if (!row) return;
+  const bron = { tabel: "trafo_vult_kabel" as const, id: row.id };
   const totaalMeters = Math.ceil(config.vultKabelAfstand * row.aantal_kabels);
-  if (row.kabel_artikel) add(map, row.kabel_artikel, totaalMeters, "Vult kabel", "vultKabel");
+  if (row.kabel_artikel) add(map, row.kabel_artikel, totaalMeters, "Vult kabel", "vultKabel", bron);
   if (row.perskabelschoen_artikel)
-    add(map, row.perskabelschoen_artikel, row.aantal_perskabelschoenen, "Vult kabel perskabelschoenen", "vultKabel");
+    add(map, row.perskabelschoen_artikel, row.aantal_perskabelschoenen, "Vult kabel perskabelschoenen", "vultKabel", bron);
   if (row.muurbeugel_artikel)
-    add(map, row.muurbeugel_artikel, 1, "Vult kabel muurbeugel", "vultKabel");
+    add(map, row.muurbeugel_artikel, 1, "Vult kabel muurbeugel", "vultKabel", bron);
 }
