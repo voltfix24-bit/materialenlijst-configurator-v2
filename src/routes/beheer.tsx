@@ -11,13 +11,14 @@ import { StandaardMaterialenTab, VasteArtikelenTab } from "@/components/beheer/O
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 
-type BeheerSearch = { groep?: string; tab?: string; artikel?: string };
+type BeheerSearch = { groep?: string; tab?: string; artikel?: string; row?: string };
 
 export const Route = createFileRoute("/beheer")({
   validateSearch: (s: Record<string, unknown>): BeheerSearch => ({
     groep: typeof s.groep === "string" ? s.groep : undefined,
     tab: typeof s.tab === "string" ? s.tab : undefined,
     artikel: typeof s.artikel === "string" ? s.artikel : undefined,
+    row: typeof s.row === "string" ? s.row : undefined,
   }),
   component: BeheerPage,
 });
@@ -186,10 +187,20 @@ function BeheerPage() {
         ))}
       </div>
 
-      {search.artikel && (
-        <div className="mb-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
-          Geopend vanuit winkelwagen — zoek hier naar artikel{" "}
-          <strong className="font-mono">{search.artikel}</strong>.
+      {(search.artikel || search.row) && (
+        <div className="mb-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs space-y-0.5">
+          {search.artikel && (
+            <div>
+              Geopend vanuit winkelwagen — zoek hier naar artikel{" "}
+              <strong className="font-mono">{search.artikel}</strong>.
+            </div>
+          )}
+          {search.row && (
+            <div className="text-muted-foreground">
+              Exacte regel-ID: <strong className="font-mono">{search.row}</strong> — gebruik
+              browser-zoek (Ctrl/Cmd+F) om de regel te vinden.
+            </div>
+          )}
         </div>
       )}
 
