@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Info, Package, Settings2, Zap, Wrench, ShieldCheck } from "lucide-react";
 import { AssortimentTab } from "@/components/beheer/AssortimentTab";
@@ -11,7 +11,14 @@ import { StandaardMaterialenTab, VasteArtikelenTab } from "@/components/beheer/O
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 
+type BeheerSearch = { groep?: string; tab?: string; artikel?: string };
+
 export const Route = createFileRoute("/beheer")({
+  validateSearch: (s: Record<string, unknown>): BeheerSearch => ({
+    groep: typeof s.groep === "string" ? s.groep : undefined,
+    tab: typeof s.tab === "string" ? s.tab : undefined,
+    artikel: typeof s.artikel === "string" ? s.artikel : undefined,
+  }),
   component: BeheerPage,
 });
 
@@ -75,9 +82,25 @@ const GROEPEN: Groep[] = [
 ];
 
 function BeheerPage() {
-  const [groepKey, setGroepKey] = useState<string>("catalogus");
-  const [tabKey, setTabKey] = useState<string>("artikelen");
+  const search = Route.useSearch();
+  const initialGroep = GROEPEN.find((g) => g.key === search.groep) ?? GROEPEN[0];
+  const initialTab =
+    initialGroep.tabs.find((t) => t.key === search.tab)?.key ?? initialGroep.tabs[0].key;
+  const [groepKey, setGroepKey] = useState<string>(initialGroep.key);
+  const [tabKey, setTabKey] = useState<string>(initialTab);
   const [intro, setIntro] = useState(true);
+
+  // Sync wanneer deep-link search params veranderen (bv. via een andere tab).
+  useEffect(() => {
+    if (search.groep) {
+      const g = GROEPEN.find((x) => x.key === search.groep);
+      if (g) {
+        setGroepKey(g.key);
+        const t = g.tabs.find((x) => x.key === search.tab)?.key ?? g.tabs[0].key;
+        setTabKey(t);
+      }
+    }
+  }, [search.groep, search.tab]);
 
   const groep = GROEPEN.find((g) => g.key === groepKey) ?? GROEPEN[0];
   const tab = groep.tabs.find((t) => t.key === tabKey) ?? groep.tabs[0];
@@ -162,6 +185,13 @@ function BeheerPage() {
           </button>
         ))}
       </div>
+
+      {search.artikel && (
+        <div className="mb-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+          Geopend vanuit winkelwagen — zoek hier naar artikel{" "}
+          <strong className="font-mono">{search.artikel}</strong>.
+        </div>
+      )}
 
       {tab.render()}
     </div>
