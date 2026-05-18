@@ -136,7 +136,7 @@ function CaseDetailPage() {
               hoeveelheid: Number(r.gewenste_hoeveelheid) || 0,
             }))
             .filter((i) => i.artikel_nummer && i.hoeveelheid > 0);
-      const res = await exporteerNaarTemplate(items, caseRow?.case_nummer ?? null);
+      const res = await exporteerNaarTemplate(items, caseRow?.case_nummer ?? null, caseRow?.station_naam ?? null);
       downloadBlob(res.blob, res.filename);
       return res;
     },
