@@ -82,9 +82,25 @@ const GROEPEN: Groep[] = [
 ];
 
 function BeheerPage() {
-  const [groepKey, setGroepKey] = useState<string>("catalogus");
-  const [tabKey, setTabKey] = useState<string>("artikelen");
+  const search = Route.useSearch();
+  const initialGroep = GROEPEN.find((g) => g.key === search.groep) ?? GROEPEN[0];
+  const initialTab =
+    initialGroep.tabs.find((t) => t.key === search.tab)?.key ?? initialGroep.tabs[0].key;
+  const [groepKey, setGroepKey] = useState<string>(initialGroep.key);
+  const [tabKey, setTabKey] = useState<string>(initialTab);
   const [intro, setIntro] = useState(true);
+
+  // Sync wanneer deep-link search params veranderen (bv. via een andere tab).
+  useEffect(() => {
+    if (search.groep) {
+      const g = GROEPEN.find((x) => x.key === search.groep);
+      if (g) {
+        setGroepKey(g.key);
+        const t = g.tabs.find((x) => x.key === search.tab)?.key ?? g.tabs[0].key;
+        setTabKey(t);
+      }
+    }
+  }, [search.groep, search.tab]);
 
   const groep = GROEPEN.find((g) => g.key === groepKey) ?? GROEPEN[0];
   const tab = groep.tabs.find((t) => t.key === tabKey) ?? groep.tabs[0];
