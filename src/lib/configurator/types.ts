@@ -235,18 +235,95 @@ export interface PreviewSectieDef {
   key: PreviewSectie;
   label: string;
   color: string;
+  /** Korte uitleg waarom een artikel uit deze sectie komt. */
+  uitleg: string;
+  /** Deep-link naar beheer: welke groep + tab beheert deze regels. */
+  beheerGroep: string;
+  beheerTab: string;
 }
 
 export const PREVIEW_SECTIE_DEFS: PreviewSectieDef[] = [
-  { key: "standaard", label: "Standaard materialen", color: "#7C8089" },
-  { key: "provisorium", label: "Provisorium", color: "#378ADD" },
-  { key: "rmu", label: "RMU", color: "#7F77DD" },
-  { key: "trafo", label: "Trafo", color: "#BA7517" },
-  { key: "vultKabel", label: "Vult kabel", color: "#2A7A6F" },
-  { key: "lsRek", label: "LS-rek", color: "#1D9E75" },
-  { key: "msVerbindingen", label: "MS verbindingen", color: "#D85A30" },
-  { key: "lsVerbindingen", label: "LS verbindingen", color: "#534AB7" },
-  { key: "ggi", label: "GGI", color: "#64748b" },
+  {
+    key: "standaard",
+    label: "Standaard materialen",
+    color: "#7C8089",
+    uitleg:
+      "Vaste basisset die altijd of bij dit subtype meekomt (NSA/provisorium/renovatie). Hoeveelheid komt uit de standaard-template.",
+    beheerGroep: "standaard",
+    beheerTab: "standaard",
+  },
+  {
+    key: "provisorium",
+    label: "Provisorium",
+    color: "#378ADD",
+    uitleg:
+      "Extra artikelen die nodig zijn voor het provisorium (tijdelijke voeding). Komt uit de provisorium-regels.",
+    beheerGroep: "automations",
+    beheerTab: "prov_regels",
+  },
+  {
+    key: "rmu",
+    label: "RMU",
+    color: "#7F77DD",
+    uitleg:
+      "Basisartikelen van de gekozen RMU (Magnefix/ABB/Siemens) plus extra's per veldtype (T/F/M). Hoeveelheden komen uit de RMU-config en RMU-veld-regels.",
+    beheerGroep: "hardware",
+    beheerTab: "rmu",
+  },
+  {
+    key: "trafo",
+    label: "Trafo",
+    color: "#BA7517",
+    uitleg:
+      "Artikelen die afhangen van het gekozen trafovermogen (250/400/630/1000 kVA). Komt uit de trafo-regels.",
+    beheerGroep: "automations",
+    beheerTab: "trafo_regels",
+  },
+  {
+    key: "vultKabel",
+    label: "Vult kabel",
+    color: "#2A7A6F",
+    uitleg:
+      "Vulkabel-artikelen (kabelschoenen, krimpkousen) per trafo + LS-rek combinatie. Komt uit trafo-vult-kabel-regels.",
+    beheerGroep: "automations",
+    beheerTab: "trafo_regels",
+  },
+  {
+    key: "lsRek",
+    label: "LS-rek",
+    color: "#1D9E75",
+    uitleg:
+      "Artikelen die horen bij het gekozen LS-rek (smeltinzetten, beveiligingen). Komt uit LS-rek-regels.",
+    beheerGroep: "automations",
+    beheerTab: "lsrek_regels",
+  },
+  {
+    key: "msVerbindingen",
+    label: "MS verbindingen",
+    color: "#D85A30",
+    uitleg:
+      "Mof-artikelen voor MS-kabelverbindingen, gekozen op basis van kabeltype en MS-mof-type. Komt uit MS-kabel-regels en MS-mof-config.",
+    beheerGroep: "automations",
+    beheerTab: "ms_kabel_regels",
+  },
+  {
+    key: "lsVerbindingen",
+    label: "LS verbindingen",
+    color: "#534AB7",
+    uitleg:
+      "Mof-artikelen voor LS-kabelverbindingen (rekvoeding + inblusters), per gekozen LS-mof-type.",
+    beheerGroep: "hardware",
+    beheerTab: "ls_mof",
+  },
+  {
+    key: "ggi",
+    label: "GGI",
+    color: "#64748b",
+    uitleg:
+      "Artikelen die specifiek bij het vervangen van de GGI horen (alleen bij renovatie + GGI-optie aan).",
+    beheerGroep: "standaard",
+    beheerTab: "ggi",
+  },
 ];
 
 export interface PreviewBijdrage {
