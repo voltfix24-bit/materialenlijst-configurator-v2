@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 
 const TEMPLATE_URL = "/templates/assortimentslijst.xlsx";
-const SHEET = "Aanvulling";
+const SHEET = "Verbruik";
 const HEADER_ROW = 13;
 const DATA_START = 14;
 
@@ -42,14 +42,11 @@ function todayDDMMYYYY(): string {
   return `${dd}-${mm}-${d.getFullYear()}`;
 }
 
-function fileDate(): string {
-  const d = new Date();
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-}
 
 export async function exporteerNaarTemplate(
   items: ExportItem[],
   caseNummer: string | null | undefined,
+  projectNaam?: string | null,
 ): Promise<ExportResult> {
   const res = await fetch(TEMPLATE_URL);
   if (!res.ok) throw new Error("Kon Excel-template niet laden");
@@ -101,10 +98,14 @@ export async function exporteerNaarTemplate(
   const blob = new Blob([out], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
-  const safeCase = (caseNummer || "case").replace(/[^a-zA-Z0-9_-]+/g, "_");
+  const sanitize = (s: string) => s.replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
+  const parts = ["Materialenlijst"];
+  if (projectNaam && projectNaam.trim()) parts.push(sanitize(projectNaam));
+  if (caseNummer && String(caseNummer).trim()) parts.push(sanitize(String(caseNummer)));
+  const filename = `${parts.join("_")}.xlsx`;
   return {
     blob,
-    filename: `Materiaallijst_${safeCase}_${fileDate()}.xlsx`,
+    filename,
     matched,
     unmatched,
   };
