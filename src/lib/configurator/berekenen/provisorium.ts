@@ -11,6 +11,7 @@ import {
 import { LS_KABEL } from "./artikelnummers";
 
 interface ProvRegel {
+  id: string;
   conditie_merk: string | null;
   conditie_kva: string | null;
   hoeveelheid: number | string;
@@ -56,7 +57,7 @@ export function berekenProvisorium(
     if (r.conditie_merk !== null && r.conditie_merk !== config.provRmuMerk) continue;
     if (r.conditie_kva !== null && r.conditie_kva !== (config.provZekeringKva ?? "")) continue;
     const qty = evalFormule(r.hoeveelheid_formule, Number(r.hoeveelheid), config);
-    add(map, r.artikel, qty, r.herkomst_label, "provisorium");
+    add(map, r.artikel, qty, r.herkomst_label, "provisorium", { tabel: "prov_regels", id: r.id });
   }
 
   // Provisorium LS moffen (dynamisch, per case)
@@ -71,7 +72,14 @@ export function berekenProvisorium(
       if (lt) {
         const mats = (sd.lsMofMaterialen.data ?? []).filter((m) => m.mof_type_id === lt.id);
         for (const ma of mats) {
-          add(map, (ma as ArtikelLike).artikel, Number(ma.hoeveelheid) * lm.aantal, `Provisorium LS ${lm.type}`, "provisorium");
+          add(
+            map,
+            (ma as ArtikelLike).artikel,
+            Number(ma.hoeveelheid) * lm.aantal,
+            `Provisorium LS ${lm.type}`,
+            "provisorium",
+            { tabel: "ls_mof_materialen", id: (ma as { id?: string }).id },
+          );
         }
       }
       if (lm.type === "aftakmof" && lm.ringklemArtikelNummer) {

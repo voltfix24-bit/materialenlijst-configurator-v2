@@ -35,7 +35,14 @@ export function berekenLsMoffen(
     if (lt) {
       const mats = (sd.lsMofMaterialen.data ?? []).filter((m) => m.mof_type_id === lt.id);
       for (const ma of mats) {
-        add(map, (ma as ArtikelLike).artikel, Number(ma.hoeveelheid) * mult, `LS ${lm.type}`, "lsVerbindingen");
+        add(
+          map,
+          (ma as ArtikelLike).artikel,
+          Number(ma.hoeveelheid) * mult,
+          `LS ${lm.type}`,
+          "lsVerbindingen",
+          { tabel: "ls_mof_materialen", id: (ma as { id?: string }).id },
+        );
       }
     }
 
