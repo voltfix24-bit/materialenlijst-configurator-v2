@@ -704,7 +704,7 @@ function WinkelwagenRij({
       <HoverCard openDelay={250} closeDelay={80}>
         <HoverCardTrigger asChild>
           <span
-            className="text-[11px] text-foreground/85 flex-1 min-w-0 truncate leading-tight cursor-help"
+            className="text-[11px] text-foreground/85 flex-1 min-w-0 leading-tight cursor-help line-clamp-2 break-words"
           >
             {item.korte_omschrijving}
           </span>
