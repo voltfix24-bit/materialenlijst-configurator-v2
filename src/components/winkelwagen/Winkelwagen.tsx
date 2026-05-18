@@ -779,7 +779,7 @@ function WinkelwagenRij({
                   Σ {item.hoeveelheid} {item.eenheid}
                 </span>
               </div>
-              <ul className="space-y-1.5">
+              <ul className="space-y-2.5">
                 {item.bijdragen.map((b, i) => {
                   const def = PREVIEW_SECTIE_DEFS.find((d) => d.key === b.sectie);
                   return (
@@ -795,14 +795,35 @@ function WinkelwagenRij({
                             {b.hoeveelheid} {item.eenheid}
                           </span>
                         </div>
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70 mb-1">
                           {def?.label ?? b.sectie}
                         </div>
+                        {def?.uitleg && (
+                          <p className="text-[11px] text-muted-foreground leading-snug">
+                            {def.uitleg}
+                          </p>
+                        )}
+                        {def && (
+                          <a
+                            href={`/beheer?groep=${def.beheerGroep}&tab=${def.beheerTab}&artikel=${item.artikel_nummer}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[10px] font-medium text-primary hover:underline mt-1"
+                          >
+                            Open beheer →
+                          </a>
+                        )}
                       </div>
                     </li>
                   );
                 })}
               </ul>
+              {item.bijdragen.length > 1 && (
+                <div className="mt-3 pt-2 border-t border-border text-[10px] text-muted-foreground leading-snug">
+                  <strong className="text-foreground">Let op:</strong> dit artikel komt uit{" "}
+                  {item.bijdragen.length} verschillende bronnen — controleer of dat klopt of dat er sprake is van dubbeltelling.
+                </div>
+              )}
             </PopoverContent>
           </Popover>
         )}
