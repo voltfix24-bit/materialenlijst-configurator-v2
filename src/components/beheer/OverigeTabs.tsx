@@ -22,6 +22,7 @@ export function StandaardMaterialenTab() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Stand> | null>(null);
   const [toDelete, setToDelete] = useState<Stand | null>(null);
+  const [filterCaseType, setFilterCaseType] = useState<string>("alle");
 
   const { data = [] } = useQuery({
     queryKey: ["beheer-standaard"],
@@ -58,30 +59,56 @@ export function StandaardMaterialenTab() {
     },
   });
 
+  const alle = data as Stand[];
+  const gefilterd = filterCaseType === "alle" ? alle : alle.filter((s) => s.case_type === filterCaseType);
+  const teller = (ct: string) => alle.filter((s) => s.case_type === ct).length;
+
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        <Button onClick={() => { setEditing({ case_type: "NSA", standaard_hoeveelheid: 1 }); setOpen(true); }}>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="text-xs text-muted-foreground mr-1">Filter case type:</span>
+          {(["alle", ...CASE_TYPES] as const).map((ct) => {
+            const actief = filterCaseType === ct;
+            const label = ct === "alle" ? `Alle (${alle.length})` : `${ct} (${teller(ct)})`;
+            return (
+              <button
+                key={ct}
+                onClick={() => setFilterCaseType(ct)}
+                className={
+                  "rounded-md border px-2.5 py-1 text-xs transition-colors " +
+                  (actief
+                    ? "border-primary bg-primary/10 text-foreground"
+                    : "border-border bg-surface text-muted-foreground hover:bg-accent/40")
+                }
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        <Button onClick={() => { setEditing({ case_type: filterCaseType === "alle" ? "NSA" : filterCaseType, standaard_hoeveelheid: 1 }); setOpen(true); }}>
           <Plus className="h-4 w-4 mr-1" /> Standaard materiaal toevoegen
         </Button>
       </div>
       <DataTable
         headers={["Case type", "Artikel", "Hoeveelheid", ""]}
-        rows={(data as Stand[]).map((s) => [
+        rows={gefilterd.map((s) => [
           s.case_type,
           <ArtikelLabel id={s.artikel_id} />,
           s.standaard_hoeveelheid,
           <RowActions onEdit={() => { setEditing(s); setOpen(true); }} onDelete={() => setToDelete(s)} />,
         ])}
         emptyIcon={ClipboardList}
-        emptyMessage="Nog geen standaard materialen"
+        emptyMessage={filterCaseType === "alle" ? "Nog geen standaard materialen" : `Geen standaard materialen voor ${filterCaseType}`}
         emptyDescription="Materialen die altijd op de bestellijst komen, ongeacht configuratie."
         emptyAction={
-          <Button onClick={() => { setEditing({ case_type: "NSA", standaard_hoeveelheid: 1 }); setOpen(true); }}>
+          <Button onClick={() => { setEditing({ case_type: filterCaseType === "alle" ? "NSA" : filterCaseType, standaard_hoeveelheid: 1 }); setOpen(true); }}>
             <Plus className="h-4 w-4 mr-1" /> Eerste standaard materiaal
           </Button>
         }
       />
+
       <FormDialog open={open} onOpenChange={setOpen} title={editing?.id ? "Standaard materiaal bewerken" : "Standaard materiaal toevoegen"}>
         {editing && (
           <div className="space-y-3">
