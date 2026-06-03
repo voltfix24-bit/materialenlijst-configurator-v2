@@ -47,7 +47,7 @@ function CasesPage() {
   const [zoekterm, setZoekterm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  const { data: cases } = useQuery({
+  const { data: cases, isLoading } = useQuery({
     queryKey: ["cases"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -168,9 +168,9 @@ function CasesPage() {
       )}
 
       {/* Filter balk */}
-      <div className="flex items-center gap-2 mb-5 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_200px_220px] gap-2 mb-5">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <input
             placeholder="Zoek op naam of casenummer..."
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-card text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
@@ -182,6 +182,7 @@ function CasesPage() {
           className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
+          aria-label="Filter op status"
         >
           <option value="">Alle statussen</option>
           {Object.entries(STATUS_LABELS).map(([k, v]) => (
@@ -192,6 +193,7 @@ function CasesPage() {
           className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
+          aria-label="Filter op case type"
         >
           <option value="">Alle types</option>
           {Object.entries(CASE_TYPE_LABELS).map(([k, v]) => (
@@ -200,12 +202,26 @@ function CasesPage() {
         </select>
       </div>
 
-      {filtered.length === 0 && (
+      {isLoading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="h-4 w-20 rounded bg-muted animate-pulse" />
+              <div className="h-5 w-3/4 rounded bg-muted animate-pulse" />
+              <div className="h-3 w-1/3 rounded bg-muted animate-pulse" />
+              <div className="h-6 w-full rounded bg-muted animate-pulse" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!isLoading && filtered.length === 0 && (
         <div className="rounded-xl border border-border bg-card px-4 py-12 text-center text-sm text-muted-foreground">
           {cases?.length === 0 ? "Nog geen cases. Maak er één aan." : "Geen cases gevonden voor deze filters."}
         </div>
       )}
 
+      {!isLoading && filtered.length > 0 && (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {filtered.map((c) => {
           const matCount = (c.case_materialen as { count: number }[] | null)?.[0]?.count ?? 0;
@@ -236,6 +252,7 @@ function CasesPage() {
                       if (confirm("Case verwijderen?")) removeCase.mutate(c.id);
                     }}
                     className="relative z-10 p-1.5 rounded text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Case verwijderen"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -267,6 +284,7 @@ function CasesPage() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }
