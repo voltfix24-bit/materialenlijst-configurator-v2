@@ -396,3 +396,141 @@ export function TrafoVultKabelTab() {
     </div>
   );
 }
+
+// === LS beveiligingsopties (mespatroon-keuzes per LS richting) ===
+
+type LsBevOptie = {
+  id: string;
+  artikel_id: string;
+  label: string;
+  sort_order: number;
+  actief: boolean;
+};
+
+export function LsBeveiligingOptiesTab() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Partial<LsBevOptie> | null>(null);
+  const [toDelete, setToDelete] = useState<LsBevOptie | null>(null);
+
+  const { data = [] } = useQuery({
+    queryKey: ["beheer-ls-beveiliging-opties"],
+    queryFn: async () =>
+      (await supabase.from("ls_beveiliging_opties").select("*").order("sort_order")).data ?? [],
+  });
+
+  const save = useMutation({
+    mutationFn: async (v: Partial<LsBevOptie>) => {
+      if (v.id) {
+        const { error } = await supabase.from("ls_beveiliging_opties").update(v).eq("id", v.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("ls_beveiliging_opties").insert(v as any);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["beheer-ls-beveiliging-opties"] });
+      qc.invalidateQueries({ queryKey: ["ls_beveiliging_opties"] });
+      toast.success("Opgeslagen");
+      setOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("ls_beveiliging_opties").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["beheer-ls-beveiliging-opties"] });
+      qc.invalidateQueries({ queryKey: ["ls_beveiliging_opties"] });
+      toast.success("Verwijderd");
+      setToDelete(null);
+    },
+  });
+
+  const rows = data as LsBevOptie[];
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs text-muted-foreground">
+        Mespatroon-keuzes die per LS-richting beschikbaar zijn in de configurator (sectie LS-laagspanning → "Mespatroon per richting").
+      </div>
+      <div className="flex justify-end">
+        <Button onClick={() => { setEditing({ sort_order: (rows.at(-1)?.sort_order ?? 0) + 10, actief: true }); setOpen(true); }}>
+          <Plus className="h-4 w-4 mr-1" /> Optie toevoegen
+        </Button>
+      </div>
+      <DataTable
+        headers={["Volgorde", "Label", "Artikel", "Actief", ""]}
+        rows={rows.map((r) => [
+          r.sort_order,
+          <span className="font-medium">{r.label}</span>,
+          <ArtikelLabel id={r.artikel_id} />,
+          r.actief ? "Ja" : "Nee",
+          <RowActions onEdit={() => { setEditing(r); setOpen(true); }} onDelete={() => setToDelete(r)} />,
+        ])}
+        emptyIcon={ShieldCheck}
+        emptyMessage="Nog geen beveiligingsopties"
+        emptyDescription="Voeg de mespatroon-keuzes (bv. 80A gG, 125A gG, 160A gFF) toe."
+        emptyAction={
+          <Button onClick={() => { setEditing({ sort_order: 10, actief: true }); setOpen(true); }}>
+            <Plus className="h-4 w-4 mr-1" /> Eerste optie
+          </Button>
+        }
+      />
+      <FormDialog open={open} onOpenChange={setOpen} title={editing?.id ? "Optie bewerken" : "Optie toevoegen"} size="md">
+        {editing && (
+          <div className="space-y-3">
+            <FormField label="Label" required>
+              <Input
+                value={editing.label ?? ""}
+                onChange={(e) => setEditing({ ...editing, label: e.target.value })}
+                placeholder="bv. 100A gFF"
+                className="h-9"
+              />
+            </FormField>
+            <FormField label="Artikel" required>
+              <ArtikelZoeker
+                value={editing.artikel_id ?? null}
+                onChange={(id) => setEditing({ ...editing, artikel_id: id ?? undefined })}
+                categorieSuggesties={["LS beveiliging", "MS beveiliging"]}
+              />
+            </FormField>
+            <FormRow>
+              <FormField label="Volgorde">
+                <Input
+                  type="number"
+                  value={editing.sort_order ?? 0}
+                  onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })}
+                  className="h-9"
+                />
+              </FormField>
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={editing.actief ?? true}
+                    onChange={(e) => setEditing({ ...editing, actief: e.target.checked })}
+                  />
+                  Actief
+                </label>
+              </div>
+            </FormRow>
+            <div className="flex justify-end pt-2">
+              <Button
+                onClick={() => save.mutate(editing)}
+                disabled={save.isPending || !editing.label || !editing.artikel_id}
+              >
+                {save.isPending ? "Opslaan..." : "Opslaan"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </FormDialog>
+      <ConfirmDelete open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)} onConfirm={() => toDelete && del.mutate(toDelete.id)} />
+    </div>
+  );
+}
