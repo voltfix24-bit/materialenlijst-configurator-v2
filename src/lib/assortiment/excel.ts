@@ -8,6 +8,7 @@ const TEMPLATE_URL = "/templates/assortimentslijst.xlsx";
  * vereisen ook update van AssortimentTab.tsx.
  */
 export const SHEET_NAAM = "Verbruik";
+export const VERWIJDERD_SHEET_NAAM = "Lijst verwijderd";
 const SHEET = SHEET_NAAM;
 const HEADER_ROW = 13;
 const DATA_START = 14;
@@ -147,6 +148,25 @@ export interface ParsedArtikel {
   alternatief_artikel_nummer: string | null;
 }
 
+/**
+ * Eén regel uit het tabblad "Lijst verwijderd". Headers staan op rij 1,
+ * data vanaf rij 2. Kolommen: A=Artikelnummer, B=Omschrijving, C=Datum,
+ * D=Wie, E=Opmerking, F=Opvolgend artikelnummer.
+ *
+ * `opvolger_nummers` bevat alle 8-cijferige Liander-nummers die uit
+ * kolom F konden worden geëxtraheerd. `opvolger_handmatig` is true
+ * als de cel óók niet-numerieke tekst bevatte (bijv. "GEBR 20036380"),
+ * zodat de engineer een handmatige controle krijgt.
+ */
+export interface ParsedVerwijderd {
+  artikel_nummer: string;
+  korte_omschrijving: string;
+  reden: string | null;
+  opvolger_raw: string | null;
+  opvolger_nummers: string[];
+  opvolger_handmatig: boolean;
+}
+
 function cellString(v: ExcelJS.CellValue): string {
   if (v == null) return "";
   if (typeof v === "object" && "result" in (v as object)) {
@@ -166,13 +186,64 @@ function normaliseerStatus(raw: string): string {
   if (l === "actief") return "Actief";
   if (l === "uitgelopen") return "Uitgelopen";
   if (l === "inactief") return "Inactief";
+  if (l === "verwijderd") return "Verwijderd";
   return s; // onbekend: laat originele waarde staan zodat het zichtbaar blijft in diff
 }
 
-export async function parseAssortimentslijst(file: File): Promise<ParsedArtikel[]> {
+/** Liander artikelnummers zijn 8-cijferig. */
+const ARTIKELNR_RE = /\b\d{8}\b/g;
+const GEEN_OPVOLGER_HINTS = new Set(["", "-", "geen opvolger", "n/a", "n.v.t.", "nvt"]);
+
+/**
+ * Parse de "Opvolgend artikelnummer"-cel uit sheet "Lijst verwijderd".
+ *  - leeg / "-" / "GEEN OPVOLGER" → {nummers:[], handmatig:false}
+ *  - "20039090 20041319" → twee kandidaten, handmatig=false
+ *  - "GEBR 20036380" → één kandidaat, handmatig=true (engineer-check)
+ */
+export function parseOpvolger(raw: string | null | undefined): {
+  nummers: string[];
+  handmatig: boolean;
+  raw: string | null;
+} {
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed) return { nummers: [], handmatig: false, raw: null };
+  const lower = trimmed.toLowerCase();
+  if (GEEN_OPVOLGER_HINTS.has(lower)) {
+    return { nummers: [], handmatig: false, raw: trimmed };
+  }
+  const matches = trimmed.match(ARTIKELNR_RE) ?? [];
+  const seen = new Set<string>();
+  const nummers: string[] = [];
+  for (const m of matches) {
+    if (!seen.has(m)) {
+      seen.add(m);
+      nummers.push(m);
+    }
+  }
+  const overige = trimmed.replace(ARTIKELNR_RE, "").trim();
+  const handmatig = overige.length > 0;
+  return { nummers, handmatig, raw: trimmed };
+}
+
+const VERWIJDERD_DATA_START = 2;
+const V_COL_ARTIKEL = 1;        // A
+const V_COL_OMSCHRIJVING = 2;   // B
+const V_COL_REDEN = 5;          // E
+const V_COL_OPVOLGER = 6;       // F
+
+export interface ParseResult {
+  /** Rijen uit sheet "Verbruik" — de actuele bestelbare lijst. */
+  artikelen: ParsedArtikel[];
+  /** Rijen uit sheet "Lijst verwijderd" — historie + opvolgers. Lege array als sheet ontbreekt. */
+  verwijderd: ParsedVerwijderd[];
+}
+
+export async function parseAssortimentslijst(file: File): Promise<ParseResult> {
   const buf = await file.arrayBuffer();
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(buf);
+
+  // --- Sheet "Verbruik" (verplicht) ---
   const ws = wb.getWorksheet(SHEET);
   if (!ws) {
     const sheets = wb.worksheets.map((s) => s.name).join(", ") || "(geen)";
@@ -182,7 +253,6 @@ export async function parseAssortimentslijst(file: File): Promise<ParsedArtikel[
     );
   }
 
-  // Lichte validatie: row HEADER_ROW moet een artikelnummer-kolom-titel hebben.
   const headerCell = cellString(ws.getRow(HEADER_ROW).getCell(COL_ARTIKELNUMMER).value).toLowerCase();
   if (headerCell && !headerCell.includes("artikel")) {
     console.warn(
@@ -191,7 +261,7 @@ export async function parseAssortimentslijst(file: File): Promise<ParsedArtikel[
     );
   }
 
-  const out: ParsedArtikel[] = [];
+  const artikelen: ParsedArtikel[] = [];
   const last = ws.actualRowCount || ws.rowCount;
   for (let r = DATA_START; r <= last; r++) {
     const row = ws.getRow(r);
@@ -199,7 +269,7 @@ export async function parseAssortimentslijst(file: File): Promise<ParsedArtikel[
     if (!nummer) continue;
     const alt = cellString(row.getCell(COL_ALTERNATIEF).value).trim();
     const verp = cellString(row.getCell(COL_AANTAL_VERPAKKING).value).trim();
-    out.push({
+    artikelen.push({
       artikel_nummer: nummer,
       korte_omschrijving: cellString(row.getCell(COL_OMSCHRIJVING).value).trim(),
       eenheid: cellString(row.getCell(COL_EENHEID).value).trim() || "Stuks",
@@ -210,7 +280,33 @@ export async function parseAssortimentslijst(file: File): Promise<ParsedArtikel[
       alternatief_artikel_nummer: alt && alt !== "." ? alt : null,
     });
   }
-  return out;
+
+  // --- Sheet "Lijst verwijderd" (optioneel) ---
+  const verwijderd: ParsedVerwijderd[] = [];
+  const wsVerw = wb.getWorksheet(VERWIJDERD_SHEET_NAAM);
+  if (wsVerw) {
+    const vLast = wsVerw.actualRowCount || wsVerw.rowCount;
+    for (let r = VERWIJDERD_DATA_START; r <= vLast; r++) {
+      const row = wsVerw.getRow(r);
+      const nummer = cellString(row.getCell(V_COL_ARTIKEL).value).trim();
+      if (!nummer || !/^\d{6,}$/.test(nummer)) continue; // sla header-resten / lege rijen over
+      const opv = parseOpvolger(cellString(row.getCell(V_COL_OPVOLGER).value));
+      verwijderd.push({
+        artikel_nummer: nummer,
+        korte_omschrijving: cellString(row.getCell(V_COL_OMSCHRIJVING).value).trim(),
+        reden: cellString(row.getCell(V_COL_REDEN).value).trim() || null,
+        opvolger_raw: opv.raw,
+        opvolger_nummers: opv.nummers,
+        opvolger_handmatig: opv.handmatig,
+      });
+    }
+  } else {
+    console.info(
+      `[assortiment] Sheet "${VERWIJDERD_SHEET_NAAM}" niet gevonden — geen verwijderd-lijst verwerkt.`,
+    );
+  }
+
+  return { artikelen, verwijderd };
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

@@ -193,17 +193,21 @@ async function runChecks(): Promise<CheckResult[]> {
     details: dupes.slice(0, 10).map(([nr, n]) => `${nr} (${n}×)`),
   });
 
-  // Alternatief-keten: inactieve artikelen met alternatief — check beschikbaarheid
+  // Alternatief-keten: inactieve artikelen met alternatief — check elke kandidaat.
+  // Ondersteunt meerdere nummers in het veld (bijv. "20039090 20041319").
+  const { splitAlternatieven } = await import("@/lib/assortiment/alternatief");
   const issues: string[] = [];
   let altGoed = 0;
   for (const a of artikelen ?? []) {
-    const altNr = (a as { alternatief_artikel_nummer?: string | null }).alternatief_artikel_nummer;
-    if (!altNr) continue;
-    const alt = byNr.get(altNr);
-    if (!alt) {
-      issues.push(`${a.artikel_nummer} → alt ${altNr}: bestaat niet`);
-    } else if (!(alt as { actief?: boolean }).actief) {
-      issues.push(`${a.artikel_nummer} → alt ${altNr}: alternatief is zelf inactief`);
+    const altRaw = (a as { alternatief_artikel_nummer?: string | null }).alternatief_artikel_nummer;
+    const nummers = splitAlternatieven(altRaw);
+    if (nummers.length === 0) continue;
+    const actieve = nummers.filter((nr) => {
+      const alt = byNr.get(nr);
+      return alt && (alt as { actief?: boolean }).actief;
+    });
+    if (actieve.length === 0) {
+      issues.push(`${a.artikel_nummer} → alt ${nummers.join(" / ")}: geen enkele kandidaat actief`);
     } else {
       altGoed++;
     }

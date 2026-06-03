@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ArrowRight, CheckCircle2, Loader2, Upload, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { parseAssortimentslijst, SHEET_NAAM } from "@/lib/assortiment/excel";
+import { parseAssortimentslijst, SHEET_NAAM, VERWIJDERD_SHEET_NAAM } from "@/lib/assortiment/excel";
 import {
   berekenDiff,
   voerSyncDoor,
@@ -40,10 +40,15 @@ export function AssortimentTab() {
   const analyseer = useMutation({
     mutationFn: async (file: File) => {
       const parsed = await parseAssortimentslijst(file);
-      if (parsed.length === 0) throw new Error("Geen artikelen gevonden in dit bestand");
+      if (parsed.artikelen.length === 0) {
+        throw new Error(`Geen artikelen gevonden in sheet "${SHEET_NAAM}"`);
+      }
       const d = await berekenDiff(parsed);
-      // Impactanalyse alleen op artikelen die straks inactief gaan
-      const ids = d.uitgelopen.map((a) => a.id);
+      // Impact alleen op artikelen die straks inactief gaan (uitgelopen + verwijderd-met-DB-match).
+      const ids = [
+        ...d.uitgelopen.map((a) => a.id),
+        ...d.verwijderd.map((v) => v.huidig?.id).filter((x): x is string => !!x),
+      ];
       const imp = ids.length > 0 ? await berekenImpact(ids) : [];
       return { d, imp };
     },
@@ -62,12 +67,15 @@ export function AssortimentTab() {
     },
     onSuccess: (res: SyncResult) => {
       const ok = res.errors.length === 0;
-      const tekst = `+${res.inserted} nieuw · ~${res.updated} gewijzigd · −${res.deactivated} inactief`;
+      const tekst =
+        `+${res.inserted} nieuw · ~${res.updated} gewijzigd · −${res.deactivated} uitgelopen · ` +
+        `−${res.verwijderd_verwerkt} verwijderd`;
       if (ok) {
         toast.success(`Assortiment gesynchroniseerd · ${tekst}`);
       } else {
         toast.error(
-          `Sync gedeeltelijk geslaagd · ${tekst} · ${res.errors.length} fout(en). Eerste: ${res.errors[0].stap} — ${res.errors[0].detail}`,
+          `Sync gedeeltelijk geslaagd · ${tekst} · ${res.errors.length} fout(en). ` +
+            `Eerste: ${res.errors[0].stap} — ${res.errors[0].detail}`,
           { duration: 12000 },
         );
       }
@@ -79,6 +87,7 @@ export function AssortimentTab() {
       qc.invalidateQueries({ queryKey: ["beheer-artikelen"] });
       qc.invalidateQueries({ queryKey: ["assortiment-laatste-sync"] });
       qc.invalidateQueries({ queryKey: ["artikelen"] });
+      qc.invalidateQueries({ queryKey: ["alternatief-voorstellen"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -112,8 +121,9 @@ export function AssortimentTab() {
         <div className="flex-1">
           <div className="text-sm font-medium">Assortimentslijst uploaden</div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            Upload het maandelijkse .xlsx bestand. Sheet "{SHEET_NAAM}" wordt ingelezen — dit is de
-            data-sheet binnen de officiële Liander-template.
+            Upload het maandelijkse .xlsx bestand. Sheet "<span className="font-mono">{SHEET_NAAM}</span>"
+            wordt gelezen voor het actuele assortiment; sheet "
+            <span className="font-mono">{VERWIJDERD_SHEET_NAAM}</span>" voor opvolgers van verwijderde artikelen.
           </div>
           {samenvatting && (
             <div className="text-xs text-muted-foreground mt-1.5 font-mono">
@@ -146,10 +156,11 @@ export function AssortimentTab() {
 
       {diff && (
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-3">
             <Stat color="text-success" label="Nieuw" count={diff.nieuw.length} icon="✅" />
             <Stat color="text-primary" label="Gewijzigd" count={diff.gewijzigd.length} icon="🔄" />
             <Stat color="text-warning" label="Uitgelopen" count={diff.uitgelopen.length} icon="⚠️" />
+            <Stat color="text-destructive" label="Verwijderd" count={diff.verwijderd.length} icon="🗑" />
           </div>
           <div className="text-xs text-muted-foreground">
             {diff.ongewijzigd} artikelen ongewijzigd.
@@ -194,7 +205,7 @@ export function AssortimentTab() {
             {diff.gewijzigd.length > 100 && <Meer n={diff.gewijzigd.length - 100} />}
           </DiffSectie>
 
-          <DiffSectie titel="Uitgelopen (worden inactief)">
+          <DiffSectie titel="Uitgelopen (in DB actief, niet meer in Verbruik)">
             {diff.uitgelopen.length === 0 ? (
               <Leeg />
             ) : (
@@ -215,6 +226,72 @@ export function AssortimentTab() {
             {diff.uitgelopen.length > 100 && <Meer n={diff.uitgelopen.length - 100} />}
           </DiffSectie>
 
+          <DiffSectie titel={`Verwijderd (uit sheet "${VERWIJDERD_SHEET_NAAM}")`}>
+            {diff.verwijderd.length === 0 ? (
+              <Leeg />
+            ) : (
+              <table className="w-full text-xs">
+                <thead className="bg-muted/40 text-muted-foreground">
+                  <tr>
+                    <th className="text-left px-2 py-1 font-medium">Artikel</th>
+                    <th className="text-left px-2 py-1 font-medium">Opvolger</th>
+                    <th className="text-left px-2 py-1 font-medium">In DB?</th>
+                    <th className="text-left px-2 py-1 font-medium">Reden</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {diff.verwijderd.slice(0, 100).map((v) => (
+                    <tr key={v.parsed.artikel_nummer}>
+                      <td className="px-2 py-1">
+                        <span className="font-mono">{v.parsed.artikel_nummer}</span>
+                        <div className="text-muted-foreground text-[11px]">{v.parsed.korte_omschrijving}</div>
+                      </td>
+                      <td className="px-2 py-1">
+                        {v.parsed.opvolger_nummers.length === 0 ? (
+                          <span className="text-muted-foreground italic">
+                            {v.parsed.opvolger_raw ?? "geen opvolger"}
+                          </span>
+                        ) : (
+                          <span className="font-mono inline-flex items-center gap-1">
+                            <ArrowRight className="w-3 h-3" />
+                            {v.parsed.opvolger_nummers.join(" / ")}
+                            {v.parsed.opvolger_handmatig && (
+                              <span
+                                className="ml-1 inline-flex items-center px-1 rounded text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-700"
+                                title={`Originele celwaarde: "${v.parsed.opvolger_raw}". Controleer of het juiste nummer is gepakt.`}
+                              >
+                                handmatig
+                              </span>
+                            )}
+                            {v.conflict_met_huidig_alt && (
+                              <span
+                                className="ml-1 inline-flex items-center px-1 rounded text-[9px] font-semibold uppercase tracking-wide bg-destructive/15 text-destructive"
+                                title={`Huidig alt in DB: ${v.huidig?.alternatief_artikel_nummer} — wordt NIET overschreven.`}
+                              >
+                                conflict
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1 text-muted-foreground">
+                        {v.huidig ? (
+                          <span className="text-success">ja</span>
+                        ) : (
+                          <span className="text-muted-foreground italic">nee — alleen geregistreerd</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1 text-muted-foreground text-[11px]">
+                        {v.parsed.reden ?? "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {diff.verwijderd.length > 100 && <Meer n={diff.verwijderd.length - 100} />}
+          </DiffSectie>
+
           <ImpactSectie impact={impact ?? []} />
 
           {hardeImpactZonderAlt.length > 0 && (
@@ -223,8 +300,8 @@ export function AssortimentTab() {
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <div className="font-medium text-amber-700">
-                    {hardeImpactZonderAlt.length} uitgelopen artikel(en) worden nog gebruikt in beheer-regels
-                    en hebben géén alternatief.
+                    {hardeImpactZonderAlt.length} uitgelopen/verwijderd artikel(en) worden nog gebruikt in
+                    beheer-regels en hebben géén bruikbaar alternatief.
                   </div>
                   <div className="text-amber-700/80 mt-0.5">
                     Na doorvoeren staan deze artikelen op inactief maar blijven referenties bestaan.
@@ -272,7 +349,7 @@ function ImpactSectie({ impact }: { impact: ImpactPerArtikel[] }) {
     return (
       <DiffSectie titel="Impact op beheer-regels">
         <div className="px-3 py-3 text-xs text-muted-foreground">
-          Geen uitgelopen artikelen → geen impact op beheer-regels.
+          Geen uitgelopen of verwijderde artikelen → geen impact op beheer-regels.
         </div>
       </DiffSectie>
     );
@@ -282,7 +359,7 @@ function ImpactSectie({ impact }: { impact: ImpactPerArtikel[] }) {
     <DiffSectie titel={`Impact op beheer-regels (${geraakt.length}/${impact.length} geraakt)`}>
       {geraakt.length === 0 ? (
         <div className="px-3 py-3 text-xs text-muted-foreground">
-          Geen van de uitgelopen artikelen wordt nog gebruikt in beheer-regels.
+          Geen van de uitgelopen/verwijderde artikelen wordt nog gebruikt in beheer-regels.
         </div>
       ) : (
         <table className="w-full text-xs">
@@ -336,13 +413,22 @@ function AlternatiefMigratiePaneel() {
     queryKey: ["alternatief-voorstellen"],
     queryFn: voorbereidAlternatiefMigratie,
   });
+  const [keuze, setKeuze] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bezigMet, setBezigMet] = useState<string | null>(null);
 
   const lijst = data ?? [];
-  const migreerbaar = lijst.filter(
-    (v) => v.nieuw_id && v.nieuw_actief && v.impact.totaal > 0,
-  );
+
+  const effectieveKeuze = (v: AlternatiefVoorstel): string | null =>
+    keuze[v.oud_id] ?? v.gekozen_nummer ?? null;
+
+  const isMigreerbaar = (v: AlternatiefVoorstel): boolean => {
+    if (v.impact.totaal === 0) return false;
+    const nr = effectieveKeuze(v);
+    if (!nr) return false;
+    const k = v.kandidaten.find((c) => c.artikel_nummer === nr);
+    return !!(k && k.artikel_id && k.actief);
+  };
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -353,15 +439,17 @@ function AlternatiefMigratiePaneel() {
     });
 
   const voerUit = async () => {
-    const teDoen = migreerbaar.filter((v) => selected.has(v.oud_id));
+    const teDoen = lijst.filter((v) => selected.has(v.oud_id) && isMigreerbaar(v));
     if (teDoen.length === 0) return;
     let succes = 0;
     let totaalRijen = 0;
     const fouten: string[] = [];
     for (const v of teDoen) {
       setBezigMet(v.oud_nummer);
+      const nr = effectieveKeuze(v);
+      if (!nr) continue;
       try {
-        const res = await voerAlternatiefMigratieDoor(v);
+        const res = await voerAlternatiefMigratieDoor(v, nr);
         succes++;
         totaalRijen += res.totaal_geupdate;
         const stapFouten = res.stappen.filter((s) => s.error);
@@ -396,8 +484,8 @@ function AlternatiefMigratiePaneel() {
         <div>
           <h3 className="text-sm font-medium">Alternatief-migratie</h3>
           <p className="text-xs text-muted-foreground">
-            Inactieve artikelen met een alternatief_artikel_nummer. Selecteer welke migraties je wilt
-            doorvoeren — er gebeurt niets automatisch.
+            Inactieve artikelen met een alternatief. Bij meerdere kandidaten moet je expliciet kiezen —
+            er gebeurt niets automatisch.
           </p>
         </div>
         <button
@@ -421,40 +509,82 @@ function AlternatiefMigratiePaneel() {
               <tr>
                 <th className="px-2 py-1.5 w-8"></th>
                 <th className="text-left px-2 py-1.5 font-medium">Oud</th>
-                <th className="text-left px-2 py-1.5 font-medium">Nieuw</th>
-                <th className="text-left px-2 py-1.5 font-medium">Status alt.</th>
+                <th className="text-left px-2 py-1.5 font-medium">Kandidaten</th>
+                <th className="text-left px-2 py-1.5 font-medium">Gekozen</th>
                 <th className="text-right px-2 py-1.5 font-medium"># refs</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {lijst.map((v) => {
-                const isMigreerbaar = v.nieuw_id && v.nieuw_actief && v.impact.totaal > 0;
+                const keuzeNr = effectieveKeuze(v);
+                const migreerbaar = isMigreerbaar(v);
+                const meerdere = v.kandidaten.length > 1;
                 return (
-                  <tr key={v.oud_id} className={isMigreerbaar ? "" : "opacity-60"}>
+                  <tr key={v.oud_id} className={migreerbaar ? "" : "opacity-70"}>
                     <td className="px-2 py-1.5 text-center">
                       <input
                         type="checkbox"
-                        disabled={!isMigreerbaar || bezigMet !== null}
+                        disabled={!migreerbaar || bezigMet !== null}
                         checked={selected.has(v.oud_id)}
                         onChange={() => toggle(v.oud_id)}
                       />
                     </td>
-                    <td className="px-2 py-1.5 font-mono">{v.oud_nummer}</td>
-                    <td className="px-2 py-1.5 font-mono">
-                      <span className="inline-flex items-center gap-1">
-                        <ArrowRight className="w-3 h-3" /> {v.nieuw_nummer}
-                      </span>
+                    <td className="px-2 py-1.5 font-mono align-top">
+                      {v.oud_nummer}
+                      <div className="text-muted-foreground text-[11px] font-sans">{v.oud_omschrijving}</div>
                     </td>
-                    <td className="px-2 py-1.5">
-                      {!v.nieuw_id ? (
-                        <span className="text-destructive">bestaat niet</span>
-                      ) : !v.nieuw_actief ? (
-                        <span className="text-amber-600">inactief</span>
+                    <td className="px-2 py-1.5 align-top">
+                      {v.kandidaten.length === 0 ? (
+                        <span className="text-muted-foreground italic">geen</span>
                       ) : (
-                        <span className="text-success">actief</span>
+                        <div className="space-y-0.5">
+                          {v.kandidaten.map((k) => (
+                            <div key={k.artikel_nummer} className="flex items-center gap-1 font-mono">
+                              <span>{k.artikel_nummer}</span>
+                              {!k.artikel_id ? (
+                                <span className="text-destructive text-[10px]">(onbekend)</span>
+                              ) : !k.actief ? (
+                                <span className="text-amber-600 text-[10px]">(inactief)</span>
+                              ) : (
+                                <span className="text-success text-[10px]">(actief)</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </td>
-                    <td className="px-2 py-1.5 text-right font-mono">{v.impact.totaal}</td>
+                    <td className="px-2 py-1.5 align-top">
+                      {meerdere ? (
+                        <select
+                          value={keuzeNr ?? ""}
+                          onChange={(e) => setKeuze((p) => ({ ...p, [v.oud_id]: e.target.value }))}
+                          disabled={bezigMet !== null}
+                          className="text-xs border border-border rounded px-1.5 py-0.5 bg-background font-mono"
+                        >
+                          <option value="">— kies —</option>
+                          {v.kandidaten
+                            .filter((k) => k.artikel_id && k.actief)
+                            .map((k) => (
+                              <option key={k.artikel_nummer} value={k.artikel_nummer}>
+                                {k.artikel_nummer}
+                              </option>
+                            ))}
+                        </select>
+                      ) : keuzeNr ? (
+                        <span className="inline-flex items-center gap-1 font-mono">
+                          <ArrowRight className="w-3 h-3" />
+                          {keuzeNr}
+                          <CheckCircle2 className="w-3 h-3 text-success" />
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-[11px]">
+                          {v.kandidaten.length === 0
+                            ? "—"
+                            : "geen bruikbare"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-2 py-1.5 text-right font-mono align-top">{v.impact.totaal}</td>
                   </tr>
                 );
               })}

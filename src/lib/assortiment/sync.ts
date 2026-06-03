@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { ParsedArtikel } from "./excel";
+import type { ParsedArtikel, ParsedVerwijderd, ParseResult } from "./excel";
 
 export interface BestaandArtikel {
   id: string;
@@ -14,15 +14,29 @@ export interface BestaandArtikel {
   alternatief_artikel_nummer?: string | null;
 }
 
+/** Eén regel uit "Lijst verwijderd" gekoppeld aan wat we al in de DB hebben. */
+export interface VerwijderdMatch {
+  parsed: ParsedVerwijderd;
+  /** null als artikel niet in DB voorkomt (= alleen registreren, geen DB-actie nodig). */
+  huidig: BestaandArtikel | null;
+  /** Voorgesteld nieuw alternatief-veld. null = leeg laten. */
+  voorgesteld_alternatief: string | null;
+  /** True = opvolger uit Lijst verwijderd verschilt van wat al in DB stond. */
+  conflict_met_huidig_alt: boolean;
+}
+
 export interface DiffResultaat {
   nieuw: ParsedArtikel[];
   gewijzigd: { huidig: BestaandArtikel; nieuw: ParsedArtikel; veranderingen: string[] }[];
+  /** Artikelen die in Verbruik ontbreken maar in DB nog actief staan. */
   uitgelopen: BestaandArtikel[];
+  /** Artikelen uit sheet "Lijst verwijderd". */
+  verwijderd: VerwijderdMatch[];
   ongewijzigd: number;
 }
 
 export interface SyncStapFout {
-  stap: "insert" | "update" | "deactivate" | "logging";
+  stap: "insert" | "update" | "deactivate" | "verwijderd" | "logging";
   detail: string;
   artikel_nummer?: string;
 }
@@ -31,6 +45,7 @@ export interface SyncResult {
   inserted: number;
   updated: number;
   deactivated: number;
+  verwijderd_verwerkt: number;
   errors: SyncStapFout[];
 }
 
@@ -50,7 +65,7 @@ function vergelijk(huidig: BestaandArtikel, nw: ParsedArtikel): string[] {
   return veld;
 }
 
-export async function berekenDiff(parsed: ParsedArtikel[]): Promise<DiffResultaat> {
+export async function berekenDiff(parsed: ParseResult): Promise<DiffResultaat> {
   const { data: huidig, error } = await supabase
     .from("artikelen")
     .select("id, artikel_nummer, korte_omschrijving, eenheid, categorie, actief, basis_eenheid, aantal_in_verpakking, status, alternatief_artikel_nummer")
@@ -64,7 +79,7 @@ export async function berekenDiff(parsed: ParsedArtikel[]): Promise<DiffResultaa
   let ongewijzigd = 0;
   const seen = new Set<string>();
 
-  for (const p of parsed) {
+  for (const p of parsed.artikelen) {
     seen.add(p.artikel_nummer);
     const h = byNum.get(p.artikel_nummer);
     if (!h) {
@@ -76,15 +91,39 @@ export async function berekenDiff(parsed: ParsedArtikel[]): Promise<DiffResultaa
     else ongewijzigd++;
   }
 
+  const verwijderdNummers = new Set(parsed.verwijderd.map((v) => v.artikel_nummer));
   const uitgelopen: BestaandArtikel[] = [];
   for (const a of huidig ?? []) {
+    // Artikelen die in Lijst verwijderd staan, vallen onder "verwijderd" — niet onder "uitgelopen".
+    if (verwijderdNummers.has(a.artikel_nummer)) continue;
     if (!seen.has(a.artikel_nummer) && a.actief) uitgelopen.push(a as BestaandArtikel);
   }
-  return { nieuw, gewijzigd, uitgelopen, ongewijzigd };
+
+  const verwijderd: VerwijderdMatch[] = parsed.verwijderd.map((p) => {
+    const h = byNum.get(p.artikel_nummer) ?? null;
+    const voorgesteld = p.opvolger_nummers.length > 0 ? p.opvolger_nummers.join(" ") : null;
+    const huidigAlt = h?.alternatief_artikel_nummer ?? null;
+    const conflict =
+      !!voorgesteld && !!huidigAlt && huidigAlt.trim() !== voorgesteld.trim();
+    return {
+      parsed: p,
+      huidig: h,
+      voorgesteld_alternatief: voorgesteld,
+      conflict_met_huidig_alt: conflict,
+    };
+  });
+
+  return { nieuw, gewijzigd, uitgelopen, verwijderd, ongewijzigd };
 }
 
 export async function voerSyncDoor(diff: DiffResultaat, bestandsnaam: string): Promise<SyncResult> {
-  const result: SyncResult = { inserted: 0, updated: 0, deactivated: 0, errors: [] };
+  const result: SyncResult = {
+    inserted: 0,
+    updated: 0,
+    deactivated: 0,
+    verwijderd_verwerkt: 0,
+    errors: [],
+  };
 
   // 1. nieuwe artikelen invoegen — per chunk om partial-success te isoleren
   if (diff.nieuw.length > 0) {
@@ -153,7 +192,42 @@ export async function voerSyncDoor(diff: DiffResultaat, bestandsnaam: string): P
     }
   }
 
-  // 4. logging — best-effort
+  // 4. verwijderd -> status="Verwijderd", actief=false, alternatief overschrijven
+  //    alleen als er nog géén alternatief was OF de waarde uit Lijst verwijderd identiek is.
+  //    Conflicten worden in de UI getoond zodat de beheerder een keuze maakt.
+  for (const v of diff.verwijderd) {
+    if (!v.huidig) continue; // artikel niet in DB — niets te updaten
+    const huidigAlt = (v.huidig.alternatief_artikel_nummer ?? "").trim();
+    const mayWriteAlt =
+      !!v.voorgesteld_alternatief &&
+      (!huidigAlt || huidigAlt === v.voorgesteld_alternatief);
+    const patch: {
+      actief: boolean;
+      status: string;
+      alternatief_artikel_nummer?: string;
+    } = {
+      actief: false,
+      status: "Verwijderd",
+    };
+    if (mayWriteAlt && v.voorgesteld_alternatief) {
+      patch.alternatief_artikel_nummer = v.voorgesteld_alternatief;
+    }
+    const { error } = await supabase
+      .from("artikelen")
+      .update(patch)
+      .eq("id", v.huidig.id);
+    if (error) {
+      result.errors.push({
+        stap: "verwijderd",
+        detail: error.message,
+        artikel_nummer: v.parsed.artikel_nummer,
+      });
+    } else {
+      result.verwijderd_verwerkt++;
+    }
+  }
+
+  // 5. logging — best-effort
   try {
     const stamp = new Date().toISOString();
     const waarde = `${stamp} | ${bestandsnaam}`;
@@ -168,6 +242,7 @@ export async function voerSyncDoor(diff: DiffResultaat, bestandsnaam: string): P
         inserted: result.inserted,
         updated: result.updated,
         deactivated: result.deactivated,
+        verwijderd_verwerkt: result.verwijderd_verwerkt,
         errors: result.errors,
       }),
       updated_at: stamp,
