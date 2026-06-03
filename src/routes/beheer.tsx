@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Info, Package, Settings2, Zap, Wrench, ShieldCheck } from "lucide-react";
+import { Info, Package, Settings2, Zap, Wrench, ShieldCheck, LayoutDashboard } from "lucide-react";
 import { AssortimentTab } from "@/components/beheer/AssortimentTab";
 import { ArtikelenTab } from "@/components/beheer/ArtikelenTab";
 import { RmuTab } from "@/components/beheer/RmuTab";
@@ -10,6 +10,7 @@ import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
 import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab } from "@/components/beheer/OverigeTabs";
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
+import { OverzichtTab } from "@/components/beheer/OverzichtTab";
 
 type BeheerSearch = { groep?: string; tab?: string; artikel?: string; row?: string };
 
@@ -27,6 +28,15 @@ type Tab = { key: string; label: string; render: () => React.ReactElement };
 type Groep = { key: string; label: string; icon: typeof Package; beschrijving: string; tabs: Tab[] };
 
 const GROEPEN: Groep[] = [
+  {
+    key: "overzicht",
+    label: "Overzicht",
+    icon: LayoutDashboard,
+    beschrijving: "Taakgericht: zoek een artikel, zie impact, vervang veilig met preview.",
+    tabs: [
+      { key: "overzicht", label: "Zoek & vervang", render: () => <OverzichtTab /> },
+    ],
+  },
   {
     key: "catalogus",
     label: "Catalogus",
@@ -143,7 +153,7 @@ function BeheerPage() {
       )}
 
       {/* Groepkeuze – primaire navigatie */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-4">
         {GROEPEN.map((g) => {
           const Icon = g.icon;
           const actief = g.key === groepKey;
