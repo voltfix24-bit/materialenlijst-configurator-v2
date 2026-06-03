@@ -248,6 +248,23 @@ export async function voerSyncDoor(diff: DiffResultaat, bestandsnaam: string): P
       }),
       updated_at: stamp,
     });
+    const totaal = result.inserted + result.updated + result.deactivated + result.verwijderd_verwerkt;
+    await logActie({
+      actie: "assortiment_sync",
+      omschrijving:
+        `Liander-upload ${bestandsnaam}: ${result.inserted} nieuw, ${result.updated} gewijzigd, ` +
+        `${result.deactivated} uitgelopen, ${result.verwijderd_verwerkt} verwijderd, ${result.errors.length} fout.`,
+      aantal_aangepast: totaal,
+      resultaat: result.errors.length === 0 ? "ok" : totaal > 0 ? "gedeeltelijk" : "fout",
+      details: {
+        bestandsnaam,
+        inserted: result.inserted,
+        updated: result.updated,
+        deactivated: result.deactivated,
+        verwijderd_verwerkt: result.verwijderd_verwerkt,
+        errors: result.errors,
+      },
+    });
   } catch (e) {
     result.errors.push({
       stap: "logging",
