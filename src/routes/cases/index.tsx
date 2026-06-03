@@ -299,6 +299,8 @@ function CasesPage() {
           );
         })}
       </div>
+      )}
+
       {materialenCase && (
         <CaseMaterialenDialog
           open={!!materialenCase}
