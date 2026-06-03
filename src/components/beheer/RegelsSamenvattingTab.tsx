@@ -299,6 +299,16 @@ export function RegelsSamenvattingTab() {
                           )}
                         </div>
                       </div>
+                      {TEST_VELDEN[type].length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setTestRegel(r)}
+                          className="text-[11px] text-primary hover:underline flex items-center gap-1 shrink-0"
+                          title="Open testpaneel — voert geen wijzigingen door"
+                        >
+                          <FlaskConical className="h-3 w-3" /> Test
+                        </button>
+                      )}
                       <Link
                         to="/beheer"
                         search={{
