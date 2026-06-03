@@ -178,17 +178,24 @@ function cellString(v: ExcelJS.CellValue): string {
   return String(v);
 }
 
-/** Normaliseer de status-string uit Excel naar consistente waarden. */
+/**
+ * Normaliseer de status-string uit Excel naar consistente waarden.
+ * Liander wisselt soms tussen "Uitloop" en "Uitgelopen" — wij slaan beide
+ * op als "Uitgelopen" zodat downstream-logica (winkelwagen, impact,
+ * alternatief-migratie) één waarde hoeft te kennen.
+ */
 function normaliseerStatus(raw: string): string {
   const s = raw.trim();
   if (!s) return "Actief";
   const l = s.toLowerCase();
   if (l === "actief") return "Actief";
-  if (l === "uitgelopen") return "Uitgelopen";
+  if (l === "uitgelopen" || l === "uitloop") return "Uitgelopen";
   if (l === "inactief") return "Inactief";
   if (l === "verwijderd") return "Verwijderd";
+  if (l === "geblokkeerd" || l === "blokkade") return "Geblokkeerd";
   return s; // onbekend: laat originele waarde staan zodat het zichtbaar blijft in diff
 }
+
 
 /** Liander artikelnummers zijn 8-cijferig. */
 const ARTIKELNR_RE = /\b\d{8}\b/g;
