@@ -299,8 +299,16 @@ function CasesPage() {
           );
         })}
       </div>
+      {materialenCase && (
+        <CaseMaterialenDialog
+          open={!!materialenCase}
+          onClose={() => setMaterialenCase(null)}
+          caseId={materialenCase.id}
+          caseLabel={materialenCase.label}
+        />
       )}
     </div>
   );
 }
+
 
