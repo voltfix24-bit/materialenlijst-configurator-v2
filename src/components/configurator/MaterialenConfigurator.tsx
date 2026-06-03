@@ -1101,9 +1101,9 @@ function LsRichtingBeveiliging({
 }) {
   const aantal = config.lsRekAantalBeveiligingen ?? 0;
   const { data: optiesData = [] } = useLsBeveiligingOpties();
-  const opties = optiesData
+  const opties = (optiesData as Array<{ artikel: { artikel_nummer?: string } | null; label: string }>)
     .map((o) => ({
-      value: (o.artikel as { artikel_nummer?: string } | null)?.artikel_nummer ?? "",
+      value: o.artikel?.artikel_nummer ?? "",
       label: o.label,
     }))
     .filter((o) => o.value);
