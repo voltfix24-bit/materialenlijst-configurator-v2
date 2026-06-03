@@ -80,6 +80,7 @@ export function Winkelwagen({
   onExport,
   exportDisabled,
   exportPending,
+  exportSignal,
 }: Props) {
   // Lokale state
   const [overrides, setOverrides] = useState<Map<string, number>>(new Map());
