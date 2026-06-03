@@ -14,7 +14,9 @@ import { berekenImpact, type ImpactPerArtikel } from "@/lib/assortiment/impact";
 import {
   voorbereidAlternatiefMigratie,
   voerAlternatiefMigratieDoor,
+  getAlternatiefKeuzes,
   type AlternatiefVoorstel,
+  type AlternatiefKeuze,
 } from "@/lib/assortiment/alternatief";
 
 export function AssortimentTab() {
