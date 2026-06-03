@@ -198,13 +198,27 @@ export function useStamdata(caseType: string | undefined) {
   const lsBeveiligingOpties = useQuery({
     queryKey: ["ls_beveiliging_opties"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Handmatige join — er is geen FK ls_beveiliging_opties.artikel_id → artikelen.id,
+      // dus PostgREST kan geen embed resolven; we joinen in code.
+      const { data: opties, error } = await supabase
         .from("ls_beveiliging_opties")
-        .select("*, artikel:artikel_id(*)")
+        .select("*")
         .eq("actief", true)
         .order("sort_order");
       if (error) throw error;
-      return data ?? [];
+      const ids = [...new Set((opties ?? []).map((o) => o.artikel_id).filter(Boolean) as string[])];
+      let byId = new Map<string, { id: string; artikel_nummer: string; korte_omschrijving: string; actief: boolean }>();
+      if (ids.length > 0) {
+        const { data: arts } = await supabase
+          .from("artikelen")
+          .select("id, artikel_nummer, korte_omschrijving, actief")
+          .in("id", ids);
+        byId = new Map((arts ?? []).map((a) => [a.id as string, a as never]));
+      }
+      return (opties ?? []).map((o) => ({
+        ...o,
+        artikel: o.artikel_id ? byId.get(o.artikel_id as string) ?? null : null,
+      }));
     },
   });
 
