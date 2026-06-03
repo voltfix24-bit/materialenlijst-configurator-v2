@@ -47,7 +47,7 @@ function CasesPage() {
   const [zoekterm, setZoekterm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  const { data: cases } = useQuery({
+  const { data: cases, isLoading } = useQuery({
     queryKey: ["cases"],
     queryFn: async () => {
       const { data, error } = await supabase
