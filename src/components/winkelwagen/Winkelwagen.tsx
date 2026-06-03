@@ -487,6 +487,17 @@ export function Winkelwagen({
     onExport();
   };
 
+  // Externe trigger (case-header "Export"-knop) → zelfde bevestigingsflow als de
+  // winkelwagen-knop. Skip de eerste mount zodat we niet automatisch openen.
+  const exportSignalRef = useRef<number | undefined>(exportSignal);
+  useEffect(() => {
+    if (exportSignal === undefined) return;
+    if (exportSignalRef.current === exportSignal) return;
+    exportSignalRef.current = exportSignal;
+    handleExportClick();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exportSignal]);
+
 
 
   return (
