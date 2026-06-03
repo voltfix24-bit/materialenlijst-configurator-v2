@@ -93,6 +93,8 @@ export function Winkelwagen({
   // Lokale filter voor zichtbare artikelen in de winkelwagen
   const [filter, setFilter] = useState("");
   const lijstRef = useRef<HTMLDivElement | null>(null);
+  const [exportConfirmOpen, setExportConfirmOpen] = useState(false);
+
 
   const slaCorrectieOp = useSlaCorrectieOp();
 
