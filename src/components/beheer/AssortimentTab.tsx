@@ -182,7 +182,7 @@ export function AssortimentTab() {
               <div className="grid grid-cols-5 gap-3">
                 <Stat color="text-success" label="Nieuw" count={diff.nieuw.length} icon="✅" />
                 <Stat color="text-primary" label="Gewijzigd" count={diff.gewijzigd.length} icon="🔄" />
-                <Stat color="text-warning" label="Uitloop" count={diff.uitgelopen.length} icon="⚠️" />
+                <Stat color="text-warning" label="Uitgelopen" count={diff.uitgelopen.length} icon="⚠️" />
                 <Stat color="text-destructive" label="Geblokkeerd" count={geblokkeerd} icon="🚫" />
                 <Stat color="text-destructive" label="Verwijderd" count={diff.verwijderd.length} icon="🗑" />
               </div>
