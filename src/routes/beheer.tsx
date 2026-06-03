@@ -94,6 +94,13 @@ const GROEPEN: Groep[] = [
     beschrijving: "Controle op ontbrekende artikelen en referentiële fouten.",
     tabs: [{ key: "datakwaliteit", label: "Datakwaliteit", render: () => <DataKwaliteitTab /> }],
   },
+  {
+    key: "historie",
+    label: "Wijzigingen",
+    icon: History,
+    beschrijving: "Log van syncs, vervangingen en alternatief-keuzes — nieuwste bovenaan.",
+    tabs: [{ key: "wijzigingen", label: "Wijzigingen", render: () => <WijzigingenTab /> }],
+  },
 ];
 
 function BeheerPage() {
