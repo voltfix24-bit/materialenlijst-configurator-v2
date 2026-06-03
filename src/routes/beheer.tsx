@@ -46,6 +46,7 @@ const GROEPEN: Groep[] = [
       { key: "rmu", label: "RMU configuraties", render: () => <RmuTab /> },
       { key: "ms_mof", label: "MS mof types", render: () => <MsMofTab /> },
       { key: "ls_mof", label: "LS mof types", render: () => <LsMofTab /> },
+      { key: "ls_beveiliging", label: "LS beveiligingsopties", render: () => <LsBeveiligingOptiesTab /> },
     ],
   },
   {
