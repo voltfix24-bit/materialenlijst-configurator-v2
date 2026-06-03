@@ -68,6 +68,7 @@ function CaseDetailPage() {
   const [saving, setSaving] = useState(false);
   const [previewCount, setPreviewCount] = useState(0);
   const [saveSignal, setSaveSignal] = useState(0);
+  const [exportSignal, setExportSignal] = useState(0);
   const [mobileTab, setMobileTab] = useState<"config" | "preview">("config");
   const winkelwagenItemsRef = useRef<PreviewItem[]>([]);
 
