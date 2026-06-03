@@ -158,6 +158,17 @@ export function ExportBevestigingDialoog({
                           Geen alternatief bekend
                         </span>
                       )}
+                      {p.eerdere_keuze && (
+                        <div className="text-[11px] mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700">
+                          <span>✓ Eerder gekozen:</span>
+                          <span className="font-mono font-semibold">
+                            {p.eerdere_keuze.nieuw_artikel_nummer}
+                          </span>
+                          <span className="text-emerald-700/70">
+                            ({new Date(p.eerdere_keuze.created_at).toLocaleDateString("nl-NL")}, {p.eerdere_keuze.totaal_geupdate} ref)
+                          </span>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
