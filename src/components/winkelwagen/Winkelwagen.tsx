@@ -422,8 +422,14 @@ export function Winkelwagen({
   }, [nieuwNrs, sectieGroepen, toegevoegd]);
 
   // ───── Export-bevestiging: verzamel inactieve / uitgelopen / verwijderd / geblokkeerde artikelen ─────
+  const { data: alternatiefKeuzes } = useQuery({
+    queryKey: ["alternatief-keuzes"],
+    queryFn: getAlternatiefKeuzes,
+  });
+
   const exportProblemen = useMemo<ExportProbleemArtikel[]>(() => {
     const artByNr = new Map(artikelen.map((a) => [a.artikel_nummer, a]));
+    const keuzes = alternatiefKeuzes ?? new Map();
     const out: ExportProbleemArtikel[] = [];
     for (const it of effectief) {
       if (it.niet_bestellen) continue;
@@ -446,6 +452,7 @@ export function Winkelwagen({
         alternatieven.length >= 1 &&
         /[a-zA-Z]/.test(altRaw);
 
+      const k = keuzes.get(it.artikel_nummer);
       out.push({
         artikel_nummer: it.artikel_nummer,
         korte_omschrijving: it.korte_omschrijving,
@@ -456,10 +463,17 @@ export function Winkelwagen({
         alternatieven,
         geen_opvolger: geenOpvolger,
         handmatig_beoordelen: handmatigBeoordelen,
+        eerdere_keuze: k
+          ? {
+              nieuw_artikel_nummer: k.nieuw_artikel_nummer,
+              created_at: k.created_at,
+              totaal_geupdate: k.totaal_geupdate,
+            }
+          : null,
       });
     }
     return out;
-  }, [effectief, artikelen]);
+  }, [effectief, artikelen, alternatiefKeuzes]);
 
   const handleExportClick = () => {
     if (!onExport) return;
