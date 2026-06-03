@@ -7,7 +7,7 @@ import { AssortimentTab } from "@/components/beheer/AssortimentTab";
 import { ArtikelenTab } from "@/components/beheer/ArtikelenTab";
 import { RmuTab } from "@/components/beheer/RmuTab";
 import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
-import { StandaardMaterialenTab, VasteArtikelenTab } from "@/components/beheer/OverigeTabs";
+import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab } from "@/components/beheer/OverigeTabs";
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 
