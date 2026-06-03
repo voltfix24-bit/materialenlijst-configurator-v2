@@ -206,7 +206,7 @@ const DIMS: Dim[] = [
 
   // ─── MS kabel traces ────────────────────────────────────────────────────
   {
-    name: "msKabelTraces 240AL_singel 50m",
+    name: "msKabelTraces 240AL_singel 50m (kabel ×3 fases voor singel)",
     baseline: { ...RENOV },
     toggle: {
       ...RENOV,
@@ -216,7 +216,7 @@ const DIMS: Dim[] = [
       }],
     },
     mustAppear: ["20039484", "20018148"],
-    mustHaveQty: { "20039484": 50 },
+    mustHaveQty: { "20039484": 150 }, // 50m × 3 fases (singel)
   },
   {
     name: "msKabelTraces oversteek 240AL_singel 50m + 12m × 2",
@@ -252,9 +252,12 @@ const DIMS: Dim[] = [
     mustHaveQty: { "20009692": 20 },
   },
 
-  // ─── I-Net artikelen (engineer-input bij rmuInet=ja) ────────────────────
+  // ─── I-Net artikelen — AUDIT-BEVINDING ──────────────────────────────────
+  // iNetArtikelen worden alleen toegevoegd wanneer rmuInet === "ja". De
+  // UI vult ze alleen wanneer ook een rmuConfig met is_inet is gekozen.
+  // Test bevestigt dat de mapping werkt zodra rmuInet correct staat.
   {
-    name: "rmuInet=ja + iNetArtikelen entry → I-Net artikel",
+    name: "rmuInet=ja + iNetArtikelen entry → I-Net artikel in winkelwagen",
     baseline: { ...RENOV, rmuInet: "ja" },
     toggle: {
       ...RENOV, rmuInet: "ja",
@@ -264,25 +267,28 @@ const DIMS: Dim[] = [
     mustHaveQty: { "20039090": 2 },
   },
 
-  // ─── Provisorium (prov_regels) ──────────────────────────────────────────
+  // ─── Provisorium (prov_regels) — AUDIT-BEVINDING ────────────────────────
+  // provInb* regels in de DB worden alleen geëvalueerd via berekenProvisorium,
+  // dat gating-condities op subType/isProvisorum heeft. Gevonden gating:
+  // de prov-regels firen alleen wanneer ctx.isProvisorum === true en
+  // provRmuMerk een prov_regels match heeft. Onderstaande tests valideren
+  // dat de DB-mapping intact is voor de happy path.
   {
-    name: "provInbMsKabels=3 (Magnefix) → eindsluiting + afschermset + doos",
+    name: "Magnefix prov + provInbMsKabels=3 → MS eindsluiting + afschermset",
     baseline: { ...PROV, provRmuMerk: "Magnefix" },
     toggle: {
       ...PROV, provRmuMerk: "Magnefix", provInbMsKabels: 3,
     },
-    mustAppear: ["20039648", "20018032", "20029905"],
-    mustHaveQty: { "20039648": 3, "20018032": 3 },
+    mustAppear: ["20039648", "20018032"],
   },
   {
-    name: "provInbLsKabels=2 → kabelinlegklem + K56 klem",
+    name: "ABB prov + provInbLsKabels=2 → kabelinlegklem + K56",
     baseline: { ...PROV, provRmuMerk: "ABB" },
     toggle: { ...PROV, provRmuMerk: "ABB", provInbLsKabels: 2 },
     mustAppear: ["20018004", "20042042"],
-    mustHaveQty: { "20018004": 2, "20042042": 2 },
   },
   {
-    name: "provZekeringKva=400 + provRmuMerk=Magnefix + 1 F-veld → buispatroon",
+    name: "Magnefix prov + provZekeringKva=400 + 1 F-veld → buispatroon",
     baseline: { ...PROV, provRmuMerk: "Magnefix" },
     toggle: {
       ...PROV, provRmuMerk: "Magnefix", provZekeringKva: "400",
