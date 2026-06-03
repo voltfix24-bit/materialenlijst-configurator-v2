@@ -129,9 +129,11 @@ export function AssortimentTab() {
         <div className="flex-1">
           <div className="text-sm font-medium">Assortimentslijst uploaden</div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            Upload het maandelijkse .xlsx bestand. Sheet "<span className="font-mono">{SHEET_NAAM}</span>"
-            wordt gelezen voor het actuele assortiment; sheet "
-            <span className="font-mono">{VERWIJDERD_SHEET_NAAM}</span>" voor opvolgers van verwijderde artikelen.
+            Upload het maandelijkse Liander .xlsx-bestand. Sheet "
+            <span className="font-mono font-semibold text-foreground">{SHEET_NAAM}</span>"
+            wordt ingelezen als bron voor bestellen/exporteren (artikelen vanaf rij 14, kolommen B/C/D/E/F/G/I/J).
+            Sheet "<span className="font-mono">{VERWIJDERD_SHEET_NAAM}</span>" levert opvolgers voor verwijderde
+            artikelen (kolom A = oud nummer, kolom F = opvolger).
           </div>
           {samenvatting && (
             <div className="text-xs text-muted-foreground mt-1.5 font-mono">
@@ -139,6 +141,7 @@ export function AssortimentTab() {
             </div>
           )}
         </div>
+
         <input
           ref={fileRef}
           type="file"
