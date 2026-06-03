@@ -11,6 +11,7 @@ import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab } fro
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
+import { RegelsSamenvattingTab } from "@/components/beheer/RegelsSamenvattingTab";
 
 type BeheerSearch = { groep?: string; tab?: string; artikel?: string; row?: string };
 
@@ -35,6 +36,7 @@ const GROEPEN: Groep[] = [
     beschrijving: "Taakgericht: zoek een artikel, zie impact, vervang veilig met preview.",
     tabs: [
       { key: "overzicht", label: "Zoek & vervang", render: () => <OverzichtTab /> },
+      { key: "leesbaar", label: "Leesbaar overzicht", render: () => <RegelsSamenvattingTab /> },
     ],
   },
   {
