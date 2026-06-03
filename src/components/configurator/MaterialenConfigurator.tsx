@@ -86,6 +86,7 @@ export function MaterialenConfigurator({
   onExport,
   exportDisabled,
   exportPending,
+  exportSignal,
 }: Props) {
   const isCompact = caseType === "compact" || caseType === "compact_prov";
   const isCompactProv = caseType === "compact_prov";
