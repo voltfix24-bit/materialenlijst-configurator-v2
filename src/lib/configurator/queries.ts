@@ -195,6 +195,19 @@ export function useStamdata(caseType: string | undefined) {
     },
   });
 
+  const lsBeveiligingOpties = useQuery({
+    queryKey: ["ls_beveiliging_opties"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ls_beveiliging_opties")
+        .select("*, artikel:artikel_id(*)")
+        .eq("actief", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   return {
     artikelen,
     rmuConfigs,
