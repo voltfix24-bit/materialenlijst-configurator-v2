@@ -95,6 +95,7 @@ export function Winkelwagen({
     setDialoogData(null);
     setPendingRevert(null);
     setOpenSecties(new Set());
+    eersteSyncRef.current = true;
   }, [caseId]);
 
   // Sync: zodra de engineer een configurator-sectie opent, open de bijbehorende
