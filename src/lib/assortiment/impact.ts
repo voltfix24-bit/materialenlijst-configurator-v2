@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { splitAlternatieven } from "./alternatief";
 
 /**
  * Definities van alle plekken in de database waar naar een artikel verwezen wordt.
