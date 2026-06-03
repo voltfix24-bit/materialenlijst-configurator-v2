@@ -367,6 +367,7 @@ function CaseDetailPage() {
               }}
               exportDisabled={isDirty || !heeftMateriaal}
               exportPending={exporteer.isPending}
+              exportSignal={exportSignal}
             />
           )}
         </div>
