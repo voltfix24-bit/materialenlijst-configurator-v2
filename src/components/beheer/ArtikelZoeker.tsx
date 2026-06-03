@@ -13,8 +13,13 @@ export interface ArtikelMini {
   categorie?: string | null;
 }
 
+/** Canonieke status "Uitgelopen"; "Uitloop" wordt als legacy DB-waarde ondersteund. */
+function isUitgelopenStatus(status: string | null | undefined): boolean {
+  return status === "Uitgelopen" || status === "Uitloop";
+}
+
 function statusColor(status: string | null | undefined) {
-  if (status === "Uitloop") return "text-muted-foreground";
+  if (isUitgelopenStatus(status)) return "text-muted-foreground";
   return "text-foreground";
 }
 
