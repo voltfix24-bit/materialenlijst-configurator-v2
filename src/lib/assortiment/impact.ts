@@ -1,5 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
-import { splitAlternatieven } from "./alternatief";
+
+/** Splits "20039090 20041319" → ["20039090","20041319"]. Lokaal gedupliceerd om circulaire import met alternatief.ts te voorkomen. */
+function splitAltNummers(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const tok of raw.split(/\s+/)) {
+    const t = tok.trim();
+    if (!t || seen.has(t)) continue;
+    if (!/^\d{6,}$/.test(t)) continue;
+    seen.add(t);
+    out.push(t);
+  }
+  return out;
+}
 
 /**
  * Definities van alle plekken in de database waar naar een artikel verwezen wordt.
