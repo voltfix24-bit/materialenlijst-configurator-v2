@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ClipboardList, Download, Info, Loader2, Plus, Search, Trash2, X } from "lucide-react";
+import { ChevronDown, ClipboardList, Download, Info, Loader2, Maximize2, Plus, Search, Trash2, X } from "lucide-react";
+import { VolledigeMaterialenlijst } from "./VolledigeMaterialenlijst";
 import { cn } from "@/lib/utils";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -98,6 +99,9 @@ export function Winkelwagen({
   const [filter, setFilter] = useState("");
   const lijstRef = useRef<HTMLDivElement | null>(null);
   const [exportConfirmOpen, setExportConfirmOpen] = useState(false);
+  const [volledigOpen, setVolledigOpen] = useState(false);
+
+
 
 
   const slaCorrectieOp = useSlaCorrectieOp();
@@ -315,36 +319,39 @@ export function Winkelwagen({
     );
   };
 
-  const voegArtikelToe = () => {
-    if (!gekozenArtikel || zoekHoeveelheid <= 0) return;
+  const voegHandmatigToe = (stam: ArtikelStam, qty: number) => {
+    if (!stam || qty <= 0) return;
     const nieuw: ToegevoegdArtikel = {
-      artikel_id: gekozenArtikel.id,
-      artikel_nummer: gekozenArtikel.artikel_nummer,
-      korte_omschrijving: gekozenArtikel.korte_omschrijving,
-      eenheid: gekozenArtikel.eenheid || "st",
-      hoeveelheid: zoekHoeveelheid,
+      artikel_id: stam.id,
+      artikel_nummer: stam.artikel_nummer,
+      korte_omschrijving: stam.korte_omschrijving,
+      eenheid: stam.eenheid || "st",
+      hoeveelheid: qty,
     };
     setToegevoegd((prev) => [...prev.filter((t) => t.artikel_nummer !== nieuw.artikel_nummer), nieuw]);
-    const arNr = nieuw.artikel_nummer;
-    const arOms = nieuw.korte_omschrijving;
-    const arQty = nieuw.hoeveelheid;
     openDialoog(
       {
-        artikel_nummer: arNr,
-        korte_omschrijving: arOms,
+        artikel_nummer: nieuw.artikel_nummer,
+        korte_omschrijving: nieuw.korte_omschrijving,
         actie: "toegevoegd",
         oude_hoeveelheid: null,
-        nieuwe_hoeveelheid: arQty,
+        nieuwe_hoeveelheid: nieuw.hoeveelheid,
       },
       () => {
-        setToegevoegd((prev) => prev.filter((t) => t.artikel_nummer !== arNr));
+        setToegevoegd((prev) => prev.filter((t) => t.artikel_nummer !== nieuw.artikel_nummer));
       },
     );
+  };
+
+  const voegArtikelToe = () => {
+    if (!gekozenArtikel || zoekHoeveelheid <= 0) return;
+    voegHandmatigToe(gekozenArtikel, zoekHoeveelheid);
     setShowZoeker(false);
     setZoek("");
     setGekozenArtikel(null);
     setZoekHoeveelheid(1);
   };
+
 
   // ---- zoek suggesties ----
   const suggesties = useMemo(() => {
@@ -516,15 +523,28 @@ export function Winkelwagen({
               <div className="text-[11px] text-muted-foreground mt-1">{teBestellen} te bestellen</div>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setShowZoeker(true)}
-            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-semibold shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Toevoegen
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setVolledigOpen(true)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-semibold px-1.5 py-1 rounded hover:bg-muted"
+              title="Volledige materialenlijst openen"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              Volledig
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowZoeker(true)}
+              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-semibold px-1.5 py-1"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Toevoegen
+            </button>
+          </div>
         </div>
+
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
           <input
@@ -777,7 +797,26 @@ export function Winkelwagen({
         />
       )}
 
+      <VolledigeMaterialenlijst
+        open={volledigOpen}
+        onClose={() => setVolledigOpen(false)}
+        effectief={effectief}
+        handmatigeNrs={new Set(toegevoegd.map((t) => t.artikel_nummer))}
+        overrideNrs={new Set(overrides.keys())}
+        artikelen={artikelen}
+        exportProblemen={exportProblemen}
+        onChangeQty={(it, v) => wijzigHoeveelheid(it, v)}
+        onVerwijder={(it) => verwijderItem(it)}
+        onVoegToe={(stam, qty) => voegHandmatigToe(stam, qty)}
+        onSave={onSave}
+        onExport={handleExportClick}
+        saving={saving}
+        exportPending={exportPending}
+        exportDisabled={exportDisabled || !onExport}
+      />
+
     </div>
+
   );
 }
 

@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ChevronRight, Clock, Package, Plus, Search, Trash2 } from "lucide-react";
+import { ChevronRight, Clock, ListChecks, Package, Plus, Search, Trash2 } from "lucide-react";
+import { CaseMaterialenDialog } from "@/components/cases/CaseMaterialenDialog";
 import { formatDistanceToNow } from "date-fns";
 import { nl } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +47,9 @@ function CasesPage() {
   const [form, setForm] = useState({ case_nummer: "", station_naam: "", case_type: "NSA" as string });
   const [zoekterm, setZoekterm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [materialenCase, setMaterialenCase] = useState<{ id: string; label: string } | null>(null);
+
+
 
   const { data: cases, isLoading } = useQuery({
     queryKey: ["cases"],
@@ -264,10 +268,20 @@ function CasesPage() {
                 <span className={cn("px-2 py-0.5 rounded-full font-medium", STATUS_COLORS[c.status] ?? "bg-muted text-muted-foreground")}>
                   {STATUS_LABELS[c.status] ?? c.status}
                 </span>
-                <span className="flex items-center gap-1 text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setMaterialenCase({ id: c.id, label: c.station_naam || c.case_nummer || "case" });
+                  }}
+                  className="relative z-10 flex items-center gap-1 text-muted-foreground hover:text-primary"
+                  title="Materialenlijst bekijken"
+                >
                   <Package className="h-3 w-3" />
                   {matCount}
-                </span>
+                  <ListChecks className="h-3 w-3 ml-0.5 opacity-60" />
+                </button>
                 <span className="flex items-center gap-1 text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   {formatDistanceToNow(new Date(c.updated_at), { locale: nl, addSuffix: true })}
@@ -281,11 +295,22 @@ function CasesPage() {
                 aria-label={`Open ${c.station_naam ?? "case"}`}
               />
             </div>
+
           );
         })}
       </div>
       )}
+
+      {materialenCase && (
+        <CaseMaterialenDialog
+          open={!!materialenCase}
+          onClose={() => setMaterialenCase(null)}
+          caseId={materialenCase.id}
+          caseLabel={materialenCase.label}
+        />
+      )}
     </div>
   );
 }
+
 
