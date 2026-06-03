@@ -371,6 +371,12 @@ export function RegelsSamenvattingTab() {
           Geen regels voldoen aan de filters.
         </p>
       )}
+
+      <TestRegelDialog
+        regel={testRegel}
+        artikel={testRegel?.artikel_id ? artikelMap.get(testRegel.artikel_id) : undefined}
+        onClose={() => setTestRegel(null)}
+      />
     </div>
   );
 }
