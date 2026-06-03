@@ -173,10 +173,58 @@ export async function voerAlternatiefMigratieDoor(
   } catch {
     /* best-effort logging */
   }
+  // Persisteer keuze in alternatief_keuzes — gebruikt door impact- en winkelwagen-UI
+  // om later te tonen welk alternatief er bij welk oud nummer is gekozen.
+  try {
+    await supabase.from("alternatief_keuzes").insert({
+      oud_artikel_id: voorstel.oud_id,
+      oud_artikel_nummer: voorstel.oud_nummer,
+      oud_omschrijving: voorstel.oud_omschrijving,
+      nieuw_artikel_id: kandidaat.artikel_id,
+      nieuw_artikel_nummer: gekozen_nummer,
+      totaal_geupdate: totaal,
+      kandidaten: JSON.parse(JSON.stringify(voorstel.kandidaten)),
+      stappen: JSON.parse(JSON.stringify(stappen)),
+    });
+  } catch {
+    /* best-effort — keuze persist mag sync niet blokkeren */
+  }
   return {
     oud_nummer: voorstel.oud_nummer,
     nieuw_nummer: gekozen_nummer,
     totaal_geupdate: totaal,
     stappen,
   };
+}
+
+/** Eén persistente keuze uit `alternatief_keuzes`. */
+export interface AlternatiefKeuze {
+  oud_artikel_nummer: string;
+  nieuw_artikel_nummer: string;
+  totaal_geupdate: number;
+  created_at: string;
+  gekozen_door: string | null;
+}
+
+/**
+ * Haal de meest recente keuze per oud artikelnummer op. Wordt gebruikt in de
+ * impact-tabel (beheer) en de winkelwagen-export-waarschuwing om terug te
+ * tonen welk alternatief eerder is gekozen.
+ */
+export async function getAlternatiefKeuzes(): Promise<Map<string, AlternatiefKeuze>> {
+  const { data, error } = await supabase
+    .from("alternatief_keuzes")
+    .select("oud_artikel_nummer, nieuw_artikel_nummer, totaal_geupdate, created_at, gekozen_door")
+    .order("created_at", { ascending: false })
+    .limit(5000);
+  if (error) {
+    console.warn("[alternatief_keuzes] fetch faalde:", error.message);
+    return new Map();
+  }
+  const out = new Map<string, AlternatiefKeuze>();
+  for (const r of data ?? []) {
+    const nr = r.oud_artikel_nummer as string;
+    if (!out.has(nr)) out.set(nr, r as AlternatiefKeuze);
+  }
+  return out;
 }

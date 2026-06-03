@@ -14,7 +14,9 @@ import { berekenImpact, type ImpactPerArtikel } from "@/lib/assortiment/impact";
 import {
   voorbereidAlternatiefMigratie,
   voerAlternatiefMigratieDoor,
+  getAlternatiefKeuzes,
   type AlternatiefVoorstel,
+  type AlternatiefKeuze,
 } from "@/lib/assortiment/alternatief";
 
 export function AssortimentTab() {
@@ -35,6 +37,11 @@ export function AssortimentTab() {
         .maybeSingle();
       return data;
     },
+  });
+
+  const { data: keuzes } = useQuery({
+    queryKey: ["alternatief-keuzes"],
+    queryFn: getAlternatiefKeuzes,
   });
 
   const analyseer = useMutation({
@@ -314,7 +321,7 @@ export function AssortimentTab() {
             {diff.verwijderd.length > 100 && <Meer n={diff.verwijderd.length - 100} />}
           </DiffSectie>
 
-          <ImpactSectie impact={impact ?? []} />
+          <ImpactSectie impact={impact ?? []} keuzes={keuzes ?? new Map()} />
 
           {hardeImpactZonderAlt.length > 0 && (
             <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs">
@@ -366,7 +373,13 @@ export function AssortimentTab() {
   );
 }
 
-function ImpactSectie({ impact }: { impact: ImpactPerArtikel[] }) {
+function ImpactSectie({
+  impact,
+  keuzes,
+}: {
+  impact: ImpactPerArtikel[];
+  keuzes: Map<string, AlternatiefKeuze>;
+}) {
   if (impact.length === 0) {
     return (
       <DiffSectie titel="Impact op beheer-regels">
@@ -389,13 +402,16 @@ function ImpactSectie({ impact }: { impact: ImpactPerArtikel[] }) {
             <tr>
               <th className="text-left px-2 py-1 font-medium">Oud artikel</th>
               <th className="text-left px-2 py-1 font-medium">Alternatief</th>
+              <th className="text-left px-2 py-1 font-medium">Gemaakte keuze</th>
               <th className="text-right px-2 py-1 font-medium"># regels</th>
               <th className="text-left px-2 py-1 font-medium">Waar</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {geraakt.slice(0, 50).map((i) => (
-              <tr key={i.artikel_id}>
+            {geraakt.slice(0, 50).map((i) => {
+              const k = keuzes.get(i.artikel_nummer);
+              return (
+                <tr key={i.artikel_id}>
                 <td className="px-2 py-1">
                   <span className="font-mono">{i.artikel_nummer}</span>
                   <div className="text-muted-foreground text-[11px]">{i.korte_omschrijving}</div>
@@ -415,12 +431,25 @@ function ImpactSectie({ impact }: { impact: ImpactPerArtikel[] }) {
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
+                <td className="px-2 py-1 text-[11px]">
+                  {k ? (
+                    <span className="inline-flex flex-col">
+                      <span className="font-mono text-success">→ {k.nieuw_artikel_nummer}</span>
+                      <span className="text-muted-foreground">
+                        {new Date(k.created_at).toLocaleString("nl-NL")} · {k.totaal_geupdate} ref(s)
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground italic">nog geen migratie</span>
+                  )}
+                </td>
                 <td className="px-2 py-1 text-right font-mono">{i.totaal}</td>
                 <td className="px-2 py-1 text-muted-foreground text-[11px]">
                   {i.gebruikt_in.map((g) => `${g.tabel}.${g.kolom} (${g.count})`).join(", ")}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -487,6 +516,7 @@ function AlternatiefMigratiePaneel() {
     setBezigMet(null);
     setSelected(new Set());
     qc.invalidateQueries({ queryKey: ["alternatief-voorstellen"] });
+    qc.invalidateQueries({ queryKey: ["alternatief-keuzes"] });
     qc.invalidateQueries({ queryKey: ["data-kwaliteit"] });
     if (fouten.length === 0) {
       toast.success(
