@@ -268,10 +268,20 @@ function CasesPage() {
                 <span className={cn("px-2 py-0.5 rounded-full font-medium", STATUS_COLORS[c.status] ?? "bg-muted text-muted-foreground")}>
                   {STATUS_LABELS[c.status] ?? c.status}
                 </span>
-                <span className="flex items-center gap-1 text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setMaterialenCase({ id: c.id, label: c.station_naam || c.case_nummer || "case" });
+                  }}
+                  className="relative z-10 flex items-center gap-1 text-muted-foreground hover:text-primary"
+                  title="Materialenlijst bekijken"
+                >
                   <Package className="h-3 w-3" />
                   {matCount}
-                </span>
+                  <ListChecks className="h-3 w-3 ml-0.5 opacity-60" />
+                </button>
                 <span className="flex items-center gap-1 text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   {formatDistanceToNow(new Date(c.updated_at), { locale: nl, addSuffix: true })}
@@ -285,6 +295,7 @@ function CasesPage() {
                 aria-label={`Open ${c.station_naam ?? "case"}`}
               />
             </div>
+
           );
         })}
       </div>
