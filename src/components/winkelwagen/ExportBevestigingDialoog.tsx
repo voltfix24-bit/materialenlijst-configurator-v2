@@ -17,6 +17,12 @@ export interface ExportProbleemArtikel {
   geen_opvolger: boolean;
   /** True als alt-veld tekst-met-nummer bevat ("GEBR 20036380") — handmatige beoordeling. */
   handmatig_beoordelen: boolean;
+  /** Eerder vastgelegde keuze uit `alternatief_keuzes`, indien aanwezig. */
+  eerdere_keuze?: {
+    nieuw_artikel_nummer: string;
+    created_at: string;
+    totaal_geupdate: number;
+  } | null;
 }
 
 export function ExportBevestigingDialoog({
