@@ -289,6 +289,21 @@ export async function voerHandmatigeVervangingDoor(params: {
   } catch {
     /* best-effort */
   }
+  const heeftFoutenManual = stappen.some((s) => s.error);
+  await logActie({
+    actie: "handmatige_vervanging",
+    omschrijving:
+      `${params.oud_nummer} → ${params.nieuw_nummer}: ${totaal} verwijzing(en) handmatig vervangen` +
+      (params.refs && params.refs.length > 0 ? ` (subset van ${params.refs.length} ref(s))` : "") +
+      ".",
+    artikel_nummer: params.oud_nummer,
+    oude_waarde: { artikel_nummer: params.oud_nummer, artikel_id: params.oud_id },
+    nieuwe_waarde: { artikel_nummer: params.nieuw_nummer, artikel_id: params.nieuw_id },
+    aantal_aangepast: totaal,
+    resultaat: heeftFoutenManual ? (totaal > 0 ? "gedeeltelijk" : "fout") : "ok",
+    details: { stappen, notitie: params.notitie ?? null },
+    uitgevoerd_door: params.gekozen_door ?? null,
+  });
   return {
     oud_nummer: params.oud_nummer,
     nieuw_nummer: params.nieuw_nummer,
