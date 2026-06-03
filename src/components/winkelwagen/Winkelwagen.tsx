@@ -8,13 +8,22 @@ import { BRON_TABEL_DEFS, PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSec
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
 import type { CorrectieDialoogData, CorrectieScope } from "@/lib/leersysteem/types";
 import { CorrectieDialoog } from "./CorrectieDialoog";
+import {
+  ExportBevestigingDialoog,
+  type ExportProbleemArtikel,
+} from "./ExportBevestigingDialoog";
+import { splitAlternatieven } from "@/lib/assortiment/alternatief";
 
 interface ArtikelStam {
   id: string;
   artikel_nummer: string;
   korte_omschrijving: string;
   eenheid: string;
+  actief?: boolean;
+  status?: string | null;
+  alternatief_artikel_nummer?: string | null;
 }
+
 
 interface Props {
   items: PreviewItem[]; // berekende items vanuit configurator
@@ -84,6 +93,8 @@ export function Winkelwagen({
   // Lokale filter voor zichtbare artikelen in de winkelwagen
   const [filter, setFilter] = useState("");
   const lijstRef = useRef<HTMLDivElement | null>(null);
+  const [exportConfirmOpen, setExportConfirmOpen] = useState(false);
+
 
   const slaCorrectieOp = useSlaCorrectieOp();
 
@@ -409,6 +420,57 @@ export function Winkelwagen({
     return s;
   }, [nieuwNrs, sectieGroepen, toegevoegd]);
 
+  // ───── Export-bevestiging: verzamel inactieve / uitgelopen / verwijderd / geblokkeerde artikelen ─────
+  const exportProblemen = useMemo<ExportProbleemArtikel[]>(() => {
+    const artByNr = new Map(artikelen.map((a) => [a.artikel_nummer, a]));
+    const out: ExportProbleemArtikel[] = [];
+    for (const it of effectief) {
+      if (it.niet_bestellen) continue;
+      const stam = artByNr.get(it.artikel_nummer);
+      const status = (stam?.status ?? "").trim();
+      const statusLower = status.toLowerCase();
+      const isInactief =
+        !!it.inactief || stam?.actief === false || ["uitgelopen", "verwijderd", "geblokkeerd"].includes(statusLower);
+      if (!isInactief) continue;
+
+      const altRaw = (stam?.alternatief_artikel_nummer ?? "").trim();
+      const alternatieven = splitAlternatieven(altRaw);
+      const geenOpvolger =
+        !altRaw ||
+        altRaw === "-" ||
+        /geen\s*opvolger/i.test(altRaw);
+      // Tekst-met-nummer ("GEBR 20036380"): bevat een nummer maar ook niet-numerieke tokens.
+      const handmatigBeoordelen =
+        !geenOpvolger &&
+        alternatieven.length >= 1 &&
+        /[a-zA-Z]/.test(altRaw);
+
+      out.push({
+        artikel_nummer: it.artikel_nummer,
+        korte_omschrijving: it.korte_omschrijving,
+        hoeveelheid: it.hoeveelheid,
+        eenheid: it.eenheid,
+        status_label: status || "Inactief",
+        alternatief_raw: altRaw || null,
+        alternatieven,
+        geen_opvolger: geenOpvolger,
+        handmatig_beoordelen: handmatigBeoordelen,
+      });
+    }
+    return out;
+  }, [effectief, artikelen]);
+
+  const handleExportClick = () => {
+    if (!onExport) return;
+    if (exportProblemen.length > 0) {
+      setExportConfirmOpen(true);
+      return;
+    }
+    onExport();
+  };
+
+
+
   return (
     <div className="bg-card flex flex-col h-full max-h-screen">
       {/* Header */}
@@ -656,12 +718,17 @@ export function Winkelwagen({
           </button>
           <button
             type="button"
-            onClick={() => onExport?.()}
+            onClick={handleExportClick}
             disabled={exportDisabled || exportPending || !onExport}
             className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground font-semibold py-2.5 text-sm hover:bg-[color:var(--primary-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
             {exportPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Export naar Liander
+            {exportProblemen.length > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                {exportProblemen.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -669,6 +736,18 @@ export function Winkelwagen({
       {dialoogData && (
         <CorrectieDialoog data={dialoogData} onBevestig={bevestigDialoog} onAnnuleer={annuleerDialoog} />
       )}
+
+      {exportConfirmOpen && (
+        <ExportBevestigingDialoog
+          problemen={exportProblemen}
+          onBevestig={() => {
+            setExportConfirmOpen(false);
+            onExport?.();
+          }}
+          onAnnuleer={() => setExportConfirmOpen(false)}
+        />
+      )}
+
     </div>
   );
 }

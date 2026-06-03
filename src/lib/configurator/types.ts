@@ -25,7 +25,9 @@ export interface Artikel {
   categorie: string | null;
   actief: boolean;
   alternatief_artikel_nummer?: string | null;
+  status?: string | null;
 }
+
 
 export interface RmuConfig {
   id: string;
