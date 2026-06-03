@@ -226,6 +226,7 @@ export function useStamdata(caseType: string | undefined) {
     msKabelRegels,
     rmuVeldRegels,
     trafoVultKabelSpecs,
+    lsBeveiligingOpties,
     isLoading:
       artikelen.isLoading ||
       rmuConfigs.isLoading ||
@@ -242,7 +243,8 @@ export function useStamdata(caseType: string | undefined) {
       provRegels.isLoading ||
       msKabelRegels.isLoading ||
       rmuVeldRegels.isLoading ||
-      trafoVultKabelSpecs.isLoading,
+      trafoVultKabelSpecs.isLoading ||
+      lsBeveiligingOpties.isLoading,
   };
 }
 
