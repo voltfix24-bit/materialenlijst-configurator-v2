@@ -109,17 +109,54 @@ export function OverzichtTab() {
     queryFn: () => getAlternatiefKeuzes(),
   });
 
-  // Bij wisselen van oud artikel: reset selectie en preselecteer alle refs die hits hebben.
+  // Bij wisselen van oud artikel: reset selectie en preselecteer alle refs die hits hebben,
+  // behalve case_materialen — opgeslagen cases worden standaard niet mee-vervangen.
   const refsMetHits = impact?.gebruikt_in.filter((g) => g.count > 0) ?? [];
   const hitKey = (g: { tabel: string; kolom: string }) => `${g.tabel}.${g.kolom}`;
   const allHitKeys = useMemo(() => refsMetHits.map(hitKey), [impact]);
-  // Reset selectie bij wisselen artikel / nieuwe impact.
+  const defaultHitKeys = useMemo(
+    () => refsMetHits.filter((g) => g.tabel !== "case_materialen").map(hitKey),
+    [impact],
+  );
   useEffect(() => {
-    setGekozenRefs(new Set(allHitKeys));
+    setGekozenRefs(new Set(defaultHitKeys));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [oudId, impact?.totaal]);
 
   const eerdereKeuze = oudArtikel ? keuzes?.get(oudArtikel.artikel_nummer) : undefined;
+
+  // Auto-voorstel: als alternatief_artikel_nummer precies één actieve kandidaat in de DB heeft,
+  // preselecteer die als vervanger. Bij 0 of meerdere → engineer kiest zelf.
+  const altNummers = useMemo(
+    () => splitAlternatieven(oudFull?.alternatief_artikel_nummer as string | null | undefined),
+    [oudFull?.alternatief_artikel_nummer],
+  );
+  const { data: altKandidaten } = useQuery({
+    queryKey: ["overzicht-alt-kandidaten", oudId, altNummers.join(",")],
+    enabled: altNummers.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("artikelen")
+        .select("id, artikel_nummer, korte_omschrijving, status, actief")
+        .in("artikel_nummer", altNummers);
+      return data ?? [];
+    },
+  });
+  useEffect(() => {
+    if (nieuwId || !altKandidaten) return;
+    const actieve = altKandidaten.filter((k) => k.actief);
+    if (actieve.length === 1) {
+      setNieuwId(actieve[0].id as string);
+      setNieuwArtikel({
+        id: actieve[0].id as string,
+        artikel_nummer: actieve[0].artikel_nummer as string,
+        korte_omschrijving: actieve[0].korte_omschrijving as string,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [altKandidaten, oudId]);
+
+
 
   const mut = useMutation({
     mutationFn: async () => {
