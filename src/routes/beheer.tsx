@@ -36,6 +36,7 @@ const GROEPEN: Groep[] = [
     beschrijving: "Taakgericht: zoek een artikel, zie impact, vervang veilig met preview.",
     tabs: [
       { key: "overzicht", label: "Zoek & vervang", render: () => <OverzichtTab /> },
+      { key: "leesbaar", label: "Leesbaar overzicht", render: () => <RegelsSamenvattingTab /> },
     ],
   },
   {
