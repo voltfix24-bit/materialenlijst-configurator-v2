@@ -41,6 +41,18 @@ const TABEL_LABELS: Record<string, string> = {
   case_materialen: "Opgeslagen cases (materialen)",
 };
 
+const GROEP_LABELS: Record<string, string> = {
+  automations: "Automations (regels)",
+  hardware: "Hardware (RMU & moffen)",
+  standaard: "Standaard / vaste materialen",
+  cases: "Opgeslagen cases (informatief)",
+};
+const GROEP_ORDER = ["automations", "hardware", "standaard", "cases"];
+function groepVan(tabel: string, vanRef?: string) {
+  if (tabel === "case_materialen") return "cases";
+  return vanRef ?? "overig";
+}
+
 function statusBadge(status: string | null | undefined, actief: boolean | undefined) {
   if (actief === false) return { label: "Inactief / verwijderd", cls: "bg-destructive/15 text-destructive border-destructive/30" };
   if (status === "Uitgelopen" || status === "Uitloop") return { label: "Uitgelopen", cls: "bg-amber-500/15 text-amber-600 border-amber-500/30" };
