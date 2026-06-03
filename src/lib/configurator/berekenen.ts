@@ -1,6 +1,6 @@
 // Orchestrator: roept domeinfuncties op in vaste volgorde en levert preview-items.
 // Fase 1 refactor — geen gedragswijzigingen t.o.v. monolithische versie.
-import type { MaterialenConfig, PreviewItem } from "./types";
+import { emptyConfig, type MaterialenConfig, type PreviewItem } from "./types";
 import type { Stamdata } from "./queries";
 import { makeFindArtNr, type BerekenCtx, type PreviewMap } from "./berekenen/shared";
 import { berekenStandaard } from "./berekenen/standaard";
