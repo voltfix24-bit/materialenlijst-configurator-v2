@@ -189,6 +189,7 @@ const DIMS: Dim[] = [
     },
     mustAppear: ["20026895"],
     mustHaveQty: { "20026895": 3 },
+  },
   {
     name: "lsRekAantalBeveiligingen + lsRekBeveiligingen (engineer-input)",
     baseline: { ...RENOV, lsRekActie: "vervangen", lsRekType: "8" },
