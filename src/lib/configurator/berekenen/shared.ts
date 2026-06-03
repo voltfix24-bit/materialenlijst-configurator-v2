@@ -12,7 +12,15 @@ export interface BronRef {
   id?: string;
 }
 
-/** Voegt een artikel toe aan de preview-map of telt op bij bestaande regel. */
+/**
+ * Voegt een artikel toe aan de preview-map of telt op bij bestaande regel.
+ *
+ * Wanneer het artikel in de DB als `actief = false` is gemarkeerd (omdat het
+ * is uitgelopen in de laatste Liander-sync) wordt het nog wél meegenomen,
+ * maar gemarkeerd met `inactief: true` zodat de winkelwagen een waarschuwing
+ * kan tonen. Stil weglaten zou de engineer onbewust een incomplete lijst
+ * geven; daarom expliciet zichtbaar maken.
+ */
 export function add(
   map: PreviewMap,
   artikel: Artikel | null | undefined,
@@ -23,6 +31,14 @@ export function add(
   nietBestellen = false,
 ): void {
   if (!artikel || qty <= 0) return;
+  const isInactief = artikel.actief === false;
+  if (isInactief && import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[winkelwagen] Inactief artikel ${artikel.artikel_nummer} (${artikel.korte_omschrijving}) ` +
+        `gebruikt via "${herkomst}" — controleer beheer-regels.`,
+    );
+  }
   const key = artikel.artikel_nummer;
   const ex = map.get(key);
   if (ex) {
@@ -45,6 +61,7 @@ export function add(
         bronId: bron?.id,
       });
     if (nietBestellen) ex.niet_bestellen = true;
+    if (isInactief) ex.inactief = true;
   } else {
     map.set(key, {
       artikel_id: artikel.id,
@@ -65,6 +82,7 @@ export function add(
           bronId: bron?.id,
         },
       ],
+      inactief: isInactief || undefined,
     });
   }
 }

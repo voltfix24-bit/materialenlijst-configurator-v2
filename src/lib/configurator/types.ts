@@ -24,6 +24,7 @@ export interface Artikel {
   eenheid: string;
   categorie: string | null;
   actief: boolean;
+  alternatief_artikel_nummer?: string | null;
 }
 
 export interface RmuConfig {
@@ -390,6 +391,12 @@ export interface PreviewItem {
   herkomst: string[];
   sectie: PreviewSectie;
   bijdragen: PreviewBijdrage[];
+  /**
+   * True wanneer dit artikel in de DB als inactief is gemarkeerd (komt niet
+   * meer voor in de huidige Liander-template). Wordt door berekenen/shared.ts
+   * gezet zodat de winkelwagen visueel kan waarschuwen.
+   */
+  inactief?: boolean;
 }
 
 export const newRichting = (): MsRichting => ({
