@@ -1077,18 +1077,36 @@ function OvStuurpuntVragen({ config, update }: { config: MaterialenConfig; updat
   );
 }
 
-type LsBeveiligingOptie = { value: string; label: string };
+function useLsBeveiligingOpties() {
+  return useQuery({
+    queryKey: ["ls_beveiliging_opties"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ls_beveiliging_opties")
+        .select("*, artikel:artikel_id(*)")
+        .eq("actief", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
 
 function LsRichtingBeveiliging({
   config,
   update,
-  opties,
 }: {
   config: MaterialenConfig;
   update: (p: Partial<MaterialenConfig>) => void;
-  opties: LsBeveiligingOptie[];
 }) {
   const aantal = config.lsRekAantalBeveiligingen ?? 0;
+  const { data: optiesData = [] } = useLsBeveiligingOpties();
+  const opties = optiesData
+    .map((o) => ({
+      value: (o.artikel as { artikel_nummer?: string } | null)?.artikel_nummer ?? "",
+      label: o.label,
+    }))
+    .filter((o) => o.value);
   return (
     <>
       <Field label="Hoeveel LS richtingen beveiliging aanpassen?">
