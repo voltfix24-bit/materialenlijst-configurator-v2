@@ -52,6 +52,7 @@ export function LegeStaat({
 export function DataTable({
   headers,
   rows,
+  loading = false,
   emptyMessage = "Geen data.",
   emptyAction,
   emptyIcon,
@@ -59,6 +60,7 @@ export function DataTable({
 }: {
   headers: string[];
   rows: React.ReactNode[][];
+  loading?: boolean;
   emptyMessage?: string;
   emptyAction?: React.ReactNode;
   emptyIcon?: LucideIcon;
@@ -67,17 +69,28 @@ export function DataTable({
   return (
     <div className="rounded-lg border border-border bg-surface overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="bg-surface-2 text-muted-foreground">
+        <thead className="bg-surface-2 text-muted-foreground sticky top-0 z-10">
           <tr>
             {headers.map((h) => (
-              <th key={h} className="text-left px-3 py-2 font-mono text-[10px] uppercase tracking-wider">
+              <th key={h} className="text-left px-3 py-2 font-mono text-[10px] uppercase tracking-wider border-b border-border">
                 {h}
               </th>
             ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {rows.length === 0 && (
+          {loading && rows.length === 0 && (
+            Array.from({ length: 5 }).map((_, i) => (
+              <tr key={`sk-${i}`}>
+                {headers.map((_, j) => (
+                  <td key={j} className="px-3 py-2.5">
+                    <div className="h-4 rounded bg-muted animate-pulse" />
+                  </td>
+                ))}
+              </tr>
+            ))
+          )}
+          {!loading && rows.length === 0 && (
             <tr>
               <td colSpan={headers.length} className="px-3 py-0">
                 <LegeStaat
@@ -90,7 +103,7 @@ export function DataTable({
             </tr>
           )}
           {rows.map((r, i) => (
-            <tr key={i} className="hover:bg-accent/40 align-top">
+            <tr key={i} className="hover:bg-accent-subtle/50 align-top transition-colors">
               {r.map((c, j) => (
                 <td key={j} className="px-3 py-2">
                   {c ?? "—"}
