@@ -4,7 +4,15 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { ChevronRight, AlertTriangle, FileText, ExternalLink } from "lucide-react";
+import { ChevronRight, AlertTriangle, FileText, ExternalLink, FlaskConical, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   voorwaardenVoor,
   zinVoor,
@@ -13,6 +21,13 @@ import {
   TYPE_LABEL,
   type RegelType,
 } from "@/lib/beheer/regelSamenvatting";
+import {
+  TEST_VELDEN,
+  defaultInputVoor,
+  evalueerRegel,
+  berekenTestHoeveelheid,
+  type TestInput,
+} from "@/lib/beheer/regelTest";
 
 interface Artikel {
   id: string;
