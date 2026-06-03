@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logActie } from "@/lib/beheer/log";
 import { ARTIKEL_REFS, berekenImpact, type ImpactPerArtikel } from "./impact";
 
 /** Splits "20039090 20041319" → ["20039090","20041319"]. Negeert lege tokens. */
