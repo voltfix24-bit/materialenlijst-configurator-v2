@@ -1,22 +1,48 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ARTIKEL_REFS, berekenImpact, type ImpactPerArtikel } from "./impact";
 
+/** Splits "20039090 20041319" → ["20039090","20041319"]. Negeert lege tokens. */
+export function splitAlternatieven(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const tok of raw.split(/\s+/)) {
+    const t = tok.trim();
+    if (!t || seen.has(t)) continue;
+    if (!/^\d{6,}$/.test(t)) continue; // alleen artikelnummer-achtige tokens
+    seen.add(t);
+    out.push(t);
+  }
+  return out;
+}
+
+export interface AlternatiefKandidaat {
+  artikel_nummer: string;
+  /** null als kandidaat niet in DB voorkomt. */
+  artikel_id: string | null;
+  actief: boolean;
+  omschrijving: string | null;
+}
+
 export interface AlternatiefVoorstel {
   oud_id: string;
   oud_nummer: string;
   oud_omschrijving: string;
-  nieuw_nummer: string;
-  /** null als alternatief niet bestaat in DB. */
-  nieuw_id: string | null;
-  nieuw_actief: boolean;
-  nieuw_omschrijving: string | null;
+  /** Alle kandidaten uit het `alternatief_artikel_nummer`-veld (kan 0, 1 of meer zijn). */
+  kandidaten: AlternatiefKandidaat[];
+  /** Default gekozen kandidaat: enige actieve. null als 0 of >1 actief. */
+  gekozen_nummer: string | null;
   impact: ImpactPerArtikel;
 }
 
 /**
  * Verzamel alle inactieve artikelen die een alternatief_artikel_nummer hebben
- * en bouw per voorstel een impact-overzicht. Doet géén database-writes — dit
- * is de "preview"-stap voor de migratie-UI.
+ * en bouw per voorstel een impact-overzicht + kandidaten-lijst. Doet géén
+ * database-writes.
+ *
+ * Bij meerdere kandidaten:
+ *  - precies 1 actief → `gekozen_nummer` wordt die kandidaat (auto-keuze)
+ *  - 0 of >1 actief → `gekozen_nummer` = null; UI moet de engineer laten kiezen
  */
 export async function voorbereidAlternatiefMigratie(): Promise<AlternatiefVoorstel[]> {
   const { data: kandidaten, error } = await supabase
@@ -29,37 +55,54 @@ export async function voorbereidAlternatiefMigratie(): Promise<AlternatiefVoorst
   const list = kandidaten ?? [];
   if (list.length === 0) return [];
 
-  const altNummers = [
-    ...new Set(list.map((k) => k.alternatief_artikel_nummer as string).filter(Boolean)),
-  ];
-  const { data: alts } = await supabase
-    .from("artikelen")
-    .select("id, artikel_nummer, korte_omschrijving, actief")
-    .in("artikel_nummer", altNummers);
-  const altByNr = new Map(
-    (alts ?? []).map((a) => [
-      a.artikel_nummer as string,
-      { id: a.id as string, actief: !!a.actief, omschrijving: a.korte_omschrijving as string },
-    ]),
-  );
+  // Verzamel alle unieke kandidaat-nummers over alle voorstellen.
+  const alleNummers = new Set<string>();
+  for (const k of list) {
+    for (const n of splitAlternatieven(k.alternatief_artikel_nummer as string)) {
+      alleNummers.add(n);
+    }
+  }
+  const altByNr = new Map<string, AlternatiefKandidaat>();
+  if (alleNummers.size > 0) {
+    const { data: alts } = await supabase
+      .from("artikelen")
+      .select("id, artikel_nummer, korte_omschrijving, actief")
+      .in("artikel_nummer", [...alleNummers]);
+    for (const a of alts ?? []) {
+      altByNr.set(a.artikel_nummer as string, {
+        artikel_nummer: a.artikel_nummer as string,
+        artikel_id: a.id as string,
+        actief: !!a.actief,
+        omschrijving: a.korte_omschrijving as string,
+      });
+    }
+  }
 
   const impactList = await berekenImpact(list.map((k) => k.id as string));
   const impactById = new Map(impactList.map((i) => [i.artikel_id, i]));
 
   const voorstellen: AlternatiefVoorstel[] = [];
   for (const k of list) {
-    const altNr = k.alternatief_artikel_nummer as string;
-    const alt = altByNr.get(altNr);
+    const nummers = splitAlternatieven(k.alternatief_artikel_nummer as string);
+    const kand: AlternatiefKandidaat[] = nummers.map(
+      (n) =>
+        altByNr.get(n) ?? {
+          artikel_nummer: n,
+          artikel_id: null,
+          actief: false,
+          omschrijving: null,
+        },
+    );
+    const actieve = kand.filter((c) => c.artikel_id && c.actief);
+    const gekozen = actieve.length === 1 ? actieve[0].artikel_nummer : null;
     const impact = impactById.get(k.id as string);
     if (!impact) continue;
     voorstellen.push({
       oud_id: k.id as string,
       oud_nummer: k.artikel_nummer as string,
       oud_omschrijving: k.korte_omschrijving as string,
-      nieuw_nummer: altNr,
-      nieuw_id: alt?.id ?? null,
-      nieuw_actief: alt?.actief ?? false,
-      nieuw_omschrijving: alt?.omschrijving ?? null,
+      kandidaten: kand,
+      gekozen_nummer: gekozen,
       impact,
     });
   }
@@ -81,17 +124,23 @@ export interface MigratieResultaat {
 }
 
 /**
- * Voer de daadwerkelijke migratie uit voor één voorstel: update in elke
- * bekende referentie-tabel/kolom waar `oud_id` voorkomt naar `nieuw_id`.
- * Per (tabel,kolom) wordt fouten apart vastgelegd zodat één gefaalde tabel
- * de rest niet blokkeert.
+ * Voer migratie uit voor één voorstel met expliciet gekozen kandidaat.
+ * Roeper is verantwoordelijk voor het bepalen van `gekozen_nummer` —
+ * dit kan de auto-keuze zijn (1 actief kandidaat) of een UI-keuze.
  */
 export async function voerAlternatiefMigratieDoor(
   voorstel: AlternatiefVoorstel,
+  gekozen_nummer: string,
 ): Promise<MigratieResultaat> {
-  if (!voorstel.nieuw_id) {
+  const kandidaat = voorstel.kandidaten.find((c) => c.artikel_nummer === gekozen_nummer);
+  if (!kandidaat || !kandidaat.artikel_id) {
     throw new Error(
-      `Alternatief ${voorstel.nieuw_nummer} bestaat niet in de database — migratie geblokkeerd.`,
+      `Alternatief ${gekozen_nummer} bestaat niet in de database — migratie geblokkeerd.`,
+    );
+  }
+  if (!kandidaat.actief) {
+    throw new Error(
+      `Alternatief ${gekozen_nummer} is zelf inactief — migratie geblokkeerd.`,
     );
   }
   const stappen: MigratieStapResultaat[] = [];
@@ -99,7 +148,7 @@ export async function voerAlternatiefMigratieDoor(
   for (const ref of ARTIKEL_REFS) {
     const { error, count } = await supabase
       .from(ref.tabel as never)
-      .update({ [ref.kolom]: voorstel.nieuw_id } as never, { count: "exact" })
+      .update({ [ref.kolom]: kandidaat.artikel_id } as never, { count: "exact" })
       .eq(ref.kolom, voorstel.oud_id);
     if (error) {
       stappen.push({ tabel: ref.tabel, kolom: ref.kolom, success_count: 0, error: error.message });
@@ -108,7 +157,6 @@ export async function voerAlternatiefMigratieDoor(
       totaal += count ?? 0;
     }
   }
-  // Log naar app_instellingen — laatste run blijft beschikbaar.
   try {
     const stamp = new Date().toISOString();
     await supabase.from("app_instellingen").upsert({
@@ -116,7 +164,7 @@ export async function voerAlternatiefMigratieDoor(
       waarde: JSON.stringify({
         timestamp: stamp,
         oud_nummer: voorstel.oud_nummer,
-        nieuw_nummer: voorstel.nieuw_nummer,
+        nieuw_nummer: gekozen_nummer,
         totaal_geupdate: totaal,
         stappen,
       }),
@@ -127,7 +175,7 @@ export async function voerAlternatiefMigratieDoor(
   }
   return {
     oud_nummer: voorstel.oud_nummer,
-    nieuw_nummer: voorstel.nieuw_nummer,
+    nieuw_nummer: gekozen_nummer,
     totaal_geupdate: totaal,
     stappen,
   };
