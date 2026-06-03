@@ -64,12 +64,11 @@ export function berekenLsRek(
     add(map, r.artikel, qty, r.herkomst_label, "lsRek", { tabel: "ls_rek_regels", id: r.id });
   }
 
-  // Dynamische per-richting beveiligingen (engineer-input artikelnummers)
-  const lsZekeringActief =
-    isCompact ||
-    (isRenovatie && config.lsRekActie === "vervangen") ||
-    (isRenovatie && config.lsRekActie === "gehandhaafd" && config.lsRekBeveiligingAanpassen);
-  if (lsZekeringActief && (config.lsRekAantalBeveiligingen ?? 0) > 0) {
+  // Dynamische per-richting beveiligingen (engineer-input artikelnummers).
+  // GEEN subtype-gating: als de engineer artikelnummers invult, horen ze
+  // altijd in de winkelwagen — anders krijg je verborgen gedrag dat
+  // afhankelijk is van vooraf gekozen lsRekActie/compact/renovatie.
+  if ((config.lsRekAantalBeveiligingen ?? 0) > 0) {
     for (const artNr of config.lsRekBeveiligingen ?? []) {
       if (artNr) add(map, findArtNr(artNr), 3, "LS richting beveiliging", "lsRek");
     }

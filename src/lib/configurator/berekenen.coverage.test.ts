@@ -178,6 +178,19 @@ const DIMS: Dim[] = [
     mustAppear: ["20036623"],
   },
   {
+    // Regressie: engineer-input beveiligingen moeten OOK buiten renovatie/compact
+    // doorwerken. Verborgen subType-gating is verwijderd voor deterministiek gedrag.
+    name: "lsRekBeveiligingen werkt zonder renovatie/compact (geen subtype-gating)",
+    baseline: { subType: "" },
+    toggle: {
+      subType: "",
+      lsRekAantalBeveiligingen: 1,
+      lsRekBeveiligingen: ["20026895"],
+    },
+    mustAppear: ["20026895"],
+    mustHaveQty: { "20026895": 3 },
+  },
+  {
     name: "lsRekAantalBeveiligingen + lsRekBeveiligingen (engineer-input)",
     baseline: { ...RENOV, lsRekActie: "vervangen", lsRekType: "8" },
     toggle: {
