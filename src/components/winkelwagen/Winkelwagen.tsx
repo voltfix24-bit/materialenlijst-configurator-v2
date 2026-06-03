@@ -41,6 +41,8 @@ interface Props {
   onExport?: () => void;
   exportDisabled?: boolean;
   exportPending?: boolean;
+  /** Verhoog deze counter om vanuit buiten (bv. case-header) de export-bevestigingscontrole te triggeren. */
+  exportSignal?: number;
 }
 
 // Mapping: configurator sectie → winkelwagen secties
