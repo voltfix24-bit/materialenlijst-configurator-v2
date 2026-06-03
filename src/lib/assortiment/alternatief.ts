@@ -228,3 +228,59 @@ export async function getAlternatiefKeuzes(): Promise<Map<string, AlternatiefKeu
   }
   return out;
 }
+
+/**
+ * Handmatige (engineer-gestuurde) vervanging: vervang álle of een subset van
+ * verwijzingen naar `oud_id` door `nieuw_id`. Werkt onafhankelijk van het
+ * `alternatief_artikel_nummer`-veld — voor de "Zoek & vervang"-workflow in
+ * het beheeroverzicht. Persisteert resultaat in `alternatief_keuzes`.
+ */
+export async function voerHandmatigeVervangingDoor(params: {
+  oud_id: string;
+  oud_nummer: string;
+  oud_omschrijving: string;
+  nieuw_id: string;
+  nieuw_nummer: string;
+  /** Subset van ARTIKEL_REFS; default alle. */
+  refs?: { tabel: string; kolom: string }[];
+  gekozen_door?: string | null;
+  notitie?: string | null;
+}): Promise<MigratieResultaat> {
+  const refs = params.refs && params.refs.length > 0 ? params.refs : ARTIKEL_REFS;
+  const stappen: MigratieStapResultaat[] = [];
+  let totaal = 0;
+  for (const ref of refs) {
+    const { error, count } = await supabase
+      .from(ref.tabel as never)
+      .update({ [ref.kolom]: params.nieuw_id } as never, { count: "exact" })
+      .eq(ref.kolom, params.oud_id);
+    if (error) {
+      stappen.push({ tabel: ref.tabel, kolom: ref.kolom, success_count: 0, error: error.message });
+    } else if ((count ?? 0) > 0) {
+      stappen.push({ tabel: ref.tabel, kolom: ref.kolom, success_count: count ?? 0 });
+      totaal += count ?? 0;
+    }
+  }
+  try {
+    await supabase.from("alternatief_keuzes").insert({
+      oud_artikel_id: params.oud_id,
+      oud_artikel_nummer: params.oud_nummer,
+      oud_omschrijving: params.oud_omschrijving,
+      nieuw_artikel_id: params.nieuw_id,
+      nieuw_artikel_nummer: params.nieuw_nummer,
+      totaal_geupdate: totaal,
+      kandidaten: null,
+      stappen: JSON.parse(JSON.stringify(stappen)),
+      gekozen_door: params.gekozen_door ?? null,
+      notitie: params.notitie ?? "handmatige vervanging via beheer-overzicht",
+    });
+  } catch {
+    /* best-effort */
+  }
+  return {
+    oud_nummer: params.oud_nummer,
+    nieuw_nummer: params.nieuw_nummer,
+    totaal_geupdate: totaal,
+    stappen,
+  };
+}
