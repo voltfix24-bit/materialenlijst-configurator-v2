@@ -614,27 +614,45 @@ function AlternatiefMigratiePaneel() {
                     </td>
                     <td className="px-2 py-1.5 align-top">
                       {meerdere ? (
-                        <select
-                          value={keuzeNr ?? ""}
-                          onChange={(e) => setKeuze((p) => ({ ...p, [v.oud_id]: e.target.value }))}
-                          disabled={bezigMet !== null}
-                          className="text-xs border border-border rounded px-1.5 py-0.5 bg-background font-mono"
-                        >
-                          <option value="">— kies —</option>
-                          {v.kandidaten
-                            .filter((k) => k.artikel_id && k.actief)
-                            .map((k) => (
-                              <option key={k.artikel_nummer} value={k.artikel_nummer}>
-                                {k.artikel_nummer}
-                              </option>
-                            ))}
-                        </select>
+                        <div>
+                          <select
+                            value={keuzeNr ?? ""}
+                            onChange={(e) => setKeuze((p) => ({ ...p, [v.oud_id]: e.target.value }))}
+                            disabled={bezigMet !== null}
+                            className="text-xs border border-border rounded px-1.5 py-0.5 bg-background font-mono"
+                          >
+                            <option value="">— kies —</option>
+                            {v.kandidaten
+                              .filter((k) => k.artikel_id && k.actief)
+                              .map((k) => (
+                                <option key={k.artikel_nummer} value={k.artikel_nummer}>
+                                  {k.artikel_nummer}
+                                  {k.omschrijving ? ` — ${k.omschrijving}` : ""}
+                                </option>
+                              ))}
+                          </select>
+                          {keuzeNr && (
+                            <div className="text-muted-foreground text-[11px] font-sans mt-0.5">
+                              {v.kandidaten.find((k) => k.artikel_nummer === keuzeNr)?.omschrijving ?? ""}
+                            </div>
+                          )}
+                        </div>
                       ) : keuzeNr ? (
-                        <span className="inline-flex items-center gap-1 font-mono">
-                          <ArrowRight className="w-3 h-3" />
-                          {keuzeNr}
-                          <CheckCircle2 className="w-3 h-3 text-success" />
-                        </span>
+                        <div>
+                          <span className="inline-flex items-center gap-1 font-mono">
+                            <ArrowRight className="w-3 h-3" />
+                            {keuzeNr}
+                            <CheckCircle2 className="w-3 h-3 text-success" />
+                          </span>
+                          {(() => {
+                            const k = v.kandidaten.find((c) => c.artikel_nummer === keuzeNr);
+                            return k?.omschrijving ? (
+                              <div className="text-muted-foreground text-[11px] font-sans">
+                                {k.omschrijving}
+                              </div>
+                            ) : null;
+                          })()}
+                        </div>
                       ) : (
                         <span className="text-muted-foreground text-[11px]">
                           {v.kandidaten.length === 0
