@@ -4,7 +4,15 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { ChevronRight, AlertTriangle, FileText, ExternalLink } from "lucide-react";
+import { ChevronRight, AlertTriangle, FileText, ExternalLink, FlaskConical, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   voorwaardenVoor,
   zinVoor,
@@ -13,6 +21,13 @@ import {
   TYPE_LABEL,
   type RegelType,
 } from "@/lib/beheer/regelSamenvatting";
+import {
+  TEST_VELDEN,
+  defaultInputVoor,
+  evalueerRegel,
+  berekenTestHoeveelheid,
+  type TestInput,
+} from "@/lib/beheer/regelTest";
 
 interface Artikel {
   id: string;
@@ -124,6 +139,7 @@ export function RegelsSamenvattingTab() {
   const [sectie, setSectie] = useState<RegelType | "alle">("alle");
   const [status, setStatus] = useState<StatusFilter>("alle");
   const [open, setOpen] = useState<Set<string>>(new Set());
+  const [testRegel, setTestRegel] = useState<RegelRij | null>(null);
 
   const gefilterd = useMemo(() => {
     const q = zoek.trim().toLowerCase();
@@ -283,6 +299,16 @@ export function RegelsSamenvattingTab() {
                           )}
                         </div>
                       </div>
+                      {TEST_VELDEN[type].length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setTestRegel(r)}
+                          className="text-[11px] text-primary hover:underline flex items-center gap-1 shrink-0"
+                          title="Open testpaneel — voert geen wijzigingen door"
+                        >
+                          <FlaskConical className="h-3 w-3" /> Test
+                        </button>
+                      )}
                       <Link
                         to="/beheer"
                         search={{
@@ -345,6 +371,189 @@ export function RegelsSamenvattingTab() {
           Geen regels voldoen aan de filters.
         </p>
       )}
+
+      <TestRegelDialog
+        regel={testRegel}
+        artikel={testRegel?.artikel_id ? artikelMap.get(testRegel.artikel_id) : undefined}
+        onClose={() => setTestRegel(null)}
+      />
     </div>
+  );
+}
+
+function TestRegelDialog({
+  regel,
+  artikel,
+  onClose,
+}: {
+  regel: RegelRij | null;
+  artikel: Artikel | undefined;
+  onClose: () => void;
+}) {
+  const [input, setInput] = useState<TestInput>({});
+  // Reset input bij wisselen van regel.
+  useMemo(() => {
+    if (regel) setInput(defaultInputVoor(regel.type, regel.raw));
+  }, [regel?.id]);
+
+  if (!regel) return null;
+  const velden = TEST_VELDEN[regel.type];
+  const result = evalueerRegel(regel.type, regel.raw, input);
+  const hv = berekenTestHoeveelheid(regel.raw);
+  const artikelProbleem = !artikel
+    ? "Geen artikel gekoppeld."
+    : !artikel.actief
+      ? `Artikel ${artikel.artikel_nummer} is inactief / verwijderd.`
+      : artikel.status === "Geblokkeerd"
+        ? `Artikel ${artikel.artikel_nummer} is geblokkeerd.`
+        : artikel.status === "Uitgelopen" || artikel.status === "Uitloop"
+          ? `Artikel ${artikel.artikel_nummer} is uitgelopen — controleer of alternatief moet worden gebruikt.`
+          : null;
+  const hoeveelheid0 = typeof hv.waarde === "number" && hv.waarde === 0;
+  const echtActief = result.matcht && !artikelProbleem && !hoeveelheid0;
+
+  return (
+    <Dialog open={!!regel} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FlaskConical className="h-4 w-4 text-primary" />
+            Regel testen — {TYPE_LABEL[regel.type]}
+          </DialogTitle>
+          <DialogDescription>
+            Verander de voorbeeldwaarden en zie of deze regel actief zou worden.
+            <strong className="ml-1 text-foreground">Niets wordt opgeslagen.</strong>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 text-sm">
+          <div className="rounded-md border border-border bg-surface-2 p-2 text-xs">
+            {zinVoor(
+              regel.type,
+              regel.raw,
+              artikel?.artikel_nummer ?? null,
+              artikel?.korte_omschrijving ?? null,
+            )}
+          </div>
+
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+              Testinvoer
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {velden.map((v) => {
+                const val = input[v.key];
+                if (v.type === "bool") {
+                  return (
+                    <label key={v.key} className="flex items-center gap-2 text-xs">
+                      <Checkbox
+                        checked={val === true}
+                        onCheckedChange={(c) =>
+                          setInput((p) => ({ ...p, [v.key]: c === true }))
+                        }
+                      />
+                      {v.label}
+                    </label>
+                  );
+                }
+                if (v.opties && v.opties.length > 0) {
+                  return (
+                    <label key={v.key} className="text-xs space-y-0.5">
+                      <span className="text-muted-foreground">{v.label}</span>
+                      <select
+                        value={(val as string) ?? ""}
+                        onChange={(e) =>
+                          setInput((p) => ({ ...p, [v.key]: e.target.value }))
+                        }
+                        className="w-full h-8 rounded-md border border-border bg-background px-1.5 text-xs"
+                      >
+                        <option value="">— leeg —</option>
+                        {v.opties.map((o) => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  );
+                }
+                return (
+                  <label key={v.key} className="text-xs space-y-0.5">
+                    <span className="text-muted-foreground">{v.label}</span>
+                    <Input
+                      value={(val as string) ?? ""}
+                      onChange={(e) =>
+                        setInput((p) => ({ ...p, [v.key]: e.target.value }))
+                      }
+                      className="h-8 text-xs"
+                    />
+                  </label>
+                );
+              })}
+              {velden.length === 0 && (
+                <p className="col-span-2 text-xs text-muted-foreground">
+                  Deze regel heeft geen voorwaarden — hij is altijd actief.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              "rounded-md border p-3 space-y-2 text-xs",
+              echtActief
+                ? "border-emerald-500/30 bg-emerald-500/10"
+                : "border-amber-500/30 bg-amber-500/10",
+            )}
+          >
+            <div className="flex items-center gap-2 text-sm font-medium">
+              {echtActief ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  Regel wordt actief
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4 text-amber-600" />
+                  Regel wordt NIET actief
+                </>
+              )}
+            </div>
+            {echtActief && artikel && (
+              <ul className="space-y-0.5">
+                <li>
+                  Artikel: <span className="font-mono">{artikel.artikel_nummer}</span> — {artikel.korte_omschrijving}
+                </li>
+                <li>Hoeveelheid: {String(hv.waarde)}</li>
+                {hv.toelichting && (
+                  <li className="text-muted-foreground">{hv.toelichting}</li>
+                )}
+                {artikel.categorie && <li>Categorie: {artikel.categorie}</li>}
+                {regel.herkomst_label && (
+                  <li>
+                    Verschijnt in winkelwagen onder herkomst <strong>{regel.herkomst_label}</strong>
+                  </li>
+                )}
+                <li className="text-muted-foreground">Sectie: {SECTIE_PER_TYPE[regel.type]}</li>
+              </ul>
+            )}
+            {!echtActief && (
+              <ul className="space-y-0.5 list-disc list-inside">
+                {result.redenen.map((r, i) => (
+                  <li key={`m-${i}`}>{r}</li>
+                ))}
+                {artikelProbleem && <li>{artikelProbleem}</li>}
+                {hoeveelheid0 && <li>Hoeveelheid is 0 — niets wordt toegevoegd.</li>}
+              </ul>
+            )}
+          </div>
+
+          <p className="text-[10px] text-muted-foreground">
+            Deze evaluator spiegelt de voorwaarden-matching van de berekenmodule en past geen
+            case- of winkelwagen-data aan.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
