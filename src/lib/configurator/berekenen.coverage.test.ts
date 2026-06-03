@@ -180,10 +180,10 @@ const DIMS: Dim[] = [
   {
     // Regressie: engineer-input beveiligingen moeten OOK buiten renovatie/compact
     // doorwerken. Verborgen subType-gating is verwijderd voor deterministiek gedrag.
-    name: "lsRekBeveiligingen werkt ook bij nieuwbouw_nsa (geen subtype-gating)",
-    baseline: { subType: "nieuwbouw_nsa" },
+    name: "lsRekBeveiligingen werkt zonder renovatie/compact (geen subtype-gating)",
+    baseline: { subType: "" },
     toggle: {
-      subType: "nieuwbouw_nsa",
+      subType: "",
       lsRekAantalBeveiligingen: 1,
       lsRekBeveiligingen: ["20026895"],
     },
