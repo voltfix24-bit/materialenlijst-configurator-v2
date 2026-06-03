@@ -319,36 +319,39 @@ export function Winkelwagen({
     );
   };
 
-  const voegArtikelToe = () => {
-    if (!gekozenArtikel || zoekHoeveelheid <= 0) return;
+  const voegHandmatigToe = (stam: ArtikelStam, qty: number) => {
+    if (!stam || qty <= 0) return;
     const nieuw: ToegevoegdArtikel = {
-      artikel_id: gekozenArtikel.id,
-      artikel_nummer: gekozenArtikel.artikel_nummer,
-      korte_omschrijving: gekozenArtikel.korte_omschrijving,
-      eenheid: gekozenArtikel.eenheid || "st",
-      hoeveelheid: zoekHoeveelheid,
+      artikel_id: stam.id,
+      artikel_nummer: stam.artikel_nummer,
+      korte_omschrijving: stam.korte_omschrijving,
+      eenheid: stam.eenheid || "st",
+      hoeveelheid: qty,
     };
     setToegevoegd((prev) => [...prev.filter((t) => t.artikel_nummer !== nieuw.artikel_nummer), nieuw]);
-    const arNr = nieuw.artikel_nummer;
-    const arOms = nieuw.korte_omschrijving;
-    const arQty = nieuw.hoeveelheid;
     openDialoog(
       {
-        artikel_nummer: arNr,
-        korte_omschrijving: arOms,
+        artikel_nummer: nieuw.artikel_nummer,
+        korte_omschrijving: nieuw.korte_omschrijving,
         actie: "toegevoegd",
         oude_hoeveelheid: null,
-        nieuwe_hoeveelheid: arQty,
+        nieuwe_hoeveelheid: nieuw.hoeveelheid,
       },
       () => {
-        setToegevoegd((prev) => prev.filter((t) => t.artikel_nummer !== arNr));
+        setToegevoegd((prev) => prev.filter((t) => t.artikel_nummer !== nieuw.artikel_nummer));
       },
     );
+  };
+
+  const voegArtikelToe = () => {
+    if (!gekozenArtikel || zoekHoeveelheid <= 0) return;
+    voegHandmatigToe(gekozenArtikel, zoekHoeveelheid);
     setShowZoeker(false);
     setZoek("");
     setGekozenArtikel(null);
     setZoekHoeveelheid(1);
   };
+
 
   // ---- zoek suggesties ----
   const suggesties = useMemo(() => {
