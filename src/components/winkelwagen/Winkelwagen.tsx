@@ -12,7 +12,8 @@ import {
   ExportBevestigingDialoog,
   type ExportProbleemArtikel,
 } from "./ExportBevestigingDialoog";
-import { splitAlternatieven } from "@/lib/assortiment/alternatief";
+import { splitAlternatieven, getAlternatiefKeuzes } from "@/lib/assortiment/alternatief";
+import { useQuery } from "@tanstack/react-query";
 
 interface ArtikelStam {
   id: string;
