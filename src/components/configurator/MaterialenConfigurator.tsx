@@ -30,7 +30,7 @@ import {
   type RmuVeldConfig,
   type SubType,
 } from "@/lib/configurator/types";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Winkelwagen } from "@/components/winkelwagen/Winkelwagen";
