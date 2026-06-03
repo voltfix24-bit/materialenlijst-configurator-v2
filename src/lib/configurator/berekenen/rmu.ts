@@ -161,13 +161,5 @@ export function berekenRmuVelden(
       });
     }
   }
-
-  // I-Net vaste artikelen (engineer-input per case)
-  if (config.rmuInet === "ja") {
-    for (const ia of config.iNetArtikelen ?? []) {
-      if (ia.hoeveelheid > 0) {
-        add(map, findArtNr(ia.artikel_nummer), ia.hoeveelheid, "I-Net", "rmu");
-      }
-    }
-  }
+}
 }
