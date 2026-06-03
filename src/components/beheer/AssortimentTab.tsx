@@ -39,6 +39,11 @@ export function AssortimentTab() {
     },
   });
 
+  const { data: keuzes } = useQuery({
+    queryKey: ["alternatief-keuzes"],
+    queryFn: getAlternatiefKeuzes,
+  });
+
   const analyseer = useMutation({
     mutationFn: async (file: File) => {
       const parsed = await parseAssortimentslijst(file);
