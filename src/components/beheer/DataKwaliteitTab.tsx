@@ -43,9 +43,10 @@ async function runChecks(): Promise<CheckResult[]> {
   // Laad artikelen index
   const { data: artikelen, error: artErr } = await supabase
     .from("artikelen")
-    .select("id, artikel_nummer, korte_omschrijving, actief");
+    .select("id, artikel_nummer, korte_omschrijving, actief, alternatief_artikel_nummer");
   if (artErr) throw artErr;
   const byId = new Map((artikelen ?? []).map((a) => [a.id as string, a]));
+  const byNr = new Map((artikelen ?? []).map((a) => [a.artikel_nummer as string, a]));
 
   // Per tabel: laad rijen + check
   for (const t of TABELLEN_MET_ARTIKEL_ID) {
@@ -191,6 +192,58 @@ async function runChecks(): Promise<CheckResult[]> {
       : `${artikelen?.length ?? 0} artikelen — geen duplicaten.`,
     details: dupes.slice(0, 10).map(([nr, n]) => `${nr} (${n}×)`),
   });
+
+  // Alternatief-keten: inactieve artikelen met alternatief — check beschikbaarheid
+  const issues: string[] = [];
+  let altGoed = 0;
+  for (const a of artikelen ?? []) {
+    const altNr = (a as { alternatief_artikel_nummer?: string | null }).alternatief_artikel_nummer;
+    if (!altNr) continue;
+    const alt = byNr.get(altNr);
+    if (!alt) {
+      issues.push(`${a.artikel_nummer} → alt ${altNr}: bestaat niet`);
+    } else if (!(alt as { actief?: boolean }).actief) {
+      issues.push(`${a.artikel_nummer} → alt ${altNr}: alternatief is zelf inactief`);
+    } else {
+      altGoed++;
+    }
+  }
+  results.push({
+    id: "alternatief-keten",
+    titel: "Alternatief-ketens",
+    severity: issues.length ? "afwijking" : "ok",
+    samenvatting: issues.length
+      ? `${issues.length} artikel(en) met onbruikbaar alternatief (${altGoed} oké).`
+      : `${altGoed} artikel(en) met geldig alternatief.`,
+    details: issues.slice(0, 8),
+  });
+
+  // Case-materialen die naar inactieve artikelen verwijzen
+  const { data: cm, error: cmErr } = await supabase
+    .from("case_materialen")
+    .select("id, case_id, artikel_id");
+  if (cmErr) {
+    results.push({ id: "case_materialen-error", titel: "Case-materialen", severity: "fout", samenvatting: cmErr.message });
+  } else {
+    const inactRefs: string[] = [];
+    let danglingCm = 0;
+    for (const row of cm ?? []) {
+      const a = byId.get(row.artikel_id as string);
+      if (!a) danglingCm++;
+      else if (!(a as { actief?: boolean }).actief) inactRefs.push(`${row.case_id?.slice(0, 8)}/${a.artikel_nummer}`);
+    }
+    results.push({
+      id: "case_materialen-inactief",
+      titel: "Opgeslagen case-materialen vs Liander-template",
+      severity: danglingCm ? "fout" : inactRefs.length ? "afwijking" : "ok",
+      samenvatting: danglingCm
+        ? `${danglingCm} rij(en) verwijzen naar niet-bestaand artikel.`
+        : inactRefs.length
+          ? `${inactRefs.length} rij(en) verwijzen naar inactief artikel.`
+          : `${cm?.length ?? 0} rijen — alle artikelen actief.`,
+      details: inactRefs.slice(0, 8),
+    });
+  }
 
   return results;
 }

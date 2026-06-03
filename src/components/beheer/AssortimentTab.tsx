@@ -1,16 +1,29 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Upload } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Loader2, Upload, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { parseAssortimentslijst } from "@/lib/assortiment/excel";
-import { berekenDiff, voerSyncDoor, type DiffResultaat } from "@/lib/assortiment/sync";
+import { parseAssortimentslijst, SHEET_NAAM } from "@/lib/assortiment/excel";
+import {
+  berekenDiff,
+  voerSyncDoor,
+  type DiffResultaat,
+  type SyncResult,
+} from "@/lib/assortiment/sync";
+import { berekenImpact, type ImpactPerArtikel } from "@/lib/assortiment/impact";
+import {
+  voorbereidAlternatiefMigratie,
+  voerAlternatiefMigratieDoor,
+  type AlternatiefVoorstel,
+} from "@/lib/assortiment/alternatief";
 
 export function AssortimentTab() {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [bestand, setBestand] = useState<File | null>(null);
   const [diff, setDiff] = useState<DiffResultaat | null>(null);
+  const [impact, setImpact] = useState<ImpactPerArtikel[] | null>(null);
+  const [erkenRisico, setErkenRisico] = useState(false);
 
   const { data: laatsteSync } = useQuery({
     queryKey: ["assortiment-laatste-sync"],
@@ -28,30 +41,51 @@ export function AssortimentTab() {
     mutationFn: async (file: File) => {
       const parsed = await parseAssortimentslijst(file);
       if (parsed.length === 0) throw new Error("Geen artikelen gevonden in dit bestand");
-      return berekenDiff(parsed);
+      const d = await berekenDiff(parsed);
+      // Impactanalyse alleen op artikelen die straks inactief gaan
+      const ids = d.uitgelopen.map((a) => a.id);
+      const imp = ids.length > 0 ? await berekenImpact(ids) : [];
+      return { d, imp };
     },
-    onSuccess: (d) => setDiff(d),
+    onSuccess: ({ d, imp }) => {
+      setDiff(d);
+      setImpact(imp);
+      setErkenRisico(false);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const doorvoeren = useMutation({
     mutationFn: async () => {
       if (!diff || !bestand) throw new Error("Geen diff");
-      await voerSyncDoor(diff, bestand.name);
+      return voerSyncDoor(diff, bestand.name);
     },
-    onSuccess: () => {
-      toast.success("Assortiment gesynchroniseerd");
+    onSuccess: (res: SyncResult) => {
+      const ok = res.errors.length === 0;
+      const tekst = `+${res.inserted} nieuw · ~${res.updated} gewijzigd · −${res.deactivated} inactief`;
+      if (ok) {
+        toast.success(`Assortiment gesynchroniseerd · ${tekst}`);
+      } else {
+        toast.error(
+          `Sync gedeeltelijk geslaagd · ${tekst} · ${res.errors.length} fout(en). Eerste: ${res.errors[0].stap} — ${res.errors[0].detail}`,
+          { duration: 12000 },
+        );
+      }
       setDiff(null);
+      setImpact(null);
       setBestand(null);
+      setErkenRisico(false);
       if (fileRef.current) fileRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["beheer-artikelen"] });
       qc.invalidateQueries({ queryKey: ["assortiment-laatste-sync"] });
+      qc.invalidateQueries({ queryKey: ["artikelen"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const onFile = (f: File | null) => {
     setDiff(null);
+    setImpact(null);
     setBestand(f);
     if (f) analyseer.mutate(f);
   };
@@ -63,13 +97,23 @@ export function AssortimentTab() {
     return `${d.toLocaleString("nl-NL")} · ${naam ?? ""}`;
   }, [laatsteSync]);
 
+  const hardeImpactZonderAlt = useMemo(
+    () => (impact ?? []).filter((i) => i.totaal > 0 && !i.alternatiefBeschikbaar),
+    [impact],
+  );
+  const doorvoerenGeblokkeerd =
+    !diff ||
+    doorvoeren.isPending ||
+    (hardeImpactZonderAlt.length > 0 && !erkenRisico);
+
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-border bg-surface p-4 flex items-center gap-4">
         <div className="flex-1">
           <div className="text-sm font-medium">Assortimentslijst uploaden</div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            Upload het maandelijkse .xlsx bestand. Sheet "Aanvulling" wordt ingelezen.
+            Upload het maandelijkse .xlsx bestand. Sheet "{SHEET_NAAM}" wordt ingelezen — dit is de
+            data-sheet binnen de officiële Liander-template.
           </div>
           {samenvatting && (
             <div className="text-xs text-muted-foreground mt-1.5 font-mono">
@@ -160,6 +204,9 @@ export function AssortimentTab() {
                     <tr key={a.id}>
                       <td className="px-2 py-1 font-mono">{a.artikel_nummer}</td>
                       <td className="px-2 py-1">{a.korte_omschrijving}</td>
+                      <td className="px-2 py-1 text-muted-foreground">
+                        {a.alternatief_artikel_nummer ? `alt: ${a.alternatief_artikel_nummer}` : "geen alt."}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -168,20 +215,263 @@ export function AssortimentTab() {
             {diff.uitgelopen.length > 100 && <Meer n={diff.uitgelopen.length - 100} />}
           </DiffSectie>
 
+          <ImpactSectie impact={impact ?? []} />
+
+          {hardeImpactZonderAlt.length > 0 && (
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="font-medium text-amber-700">
+                    {hardeImpactZonderAlt.length} uitgelopen artikel(en) worden nog gebruikt in beheer-regels
+                    en hebben géén alternatief.
+                  </div>
+                  <div className="text-amber-700/80 mt-0.5">
+                    Na doorvoeren staan deze artikelen op inactief maar blijven referenties bestaan.
+                    Cases die deze artikelen gebruiken krijgen een waarschuwing in de winkelwagen.
+                  </div>
+                  <label className="inline-flex items-center gap-2 mt-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={erkenRisico}
+                      onChange={(e) => setErkenRisico(e.target.checked)}
+                    />
+                    <span className="text-amber-700">Ik begrijp dit en wil toch doorvoeren.</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-2">
             <button
-              onClick={() => { setDiff(null); setBestand(null); if (fileRef.current) fileRef.current.value = ""; }}
+              onClick={() => { setDiff(null); setImpact(null); setBestand(null); setErkenRisico(false); if (fileRef.current) fileRef.current.value = ""; }}
               className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-accent"
             >
               Annuleren
             </button>
             <button
               onClick={() => doorvoeren.mutate()}
-              disabled={doorvoeren.isPending}
+              disabled={doorvoerenGeblokkeerd}
               className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-1.5 text-sm hover:opacity-90 disabled:opacity-50"
             >
               {doorvoeren.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Doorvoeren
+            </button>
+          </div>
+        </div>
+      )}
+
+      <AlternatiefMigratiePaneel />
+    </div>
+  );
+}
+
+function ImpactSectie({ impact }: { impact: ImpactPerArtikel[] }) {
+  if (impact.length === 0) {
+    return (
+      <DiffSectie titel="Impact op beheer-regels">
+        <div className="px-3 py-3 text-xs text-muted-foreground">
+          Geen uitgelopen artikelen → geen impact op beheer-regels.
+        </div>
+      </DiffSectie>
+    );
+  }
+  const geraakt = impact.filter((i) => i.totaal > 0);
+  return (
+    <DiffSectie titel={`Impact op beheer-regels (${geraakt.length}/${impact.length} geraakt)`}>
+      {geraakt.length === 0 ? (
+        <div className="px-3 py-3 text-xs text-muted-foreground">
+          Geen van de uitgelopen artikelen wordt nog gebruikt in beheer-regels.
+        </div>
+      ) : (
+        <table className="w-full text-xs">
+          <thead className="bg-muted/40 text-muted-foreground">
+            <tr>
+              <th className="text-left px-2 py-1 font-medium">Oud artikel</th>
+              <th className="text-left px-2 py-1 font-medium">Alternatief</th>
+              <th className="text-right px-2 py-1 font-medium"># regels</th>
+              <th className="text-left px-2 py-1 font-medium">Waar</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {geraakt.slice(0, 50).map((i) => (
+              <tr key={i.artikel_id}>
+                <td className="px-2 py-1">
+                  <span className="font-mono">{i.artikel_nummer}</span>
+                  <div className="text-muted-foreground text-[11px]">{i.korte_omschrijving}</div>
+                </td>
+                <td className="px-2 py-1">
+                  {i.alternatief_artikel_nummer ? (
+                    <span className="inline-flex items-center gap-1 font-mono">
+                      <ArrowRight className="w-3 h-3" />
+                      {i.alternatief_artikel_nummer}
+                      {i.alternatiefBeschikbaar ? (
+                        <CheckCircle2 className="w-3 h-3 text-success" aria-label="beschikbaar" />
+                      ) : (
+                        <XCircle className="w-3 h-3 text-destructive" aria-label="niet beschikbaar of inactief" />
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="px-2 py-1 text-right font-mono">{i.totaal}</td>
+                <td className="px-2 py-1 text-muted-foreground text-[11px]">
+                  {i.gebruikt_in.map((g) => `${g.tabel}.${g.kolom} (${g.count})`).join(", ")}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {geraakt.length > 50 && <Meer n={geraakt.length - 50} />}
+    </DiffSectie>
+  );
+}
+
+function AlternatiefMigratiePaneel() {
+  const qc = useQueryClient();
+  const { data, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ["alternatief-voorstellen"],
+    queryFn: voorbereidAlternatiefMigratie,
+  });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bezigMet, setBezigMet] = useState<string | null>(null);
+
+  const lijst = data ?? [];
+  const migreerbaar = lijst.filter(
+    (v) => v.nieuw_id && v.nieuw_actief && v.impact.totaal > 0,
+  );
+
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      return s;
+    });
+
+  const voerUit = async () => {
+    const teDoen = migreerbaar.filter((v) => selected.has(v.oud_id));
+    if (teDoen.length === 0) return;
+    let succes = 0;
+    let totaalRijen = 0;
+    const fouten: string[] = [];
+    for (const v of teDoen) {
+      setBezigMet(v.oud_nummer);
+      try {
+        const res = await voerAlternatiefMigratieDoor(v);
+        succes++;
+        totaalRijen += res.totaal_geupdate;
+        const stapFouten = res.stappen.filter((s) => s.error);
+        if (stapFouten.length > 0) {
+          fouten.push(
+            `${v.oud_nummer}: ${stapFouten.map((s) => `${s.tabel}.${s.kolom}: ${s.error}`).join("; ")}`,
+          );
+        }
+      } catch (e) {
+        fouten.push(`${v.oud_nummer}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+    setBezigMet(null);
+    setSelected(new Set());
+    qc.invalidateQueries({ queryKey: ["alternatief-voorstellen"] });
+    qc.invalidateQueries({ queryKey: ["data-kwaliteit"] });
+    if (fouten.length === 0) {
+      toast.success(
+        `${succes} migratie(s) doorgevoerd · ${totaalRijen} verwijzing(en) gemigreerd.`,
+      );
+    } else {
+      toast.error(
+        `${succes} migratie(s) gelukt · ${totaalRijen} rijen · ${fouten.length} met fouten: ${fouten[0]}`,
+        { duration: 14000 },
+      );
+    }
+  };
+
+  return (
+    <div className="space-y-2 mt-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-medium">Alternatief-migratie</h3>
+          <p className="text-xs text-muted-foreground">
+            Inactieve artikelen met een alternatief_artikel_nummer. Selecteer welke migraties je wilt
+            doorvoeren — er gebeurt niets automatisch.
+          </p>
+        </div>
+        <button
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="text-xs px-2 py-1 rounded-md border border-border hover:bg-accent disabled:opacity-50"
+        >
+          {isFetching ? "Bezig…" : "Verversen"}
+        </button>
+      </div>
+      {isLoading ? (
+        <div className="text-xs text-muted-foreground">Laden…</div>
+      ) : lijst.length === 0 ? (
+        <div className="text-xs text-muted-foreground rounded-md border border-border bg-surface px-3 py-3">
+          Geen inactieve artikelen met alternatief gevonden.
+        </div>
+      ) : (
+        <div className="rounded-md border border-border bg-surface overflow-hidden">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/40 text-muted-foreground">
+              <tr>
+                <th className="px-2 py-1.5 w-8"></th>
+                <th className="text-left px-2 py-1.5 font-medium">Oud</th>
+                <th className="text-left px-2 py-1.5 font-medium">Nieuw</th>
+                <th className="text-left px-2 py-1.5 font-medium">Status alt.</th>
+                <th className="text-right px-2 py-1.5 font-medium"># refs</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {lijst.map((v) => {
+                const isMigreerbaar = v.nieuw_id && v.nieuw_actief && v.impact.totaal > 0;
+                return (
+                  <tr key={v.oud_id} className={isMigreerbaar ? "" : "opacity-60"}>
+                    <td className="px-2 py-1.5 text-center">
+                      <input
+                        type="checkbox"
+                        disabled={!isMigreerbaar || bezigMet !== null}
+                        checked={selected.has(v.oud_id)}
+                        onChange={() => toggle(v.oud_id)}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 font-mono">{v.oud_nummer}</td>
+                    <td className="px-2 py-1.5 font-mono">
+                      <span className="inline-flex items-center gap-1">
+                        <ArrowRight className="w-3 h-3" /> {v.nieuw_nummer}
+                      </span>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      {!v.nieuw_id ? (
+                        <span className="text-destructive">bestaat niet</span>
+                      ) : !v.nieuw_actief ? (
+                        <span className="text-amber-600">inactief</span>
+                      ) : (
+                        <span className="text-success">actief</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-1.5 text-right font-mono">{v.impact.totaal}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-background">
+            <span className="text-xs text-muted-foreground">
+              {selected.size} geselecteerd
+              {bezigMet && ` · bezig met ${bezigMet}…`}
+            </span>
+            <button
+              onClick={voerUit}
+              disabled={selected.size === 0 || bezigMet !== null}
+              className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs hover:opacity-90 disabled:opacity-50"
+            >
+              {bezigMet !== null && <Loader2 className="w-3 h-3 animate-spin" />}
+              Geselecteerde migraties doorvoeren
             </button>
           </div>
         </div>

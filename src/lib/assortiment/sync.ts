@@ -17,8 +17,21 @@ export interface BestaandArtikel {
 export interface DiffResultaat {
   nieuw: ParsedArtikel[];
   gewijzigd: { huidig: BestaandArtikel; nieuw: ParsedArtikel; veranderingen: string[] }[];
-  uitgelopen: BestaandArtikel[]; // staan in DB met actief=true maar niet in nieuwe lijst OF status niet meer Actief
+  uitgelopen: BestaandArtikel[];
   ongewijzigd: number;
+}
+
+export interface SyncStapFout {
+  stap: "insert" | "update" | "deactivate" | "logging";
+  detail: string;
+  artikel_nummer?: string;
+}
+
+export interface SyncResult {
+  inserted: number;
+  updated: number;
+  deactivated: number;
+  errors: SyncStapFout[];
 }
 
 const ACTIEVE = (s: string | null | undefined) => (s || "").toLowerCase() === "actief";
@@ -41,7 +54,7 @@ export async function berekenDiff(parsed: ParsedArtikel[]): Promise<DiffResultaa
   const { data: huidig, error } = await supabase
     .from("artikelen")
     .select("id, artikel_nummer, korte_omschrijving, eenheid, categorie, actief, basis_eenheid, aantal_in_verpakking, status, alternatief_artikel_nummer")
-    .limit(10000);
+    .limit(20000);
   if (error) throw error;
   const byNum = new Map<string, BestaandArtikel>();
   for (const a of huidig ?? []) byNum.set(a.artikel_nummer, a as BestaandArtikel);
@@ -63,7 +76,6 @@ export async function berekenDiff(parsed: ParsedArtikel[]): Promise<DiffResultaa
     else ongewijzigd++;
   }
 
-  // Niet meer in lijst -> markeer inactief (alleen wanneer nu nog actief)
   const uitgelopen: BestaandArtikel[] = [];
   for (const a of huidig ?? []) {
     if (!seen.has(a.artikel_nummer) && a.actief) uitgelopen.push(a as BestaandArtikel);
@@ -71,8 +83,10 @@ export async function berekenDiff(parsed: ParsedArtikel[]): Promise<DiffResultaa
   return { nieuw, gewijzigd, uitgelopen, ongewijzigd };
 }
 
-export async function voerSyncDoor(diff: DiffResultaat, bestandsnaam: string) {
-  // 1. nieuwe artikelen invoegen
+export async function voerSyncDoor(diff: DiffResultaat, bestandsnaam: string): Promise<SyncResult> {
+  const result: SyncResult = { inserted: 0, updated: 0, deactivated: 0, errors: [] };
+
+  // 1. nieuwe artikelen invoegen — per chunk om partial-success te isoleren
   if (diff.nieuw.length > 0) {
     const rows = diff.nieuw.map((p) => ({
       artikel_nummer: p.artikel_nummer,
@@ -85,11 +99,21 @@ export async function voerSyncDoor(diff: DiffResultaat, bestandsnaam: string) {
       alternatief_artikel_nummer: p.alternatief_artikel_nummer,
       actief: ACTIEVE(p.status),
     }));
-    const { error } = await supabase.from("artikelen").insert(rows);
-    if (error) throw error;
+    const CHUNK = 200;
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const slice = rows.slice(i, i + CHUNK);
+      const { error, count } = await supabase
+        .from("artikelen")
+        .insert(slice, { count: "exact" });
+      if (error) {
+        result.errors.push({ stap: "insert", detail: error.message });
+      } else {
+        result.inserted += count ?? slice.length;
+      }
+    }
   }
 
-  // 2. wijzigingen
+  // 2. wijzigingen — per rij; één rij-failure blokkeert de rest niet
   for (const g of diff.gewijzigd) {
     const { error } = await supabase
       .from("artikelen")
@@ -104,22 +128,56 @@ export async function voerSyncDoor(diff: DiffResultaat, bestandsnaam: string) {
         actief: ACTIEVE(g.nieuw.status),
       })
       .eq("id", g.huidig.id);
-    if (error) throw error;
+    if (error) {
+      result.errors.push({
+        stap: "update",
+        detail: error.message,
+        artikel_nummer: g.huidig.artikel_nummer,
+      });
+    } else {
+      result.updated++;
+    }
   }
 
-  // 3. uitgelopen -> inactief
+  // 3. uitgelopen -> inactief + status="Uitgelopen"
   if (diff.uitgelopen.length > 0) {
     const ids = diff.uitgelopen.map((a) => a.id);
-    const { error } = await supabase
+    const { error, count } = await supabase
       .from("artikelen")
-      .update({ actief: false })
+      .update({ actief: false, status: "Uitgelopen" }, { count: "exact" })
       .in("id", ids);
-    if (error) throw error;
+    if (error) {
+      result.errors.push({ stap: "deactivate", detail: error.message });
+    } else {
+      result.deactivated = count ?? ids.length;
+    }
   }
 
-  // 4. instelling
-  const waarde = `${new Date().toISOString()} | ${bestandsnaam}`;
-  await supabase
-    .from("app_instellingen")
-    .upsert({ sleutel: "laatste_assortiment_sync", waarde, updated_at: new Date().toISOString() });
+  // 4. logging — best-effort
+  try {
+    const stamp = new Date().toISOString();
+    const waarde = `${stamp} | ${bestandsnaam}`;
+    await supabase
+      .from("app_instellingen")
+      .upsert({ sleutel: "laatste_assortiment_sync", waarde, updated_at: stamp });
+    await supabase.from("app_instellingen").upsert({
+      sleutel: "laatste_assortiment_sync_resultaat",
+      waarde: JSON.stringify({
+        bestandsnaam,
+        timestamp: stamp,
+        inserted: result.inserted,
+        updated: result.updated,
+        deactivated: result.deactivated,
+        errors: result.errors,
+      }),
+      updated_at: stamp,
+    });
+  } catch (e) {
+    result.errors.push({
+      stap: "logging",
+      detail: e instanceof Error ? e.message : String(e),
+    });
+  }
+
+  return result;
 }

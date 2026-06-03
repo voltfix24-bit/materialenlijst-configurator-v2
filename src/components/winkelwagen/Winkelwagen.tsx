@@ -691,6 +691,7 @@ function WinkelwagenRij({
   onDelete: () => void;
 }) {
   const minHoeveelheid = 0;
+  const isInactief = !!item.inactief;
   return (
     <div
       className={cn(
@@ -699,8 +700,10 @@ function WinkelwagenRij({
         item.niet_bestellen && !isVerwijderd && "opacity-50 line-through",
         isNieuw && !isVerwijderd && "bg-success/10 ring-1 ring-success/30",
         isOverride && !isVerwijderd && !isNieuw && "bg-primary/5 ring-1 ring-primary/30",
+        isInactief && !isVerwijderd && "bg-amber-500/10 ring-1 ring-amber-500/40",
         isVerwijderd && "bg-destructive/10 ring-1 ring-destructive/30 line-through opacity-70 animate-fade-out",
       )}
+      title={isInactief ? "Inactief artikel — komt niet meer voor in de huidige Liander-template" : undefined}
     >
       {/* Sectie kleurblokje */}
       <div className="w-0.5 h-4 rounded-full flex-shrink-0" style={{ background: color }} />
@@ -720,6 +723,11 @@ function WinkelwagenRij({
           <span
             className="text-[11px] text-foreground/85 flex-1 min-w-0 leading-tight cursor-help line-clamp-2 break-words"
           >
+            {isInactief && (
+              <span className="inline-flex items-center px-1 mr-1 rounded text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-700 align-middle">
+                inactief
+              </span>
+            )}
             {item.korte_omschrijving}
           </span>
         </HoverCardTrigger>
@@ -730,6 +738,12 @@ function WinkelwagenRij({
         >
           <div className="font-mono text-[10px] text-primary mb-1">{item.artikel_nummer}</div>
           <div className="text-foreground">{item.korte_omschrijving}</div>
+          {isInactief && (
+            <div className="mt-1.5 text-amber-700 text-[11px]">
+              Dit artikel komt niet meer voor in de huidige Liander-template. Vervang via Beheer →
+              Assortiment.
+            </div>
+          )}
         </HoverCardContent>
       </HoverCard>
 
