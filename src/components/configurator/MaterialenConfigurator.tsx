@@ -445,7 +445,7 @@ export function MaterialenConfigurator({
       {/* Live winkelwagen — sticky op lg, mobiel via tab-toggle */}
       <div className={cn(
         mobileTab === "config" && "hidden lg:block",
-        "lg:sticky lg:top-0 lg:h-[calc(100svh-var(--app-header-h,57px))] lg:max-h-[calc(100svh-var(--app-header-h,57px))] lg:overflow-hidden border-l border-border bg-card",
+        "lg:sticky lg:top-0 lg:self-start lg:h-[calc(100svh-var(--app-header-h,57px))] lg:max-h-[calc(100svh-var(--app-header-h,57px))] lg:overflow-hidden border-l border-border bg-card",
       )}>
         <Winkelwagen
           items={preview}
