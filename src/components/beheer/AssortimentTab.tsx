@@ -589,16 +589,23 @@ function AlternatiefMigratiePaneel() {
                       {v.kandidaten.length === 0 ? (
                         <span className="text-muted-foreground italic">geen</span>
                       ) : (
-                        <div className="space-y-0.5">
+                        <div className="space-y-1">
                           {v.kandidaten.map((k) => (
-                            <div key={k.artikel_nummer} className="flex items-center gap-1 font-mono">
-                              <span>{k.artikel_nummer}</span>
-                              {!k.artikel_id ? (
-                                <span className="text-destructive text-[10px]">(onbekend)</span>
-                              ) : !k.actief ? (
-                                <span className="text-amber-600 text-[10px]">(inactief)</span>
-                              ) : (
-                                <span className="text-success text-[10px]">(actief)</span>
+                            <div key={k.artikel_nummer}>
+                              <div className="flex items-center gap-1 font-mono">
+                                <span>{k.artikel_nummer}</span>
+                                {!k.artikel_id ? (
+                                  <span className="text-destructive text-[10px]">(onbekend)</span>
+                                ) : !k.actief ? (
+                                  <span className="text-amber-600 text-[10px]">(inactief)</span>
+                                ) : (
+                                  <span className="text-success text-[10px]">(actief)</span>
+                                )}
+                              </div>
+                              {k.omschrijving && (
+                                <div className="text-muted-foreground text-[11px] font-sans">
+                                  {k.omschrijving}
+                                </div>
                               )}
                             </div>
                           ))}
