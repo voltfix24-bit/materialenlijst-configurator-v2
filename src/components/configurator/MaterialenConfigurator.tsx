@@ -463,6 +463,7 @@ export function MaterialenConfigurator({
           onExport={onExport}
           exportDisabled={exportDisabled}
           exportPending={exportPending}
+          exportSignal={exportSignal}
         />
       </div>
     </div>
