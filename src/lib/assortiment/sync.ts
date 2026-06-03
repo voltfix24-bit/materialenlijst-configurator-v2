@@ -197,12 +197,19 @@ export async function voerSyncDoor(diff: DiffResultaat, bestandsnaam: string): P
   //    Conflicten worden in de UI getoond zodat de beheerder een keuze maakt.
   for (const v of diff.verwijderd) {
     if (!v.huidig) continue; // artikel niet in DB — niets te updaten
-    const patch: Record<string, unknown> = {
+    const huidigAlt = (v.huidig.alternatief_artikel_nummer ?? "").trim();
+    const mayWriteAlt =
+      !!v.voorgesteld_alternatief &&
+      (!huidigAlt || huidigAlt === v.voorgesteld_alternatief);
+    const patch: {
+      actief: boolean;
+      status: string;
+      alternatief_artikel_nummer?: string;
+    } = {
       actief: false,
       status: "Verwijderd",
     };
-    const huidigAlt = (v.huidig.alternatief_artikel_nummer ?? "").trim();
-    if (v.voorgesteld_alternatief && (!huidigAlt || huidigAlt === v.voorgesteld_alternatief)) {
+    if (mayWriteAlt && v.voorgesteld_alternatief) {
       patch.alternatief_artikel_nummer = v.voorgesteld_alternatief;
     }
     const { error } = await supabase
