@@ -139,6 +139,7 @@ export function RegelsSamenvattingTab() {
   const [sectie, setSectie] = useState<RegelType | "alle">("alle");
   const [status, setStatus] = useState<StatusFilter>("alle");
   const [open, setOpen] = useState<Set<string>>(new Set());
+  const [testRegel, setTestRegel] = useState<RegelRij | null>(null);
 
   const gefilterd = useMemo(() => {
     const q = zoek.trim().toLowerCase();
