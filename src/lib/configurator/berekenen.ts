@@ -75,7 +75,7 @@ function warnOnce(msg: string) {
  * winkelwagen correct gedrag.
  */
 function hasNonDefaultConfig(config: MaterialenConfig): boolean {
-  const empty = emptyConfig() as Record<string, unknown>;
+  const empty = emptyConfig() as unknown as Record<string, unknown>;
   const cfg = config as unknown as Record<string, unknown>;
   for (const k of Object.keys(cfg)) {
     const a = cfg[k];
