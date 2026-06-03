@@ -183,8 +183,8 @@ export async function voerAlternatiefMigratieDoor(
       nieuw_artikel_id: kandidaat.artikel_id,
       nieuw_artikel_nummer: gekozen_nummer,
       totaal_geupdate: totaal,
-      kandidaten: voorstel.kandidaten as unknown as object,
-      stappen: stappen as unknown as object,
+      kandidaten: JSON.parse(JSON.stringify(voorstel.kandidaten)),
+      stappen: JSON.parse(JSON.stringify(stappen)),
     });
   } catch {
     /* best-effort — keuze persist mag sync niet blokkeren */
