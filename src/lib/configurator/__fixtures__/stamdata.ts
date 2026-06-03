@@ -307,6 +307,8 @@ export const ALL_HARDCODED_ARTIKELEN = [
   "20036622", "20036623", "20036624",
   "20050813", "20050761", "20020042",
   "20001107", "20001108", "20040148", "20040188", "20039993", "20039994", "20040149",
+  // LS richting beveiligingen (engineer-input artikelnummers — fictief gekozen in tests)
+  "20026895", "20001038",
   // Vult kabel
   "20030299", "20030300", "20000986", "20017790", "20042739",
   // GGI
