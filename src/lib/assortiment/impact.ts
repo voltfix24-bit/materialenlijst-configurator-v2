@@ -65,8 +65,17 @@ export interface ImpactPerArtikel {
   artikel_nummer: string;
   korte_omschrijving: string;
   alternatief_artikel_nummer: string | null;
-  /** Of het alternatief in de DB bestaat én actief is. null als geen alternatief. */
+  /**
+   * True als er precies één bekende én actieve kandidaat is in het
+   * `alternatief_artikel_nummer`-veld (auto-voorstel mogelijk).
+   * False bij 0 actieve kandidaten of bij meerdere actieve kandidaten
+   * (handmatige beoordeling/keuze nodig). null als veld leeg is.
+   */
   alternatiefBeschikbaar: boolean | null;
+  /** Aantal kandidaten dat actief is in de DB (0, 1, of meer). null als geen alternatief. */
+  actieveAlternatieven: number | null;
+  /** Lijst alle kandidaat-nummers uit het veld (na split). */
+  alternatiefKandidaten: string[];
   totaal: number;
   gebruikt_in: ImpactGebruik[];
 }
