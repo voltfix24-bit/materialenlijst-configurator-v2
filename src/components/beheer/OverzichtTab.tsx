@@ -145,6 +145,7 @@ export function OverzichtTab() {
   useEffect(() => {
     if (nieuwId || !altKandidaten) return;
     const actieve = altKandidaten.filter((k) => k.actief);
+    if (actieve.length === 1) {
       setNieuwId(actieve[0].id as string);
       setNieuwArtikel({
         id: actieve[0].id as string,
