@@ -98,19 +98,32 @@ export function Winkelwagen({
   }, [caseId]);
 
   // Sync: zodra de engineer een configurator-sectie opent, open de bijbehorende
-  // winkelwagen secties (en sluit de rest) + scroll naar de eerste geopende sectie.
+  // winkelwagen secties (toevoegen aan reeds geopende) + scroll naar de eerste.
+  // Eerste mount slaan we over — anders springt de cart bij openen van een case
+  // direct naar de "standaard"-sectie zonder dat de gebruiker iets deed.
+  const eersteSyncRef = useRef(true);
   useEffect(() => {
     if (!activeSectie) return;
     const mapped = CONFIG_SECTIE_NAAR_WINKELWAGEN[activeSectie];
     if (!mapped || mapped.length === 0) return;
-    setOpenSecties(new Set(mapped));
+    setOpenSecties((prev) => {
+      const s = new Set(prev);
+      for (const k of mapped) s.add(k);
+      return s;
+    });
+    if (eersteSyncRef.current) {
+      eersteSyncRef.current = false;
+      return;
+    }
     requestAnimationFrame(() => {
       const root = lijstRef.current;
       if (!root) return;
       for (const k of mapped) {
         const el = root.querySelector<HTMLElement>(`[data-sectie="${k}"]`);
         if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          // nestedScroll: alleen de winkelwagenlijst zelf scrollen, niet de
+          // hoofdpagina. scrollTop berekenen voorkomt smooth-bubbling naar parent.
+          root.scrollTo({ top: el.offsetTop - root.offsetTop, behavior: "smooth" });
           break;
         }
       }
