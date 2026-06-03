@@ -11,6 +11,7 @@ import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab } fro
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
+import { RegelsSamenvattingTab } from "@/components/beheer/RegelsSamenvattingTab";
 
 type BeheerSearch = { groep?: string; tab?: string; artikel?: string; row?: string };
 
