@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { berekenImpact, ARTIKEL_REFS } from "@/lib/assortiment/impact";
-import { voerHandmatigeVervangingDoor, getAlternatiefKeuzes } from "@/lib/assortiment/alternatief";
+import { voerHandmatigeVervangingDoor, getAlternatiefKeuzes, splitAlternatieven } from "@/lib/assortiment/alternatief";
 import { ArtikelZoeker, type ArtikelMini } from "./ArtikelZoeker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
