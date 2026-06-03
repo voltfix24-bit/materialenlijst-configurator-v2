@@ -145,12 +145,12 @@ export function OverzichtTab() {
   useEffect(() => {
     if (nieuwId || !altKandidaten) return;
     const actieve = altKandidaten.filter((k) => k.actief);
-    if (actieve.length === 1) {
       setNieuwId(actieve[0].id as string);
       setNieuwArtikel({
         id: actieve[0].id as string,
         artikel_nummer: actieve[0].artikel_nummer as string,
         korte_omschrijving: actieve[0].korte_omschrijving as string,
+        status: (actieve[0].status as string | null) ?? null,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
