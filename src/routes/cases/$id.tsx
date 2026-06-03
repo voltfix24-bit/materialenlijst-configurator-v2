@@ -303,7 +303,10 @@ function CaseDetailPage() {
                 toast.warning("Sla eerst de materiaallijst op voor je exporteert.");
                 return;
               }
-              exporteer.mutate();
+              // Triggert de winkelwagen-bevestigingsmodal als er inactieve/uitgelopen/
+              // geblokkeerde/verwijderde artikelen in de export zitten. De winkelwagen
+              // roept zelf onExport (→ exporteer.mutate) aan na bevestiging.
+              setExportSignal((c) => c + 1);
             }}
             disabled={exporteer.isPending || isDirty}
             className="px-4 py-2 rounded-lg border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-40 flex items-center gap-1.5"
