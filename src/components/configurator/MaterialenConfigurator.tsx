@@ -1077,21 +1077,16 @@ function OvStuurpuntVragen({ config, update }: { config: MaterialenConfig; updat
   );
 }
 
-const LS_BEVEILIGING_OPTIONS = [
-  { value: "20001042", label: "80A gG" },
-  { value: "20001099", label: "125A gG" },
-  { value: "20026896", label: "160A gFF" },
-  { value: "20026895", label: "200A gFF" },
-  { value: "20026894", label: "250A gFF" },
-  { value: "20001038", label: "315A gG" },
-];
+type LsBeveiligingOptie = { value: string; label: string };
 
 function LsRichtingBeveiliging({
   config,
   update,
+  opties,
 }: {
   config: MaterialenConfig;
   update: (p: Partial<MaterialenConfig>) => void;
+  opties: LsBeveiligingOptie[];
 }) {
   const aantal = config.lsRekAantalBeveiligingen ?? 0;
   return (
@@ -1113,6 +1108,11 @@ function LsRichtingBeveiliging({
           <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
             Mespatroon per richting (3 stuks per richting)
           </div>
+          {opties.length === 0 && (
+            <div className="text-xs text-muted-foreground italic">
+              Geen beveiligingsopties geconfigureerd — voeg ze toe via Beheer → Hardware → LS beveiligingsopties.
+            </div>
+          )}
           {Array.from({ length: aantal }, (_, i) => (
             <div key={i} className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground w-16 flex-shrink-0">
@@ -1125,7 +1125,7 @@ function LsRichtingBeveiliging({
                   arr[i] = v;
                   update({ lsRekBeveiligingen: arr });
                 }}
-                options={LS_BEVEILIGING_OPTIONS}
+                options={opties}
                 size="sm"
               />
             </div>
