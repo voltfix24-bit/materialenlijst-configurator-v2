@@ -21,7 +21,7 @@ type Artikel = {
   actief: boolean;
 };
 
-const STATUSSEN = ["Actief", "Uitloop", "Geblokkeerd"];
+const STATUSSEN = ["Actief", "Uitgelopen", "Geblokkeerd"];
 const EENHEDEN = ["Stuks", "Doos", "Rol", "Meter"];
 const BASIS_EENHEDEN = ["ST", "M", "ROL"];
 const PAGE = 50;
