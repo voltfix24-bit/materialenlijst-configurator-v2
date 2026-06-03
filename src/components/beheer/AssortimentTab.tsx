@@ -373,7 +373,13 @@ export function AssortimentTab() {
   );
 }
 
-function ImpactSectie({ impact }: { impact: ImpactPerArtikel[] }) {
+function ImpactSectie({
+  impact,
+  keuzes,
+}: {
+  impact: ImpactPerArtikel[];
+  keuzes: Map<string, AlternatiefKeuze>;
+}) {
   if (impact.length === 0) {
     return (
       <DiffSectie titel="Impact op beheer-regels">
@@ -396,13 +402,16 @@ function ImpactSectie({ impact }: { impact: ImpactPerArtikel[] }) {
             <tr>
               <th className="text-left px-2 py-1 font-medium">Oud artikel</th>
               <th className="text-left px-2 py-1 font-medium">Alternatief</th>
+              <th className="text-left px-2 py-1 font-medium">Gemaakte keuze</th>
               <th className="text-right px-2 py-1 font-medium"># regels</th>
               <th className="text-left px-2 py-1 font-medium">Waar</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {geraakt.slice(0, 50).map((i) => (
-              <tr key={i.artikel_id}>
+            {geraakt.slice(0, 50).map((i) => {
+              const k = keuzes.get(i.artikel_nummer);
+              return (
+                <tr key={i.artikel_id}>
                 <td className="px-2 py-1">
                   <span className="font-mono">{i.artikel_nummer}</span>
                   <div className="text-muted-foreground text-[11px]">{i.korte_omschrijving}</div>
