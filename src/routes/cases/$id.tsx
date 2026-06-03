@@ -128,6 +128,8 @@ function CaseDetailPage() {
             .map((p) => ({
               artikel_nummer: p.artikel_nummer,
               hoeveelheid: Number(p.hoeveelheid) || 0,
+              actief: !p.inactief,
+              korte_omschrijving: p.korte_omschrijving,
             }))
             .filter((i) => i.artikel_nummer && i.hoeveelheid > 0)
         : (opgeslagen ?? [])
@@ -141,7 +143,18 @@ function CaseDetailPage() {
       return res;
     },
     onSuccess: (res) => {
-      toast.success(`Geëxporteerd · ${res.matched} gematcht${res.unmatched.length ? `, ${res.unmatched.length} zonder Liander-nummer` : ""}`);
+      const stukken: string[] = [`${res.matched} gematcht`];
+      if (res.unmatched.length) stukken.push(`${res.unmatched.length} zonder Liander-nummer`);
+      if (res.inactief.length) stukken.push(`${res.inactief.length} inactief`);
+      toast.success(`Geëxporteerd · ${stukken.join(", ")}`);
+      if (res.inactief.length > 0) {
+        const eersten = res.inactief.slice(0, 5).map((i) => i.artikel_nummer).join(", ");
+        const meer = res.inactief.length > 5 ? ` (+${res.inactief.length - 5})` : "";
+        toast.warning(
+          `Let op: ${res.inactief.length} artikel(en) in deze export zijn inactief in de Liander-template: ${eersten}${meer}. Overweeg ze te migreren naar hun alternatief via Beheer → Assortiment.`,
+          { duration: 10000 },
+        );
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
