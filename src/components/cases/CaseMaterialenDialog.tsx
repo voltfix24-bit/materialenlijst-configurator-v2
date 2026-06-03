@@ -62,12 +62,13 @@ export function CaseMaterialenDialog({ open, onClose, caseId, caseLabel }: Props
 
   const updateRij = useMutation({
     mutationFn: async (vars: { id: string; gewenste_hoeveelheid?: number; niet_bestellen?: boolean }) => {
-      const patch: Record<string, unknown> = {};
+      const patch: { gewenste_hoeveelheid?: number; niet_bestellen?: boolean } = {};
       if (vars.gewenste_hoeveelheid !== undefined) patch.gewenste_hoeveelheid = vars.gewenste_hoeveelheid;
       if (vars.niet_bestellen !== undefined) patch.niet_bestellen = vars.niet_bestellen;
       const { error } = await supabase.from("case_materialen").update(patch).eq("id", vars.id);
       if (error) throw error;
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["case-materialen-full", caseId] });
       qc.invalidateQueries({ queryKey: ["cases"] });
