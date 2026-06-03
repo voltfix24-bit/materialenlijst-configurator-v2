@@ -431,12 +431,25 @@ function ImpactSectie({
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
+                <td className="px-2 py-1 text-[11px]">
+                  {k ? (
+                    <span className="inline-flex flex-col">
+                      <span className="font-mono text-success">→ {k.nieuw_artikel_nummer}</span>
+                      <span className="text-muted-foreground">
+                        {new Date(k.created_at).toLocaleString("nl-NL")} · {k.totaal_geupdate} ref(s)
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground italic">nog geen migratie</span>
+                  )}
+                </td>
                 <td className="px-2 py-1 text-right font-mono">{i.totaal}</td>
                 <td className="px-2 py-1 text-muted-foreground text-[11px]">
                   {i.gebruikt_in.map((g) => `${g.tabel}.${g.kolom} (${g.count})`).join(", ")}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       )}
