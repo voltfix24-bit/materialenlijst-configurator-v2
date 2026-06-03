@@ -39,7 +39,18 @@ interface Dim {
 
 // Subtype dat de meeste regels activeert (renovatie_nsa = niet-prov, niet-compact).
 const RENOV = { subType: "renovatie_nsa" } as ConfigPatch;
-const PROV = { subType: "renovatie_prov" } as ConfigPatch;
+// Provisorium-baseline vereist een (stub) provRmuConfig — gating in
+// berekenProvisorium kijkt naar `!config.provRmuConfig` om vroeg te returnen.
+const PROV_STUB_CFG = {
+  id: "stub", code: "stub", merk: "stub", is_inet: false,
+  aantal_velden: 0, aantal_f: 0, aantal_c: 0, aantal_v: 0,
+  rmu_artikel_id: null, frame_artikel_id: null, bodemplaat_artikel_id: null,
+  actief: true,
+};
+const PROV = {
+  subType: "renovatie_prov",
+  provRmuConfig: PROV_STUB_CFG as unknown as MaterialenConfig["provRmuConfig"],
+} as ConfigPatch;
 const COMPACT = { subType: "cs_zonder_prov", isCompactStation: true } as ConfigPatch;
 
 const DIMS: Dim[] = [
@@ -404,7 +415,7 @@ describe("berekenPreview — integratiescenario (meerdere secties tegelijk)", ()
     expect(q("20020042")).toBe(1);              // 1 extra strook
     expect(q("20042042")).toBe(4);              // 4 kabels → 4 K56-klemmen
     expect(q("20018004")).toBe(4);              // 4 kabelinlegklemmen
-    expect(q("20039484")).toBe(40);             // 40m MS kabel
+    expect(q("20039484")).toBe(120);            // 40m × 3 fases (singel)
     expect(q("20009692")).toBe(15);             // 15m LS kabel
     expect(q("20036623")).toBe(3);              // mespatroon 400kVA × 3
     expect(q("20026895")).toBe(3);              // 1 richting × 3 mespatronen
