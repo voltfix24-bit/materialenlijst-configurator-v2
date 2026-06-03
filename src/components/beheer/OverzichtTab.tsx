@@ -258,29 +258,49 @@ export function OverzichtTab() {
                 </p>
               )}
               {!impactLoading && impact && impact.totaal > 0 && (
-                <ul className="space-y-1">
-                  {refsMetHits.map((g) => {
-                    const label = TABEL_LABELS[g.tabel] ?? g.tabel;
+                <div className="space-y-3">
+                  {GROEP_ORDER.map((groep) => {
+                    const items = refsMetHits.filter((g) => groepVan(g.tabel, g.beheerGroep) === groep);
+                    if (items.length === 0) return null;
+                    const totaal = items.reduce((s, g) => s + g.count, 0);
                     return (
-                      <li key={hitKey(g)} className="flex items-center justify-between gap-3 text-xs border-b border-border last:border-b-0 py-1.5">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-mono text-muted-foreground">{g.count}×</span>
-                          <span className="truncate">{label}</span>
-                          <span className="font-mono text-[10px] text-muted-foreground">({g.kolom})</span>
+                      <div key={groep}>
+                        <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                          <span>{GROEP_LABELS[groep] ?? groep}</span>
+                          <span className="font-mono">{totaal}×</span>
                         </div>
-                        {g.beheerGroep && g.beheerTab && (
-                          <Link
-                            to="/beheer"
-                            search={{ groep: g.beheerGroep, tab: g.beheerTab, artikel: oudFull.artikel_nummer }}
-                            className="text-primary hover:underline flex items-center gap-1 shrink-0"
-                          >
-                            Bekijk <ExternalLink className="h-3 w-3" />
-                          </Link>
+                        <ul className="space-y-1">
+                          {items.map((g) => {
+                            const label = TABEL_LABELS[g.tabel] ?? g.tabel;
+                            return (
+                              <li key={hitKey(g)} className="flex items-center justify-between gap-3 text-xs border-b border-border last:border-b-0 py-1.5">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="font-mono text-muted-foreground">{g.count}×</span>
+                                  <span className="truncate">{label}</span>
+                                  <span className="font-mono text-[10px] text-muted-foreground">({g.kolom})</span>
+                                </div>
+                                {g.beheerGroep && g.beheerTab && (
+                                  <Link
+                                    to="/beheer"
+                                    search={{ groep: g.beheerGroep, tab: g.beheerTab, artikel: oudFull.artikel_nummer }}
+                                    className="text-primary hover:underline flex items-center gap-1 shrink-0"
+                                  >
+                                    Bekijk <ExternalLink className="h-3 w-3" />
+                                  </Link>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                        {groep === "cases" && (
+                          <p className="text-[10px] text-muted-foreground mt-1 italic">
+                            Opgeslagen cases zijn informatief — niet automatisch meegenomen bij vervangen.
+                          </p>
                         )}
-                      </li>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               )}
             </div>
           </div>
