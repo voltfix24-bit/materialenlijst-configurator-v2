@@ -104,8 +104,20 @@ export function berekenRmuVelden(
   sd: Stamdata,
   ctx: BerekenCtx,
 ): void {
-  if (!config.rmuConfig) return;
   const { findArtNr } = ctx;
+
+  // I-Net vaste artikelen (engineer-input per case). Bewust BUITEN de
+  // rmuConfig-gate: ook wanneer er nog geen rmu-configuratie is gekozen,
+  // moeten ingevoerde I-Net artikelen in de winkelwagen verschijnen.
+  if (config.rmuInet === "ja") {
+    for (const ia of config.iNetArtikelen ?? []) {
+      if (ia.hoeveelheid > 0) {
+        add(map, findArtNr(ia.artikel_nummer), ia.hoeveelheid, "I-Net", "rmu");
+      }
+    }
+  }
+
+  if (!config.rmuConfig) return;
   const regels = (sd.rmuVeldRegels.data ?? []) as unknown as RmuVeldRegel[];
   const velden = config.rmuVelden ?? [];
   const aantalKv = velden.filter((v) => v.veldType === "C" || v.veldType === "V").length;
