@@ -420,6 +420,57 @@ export function Winkelwagen({
     return s;
   }, [nieuwNrs, sectieGroepen, toegevoegd]);
 
+  // ───── Export-bevestiging: verzamel inactieve / uitgelopen / verwijderd / geblokkeerde artikelen ─────
+  const exportProblemen = useMemo<ExportProbleemArtikel[]>(() => {
+    const artByNr = new Map(artikelen.map((a) => [a.artikel_nummer, a]));
+    const out: ExportProbleemArtikel[] = [];
+    for (const it of effectief) {
+      if (it.niet_bestellen) continue;
+      const stam = artByNr.get(it.artikel_nummer);
+      const status = (stam?.status ?? "").trim();
+      const statusLower = status.toLowerCase();
+      const isInactief =
+        !!it.inactief || stam?.actief === false || ["uitgelopen", "verwijderd", "geblokkeerd"].includes(statusLower);
+      if (!isInactief) continue;
+
+      const altRaw = (stam?.alternatief_artikel_nummer ?? "").trim();
+      const alternatieven = splitAlternatieven(altRaw);
+      const geenOpvolger =
+        !altRaw ||
+        altRaw === "-" ||
+        /geen\s*opvolger/i.test(altRaw);
+      // Tekst-met-nummer ("GEBR 20036380"): bevat een nummer maar ook niet-numerieke tokens.
+      const handmatigBeoordelen =
+        !geenOpvolger &&
+        alternatieven.length >= 1 &&
+        /[a-zA-Z]/.test(altRaw);
+
+      out.push({
+        artikel_nummer: it.artikel_nummer,
+        korte_omschrijving: it.korte_omschrijving,
+        hoeveelheid: it.hoeveelheid,
+        eenheid: it.eenheid,
+        status_label: status || "Inactief",
+        alternatief_raw: altRaw || null,
+        alternatieven,
+        geen_opvolger: geenOpvolger,
+        handmatig_beoordelen: handmatigBeoordelen,
+      });
+    }
+    return out;
+  }, [effectief, artikelen]);
+
+  const handleExportClick = () => {
+    if (!onExport) return;
+    if (exportProblemen.length > 0) {
+      setExportConfirmOpen(true);
+      return;
+    }
+    onExport();
+  };
+
+
+
   return (
     <div className="bg-card flex flex-col h-full max-h-screen">
       {/* Header */}
