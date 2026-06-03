@@ -797,7 +797,26 @@ export function Winkelwagen({
         />
       )}
 
+      <VolledigeMaterialenlijst
+        open={volledigOpen}
+        onClose={() => setVolledigOpen(false)}
+        effectief={effectief}
+        handmatigeNrs={new Set(toegevoegd.map((t) => t.artikel_nummer))}
+        overrideNrs={new Set(overrides.keys())}
+        artikelen={artikelen}
+        exportProblemen={exportProblemen}
+        onChangeQty={(it, v) => wijzigHoeveelheid(it, v)}
+        onVerwijder={(it) => verwijderItem(it)}
+        onVoegToe={(stam, qty) => voegHandmatigToe(stam, qty)}
+        onSave={onSave}
+        onExport={handleExportClick}
+        saving={saving}
+        exportPending={exportPending}
+        exportDisabled={exportDisabled || !onExport}
+      />
+
     </div>
+
   );
 }
 
