@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Info, Package, Settings2, Zap, Wrench, ShieldCheck, LayoutDashboard } from "lucide-react";
+import { Info, Package, Settings2, Zap, Wrench, ShieldCheck, LayoutDashboard, History } from "lucide-react";
 import { AssortimentTab } from "@/components/beheer/AssortimentTab";
 import { ArtikelenTab } from "@/components/beheer/ArtikelenTab";
 import { RmuTab } from "@/components/beheer/RmuTab";
@@ -12,6 +12,7 @@ import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelReg
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
 import { RegelsSamenvattingTab } from "@/components/beheer/RegelsSamenvattingTab";
+import { WijzigingenTab } from "@/components/beheer/WijzigingenTab";
 
 type BeheerSearch = { groep?: string; tab?: string; artikel?: string; row?: string };
 
