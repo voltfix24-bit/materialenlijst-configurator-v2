@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      alternatief_keuzes: {
+        Row: {
+          created_at: string
+          gekozen_door: string | null
+          id: string
+          kandidaten: Json | null
+          nieuw_artikel_id: string | null
+          nieuw_artikel_nummer: string
+          notitie: string | null
+          oud_artikel_id: string | null
+          oud_artikel_nummer: string
+          oud_omschrijving: string | null
+          stappen: Json | null
+          totaal_geupdate: number
+        }
+        Insert: {
+          created_at?: string
+          gekozen_door?: string | null
+          id?: string
+          kandidaten?: Json | null
+          nieuw_artikel_id?: string | null
+          nieuw_artikel_nummer: string
+          notitie?: string | null
+          oud_artikel_id?: string | null
+          oud_artikel_nummer: string
+          oud_omschrijving?: string | null
+          stappen?: Json | null
+          totaal_geupdate?: number
+        }
+        Update: {
+          created_at?: string
+          gekozen_door?: string | null
+          id?: string
+          kandidaten?: Json | null
+          nieuw_artikel_id?: string | null
+          nieuw_artikel_nummer?: string
+          notitie?: string | null
+          oud_artikel_id?: string | null
+          oud_artikel_nummer?: string
+          oud_omschrijving?: string | null
+          stappen?: Json | null
+          totaal_geupdate?: number
+        }
+        Relationships: []
+      }
       app_instellingen: {
         Row: {
           sleutel: string
