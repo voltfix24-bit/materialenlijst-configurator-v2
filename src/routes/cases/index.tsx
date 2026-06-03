@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ChevronRight, Clock, Package, Plus, Search, Trash2 } from "lucide-react";
+import { ChevronRight, Clock, ListChecks, Package, Plus, Search, Trash2 } from "lucide-react";
+import { CaseMaterialenDialog } from "@/components/cases/CaseMaterialenDialog";
 import { formatDistanceToNow } from "date-fns";
 import { nl } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
