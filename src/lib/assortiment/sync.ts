@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logActie } from "@/lib/beheer/log";
 import type { ParsedArtikel, ParsedVerwijderd, ParseResult } from "./excel";
 
 export interface BestaandArtikel {
