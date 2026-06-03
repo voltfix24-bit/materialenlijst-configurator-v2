@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ClipboardList, Download, Info, Loader2, Plus, Search, Trash2, X } from "lucide-react";
+import { ChevronDown, ClipboardList, Download, Info, Loader2, Maximize2, Plus, Search, Trash2, X } from "lucide-react";
+import { VolledigeMaterialenlijst } from "./VolledigeMaterialenlijst";
 import { cn } from "@/lib/utils";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
