@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { berekenImpact, ARTIKEL_REFS } from "@/lib/assortiment/impact";
-import { voerHandmatigeVervangingDoor, getAlternatiefKeuzes } from "@/lib/assortiment/alternatief";
+import { voerHandmatigeVervangingDoor, getAlternatiefKeuzes, splitAlternatieven } from "@/lib/assortiment/alternatief";
 import { ArtikelZoeker, type ArtikelMini } from "./ArtikelZoeker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -40,6 +40,18 @@ const TABEL_LABELS: Record<string, string> = {
   trafo_vult_kabel: "Trafo vult kabel",
   case_materialen: "Opgeslagen cases (materialen)",
 };
+
+const GROEP_LABELS: Record<string, string> = {
+  automations: "Automations (regels)",
+  hardware: "Hardware (RMU & moffen)",
+  standaard: "Standaard / vaste materialen",
+  cases: "Opgeslagen cases (informatief)",
+};
+const GROEP_ORDER = ["automations", "hardware", "standaard", "cases"];
+function groepVan(tabel: string, vanRef?: string) {
+  if (tabel === "case_materialen") return "cases";
+  return vanRef ?? "overig";
+}
 
 function statusBadge(status: string | null | undefined, actief: boolean | undefined) {
   if (actief === false) return { label: "Inactief / verwijderd", cls: "bg-destructive/15 text-destructive border-destructive/30" };
@@ -97,17 +109,55 @@ export function OverzichtTab() {
     queryFn: () => getAlternatiefKeuzes(),
   });
 
-  // Bij wisselen van oud artikel: reset selectie en preselecteer alle refs die hits hebben.
+  // Bij wisselen van oud artikel: reset selectie en preselecteer alle refs die hits hebben,
+  // behalve case_materialen — opgeslagen cases worden standaard niet mee-vervangen.
   const refsMetHits = impact?.gebruikt_in.filter((g) => g.count > 0) ?? [];
   const hitKey = (g: { tabel: string; kolom: string }) => `${g.tabel}.${g.kolom}`;
   const allHitKeys = useMemo(() => refsMetHits.map(hitKey), [impact]);
-  // Reset selectie bij wisselen artikel / nieuwe impact.
+  const defaultHitKeys = useMemo(
+    () => refsMetHits.filter((g) => g.tabel !== "case_materialen").map(hitKey),
+    [impact],
+  );
   useEffect(() => {
-    setGekozenRefs(new Set(allHitKeys));
+    setGekozenRefs(new Set(defaultHitKeys));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [oudId, impact?.totaal]);
 
   const eerdereKeuze = oudArtikel ? keuzes?.get(oudArtikel.artikel_nummer) : undefined;
+
+  // Auto-voorstel: als alternatief_artikel_nummer precies één actieve kandidaat in de DB heeft,
+  // preselecteer die als vervanger. Bij 0 of meerdere → engineer kiest zelf.
+  const altNummers = useMemo(
+    () => splitAlternatieven(oudFull?.alternatief_artikel_nummer as string | null | undefined),
+    [oudFull?.alternatief_artikel_nummer],
+  );
+  const { data: altKandidaten } = useQuery({
+    queryKey: ["overzicht-alt-kandidaten", oudId, altNummers.join(",")],
+    enabled: altNummers.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("artikelen")
+        .select("id, artikel_nummer, korte_omschrijving, status, actief")
+        .in("artikel_nummer", altNummers);
+      return data ?? [];
+    },
+  });
+  useEffect(() => {
+    if (nieuwId || !altKandidaten) return;
+    const actieve = altKandidaten.filter((k) => k.actief);
+    if (actieve.length === 1) {
+      setNieuwId(actieve[0].id as string);
+      setNieuwArtikel({
+        id: actieve[0].id as string,
+        artikel_nummer: actieve[0].artikel_nummer as string,
+        korte_omschrijving: actieve[0].korte_omschrijving as string,
+        status: (actieve[0].status as string | null) ?? null,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [altKandidaten, oudId]);
+
+
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -208,29 +258,49 @@ export function OverzichtTab() {
                 </p>
               )}
               {!impactLoading && impact && impact.totaal > 0 && (
-                <ul className="space-y-1">
-                  {refsMetHits.map((g) => {
-                    const label = TABEL_LABELS[g.tabel] ?? g.tabel;
+                <div className="space-y-3">
+                  {GROEP_ORDER.map((groep) => {
+                    const items = refsMetHits.filter((g) => groepVan(g.tabel, g.beheerGroep) === groep);
+                    if (items.length === 0) return null;
+                    const totaal = items.reduce((s, g) => s + g.count, 0);
                     return (
-                      <li key={hitKey(g)} className="flex items-center justify-between gap-3 text-xs border-b border-border last:border-b-0 py-1.5">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-mono text-muted-foreground">{g.count}×</span>
-                          <span className="truncate">{label}</span>
-                          <span className="font-mono text-[10px] text-muted-foreground">({g.kolom})</span>
+                      <div key={groep}>
+                        <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                          <span>{GROEP_LABELS[groep] ?? groep}</span>
+                          <span className="font-mono">{totaal}×</span>
                         </div>
-                        {g.beheerGroep && g.beheerTab && (
-                          <Link
-                            to="/beheer"
-                            search={{ groep: g.beheerGroep, tab: g.beheerTab, artikel: oudFull.artikel_nummer }}
-                            className="text-primary hover:underline flex items-center gap-1 shrink-0"
-                          >
-                            Bekijk <ExternalLink className="h-3 w-3" />
-                          </Link>
+                        <ul className="space-y-1">
+                          {items.map((g) => {
+                            const label = TABEL_LABELS[g.tabel] ?? g.tabel;
+                            return (
+                              <li key={hitKey(g)} className="flex items-center justify-between gap-3 text-xs border-b border-border last:border-b-0 py-1.5">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="font-mono text-muted-foreground">{g.count}×</span>
+                                  <span className="truncate">{label}</span>
+                                  <span className="font-mono text-[10px] text-muted-foreground">({g.kolom})</span>
+                                </div>
+                                {g.beheerGroep && g.beheerTab && (
+                                  <Link
+                                    to="/beheer"
+                                    search={{ groep: g.beheerGroep, tab: g.beheerTab, artikel: oudFull.artikel_nummer }}
+                                    className="text-primary hover:underline flex items-center gap-1 shrink-0"
+                                  >
+                                    Bekijk <ExternalLink className="h-3 w-3" />
+                                  </Link>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                        {groep === "cases" && (
+                          <p className="text-[10px] text-muted-foreground mt-1 italic">
+                            Opgeslagen cases zijn informatief — niet automatisch meegenomen bij vervangen.
+                          </p>
                         )}
-                      </li>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               )}
             </div>
           </div>
