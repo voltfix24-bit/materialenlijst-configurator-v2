@@ -516,6 +516,7 @@ function AlternatiefMigratiePaneel() {
     setBezigMet(null);
     setSelected(new Set());
     qc.invalidateQueries({ queryKey: ["alternatief-voorstellen"] });
+    qc.invalidateQueries({ queryKey: ["alternatief-keuzes"] });
     qc.invalidateQueries({ queryKey: ["data-kwaliteit"] });
     if (fouten.length === 0) {
       toast.success(
