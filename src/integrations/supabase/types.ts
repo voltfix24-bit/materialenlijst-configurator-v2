@@ -400,6 +400,36 @@ export type Database = {
           },
         ]
       }
+      ls_beveiliging_opties: {
+        Row: {
+          actief: boolean
+          artikel_id: string
+          created_at: string
+          id: string
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actief?: boolean
+          artikel_id: string
+          created_at?: string
+          id?: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actief?: boolean
+          artikel_id?: string
+          created_at?: string
+          id?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ls_mof_materialen: {
         Row: {
           artikel_id: string

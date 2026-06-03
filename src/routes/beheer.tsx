@@ -7,7 +7,7 @@ import { AssortimentTab } from "@/components/beheer/AssortimentTab";
 import { ArtikelenTab } from "@/components/beheer/ArtikelenTab";
 import { RmuTab } from "@/components/beheer/RmuTab";
 import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
-import { StandaardMaterialenTab, VasteArtikelenTab } from "@/components/beheer/OverigeTabs";
+import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab } from "@/components/beheer/OverigeTabs";
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 
@@ -46,6 +46,7 @@ const GROEPEN: Groep[] = [
       { key: "rmu", label: "RMU configuraties", render: () => <RmuTab /> },
       { key: "ms_mof", label: "MS mof types", render: () => <MsMofTab /> },
       { key: "ls_mof", label: "LS mof types", render: () => <LsMofTab /> },
+      { key: "ls_beveiliging", label: "LS beveiligingsopties", render: () => <LsBeveiligingOptiesTab /> },
     ],
   },
   {
