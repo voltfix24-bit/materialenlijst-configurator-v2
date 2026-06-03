@@ -125,7 +125,7 @@ export function ArtikelZoeker({
         <div className="flex items-center gap-2 min-w-0">
           <span className={cn("font-mono text-xs shrink-0", statusColor(selected.status))}>{selected.artikel_nummer}</span>
           <span className={cn("truncate", statusColor(selected.status))}>{selected.korte_omschrijving}</span>
-          {selected.status === "Uitloop" && <span className="text-[10px] text-muted-foreground shrink-0">(uitloop)</span>}
+          {isUitgelopenStatus(selected.status) && <span className="text-[10px] text-muted-foreground shrink-0">(uitgelopen)</span>}
         </div>
         <button
           type="button"
