@@ -174,7 +174,23 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   body { font-feature-settings: "ss01", "cv11"; }
-  .font-mono { font-family: var(--font-mono); }
+  .font-mono { font-family: var(--font-mono); font-feature-settings: normal; }
+
+  /* Consistente, zichtbare keyboard-focus voor alle interactieve elementen */
+  :where(button, a, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
+  }
+
+  /* Tabular numerieke uitlijning in tabellen */
+  table { font-variant-numeric: tabular-nums; }
+
+  /* Subtielere selectie-kleur */
+  ::selection { background: color-mix(in oklab, var(--color-primary) 25%, transparent); }
 }
