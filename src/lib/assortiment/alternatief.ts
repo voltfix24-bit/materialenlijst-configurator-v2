@@ -190,6 +190,17 @@ export async function voerAlternatiefMigratieDoor(
   } catch {
     /* best-effort — keuze persist mag sync niet blokkeren */
   }
+  const heeftFouten = stappen.some((s) => s.error);
+  await logActie({
+    actie: "alternatief_migratie",
+    omschrijving: `${voorstel.oud_nummer} → ${gekozen_nummer}: ${totaal} verwijzing(en) bijgewerkt over ${stappen.filter((s) => !s.error).length} tabel(len).`,
+    artikel_nummer: voorstel.oud_nummer,
+    oude_waarde: { artikel_nummer: voorstel.oud_nummer, artikel_id: voorstel.oud_id },
+    nieuwe_waarde: { artikel_nummer: gekozen_nummer, artikel_id: kandidaat.artikel_id },
+    aantal_aangepast: totaal,
+    resultaat: heeftFouten ? (totaal > 0 ? "gedeeltelijk" : "fout") : "ok",
+    details: { stappen, kandidaten: voorstel.kandidaten },
+  });
   return {
     oud_nummer: voorstel.oud_nummer,
     nieuw_nummer: gekozen_nummer,
