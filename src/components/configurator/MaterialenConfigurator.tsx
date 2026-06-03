@@ -49,6 +49,7 @@ interface Props {
   onExport?: () => void;
   exportDisabled?: boolean;
   exportPending?: boolean;
+  exportSignal?: number;
 }
 
 // Nieuwe gegroepeerde sectievolgorde (TerreVolt redesign)
