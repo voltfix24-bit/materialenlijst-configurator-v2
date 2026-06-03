@@ -47,6 +47,9 @@ function CasesPage() {
   const [form, setForm] = useState({ case_nummer: "", station_naam: "", case_type: "NSA" as string });
   const [zoekterm, setZoekterm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [materialenCase, setMaterialenCase] = useState<{ id: string; label: string } | null>(null);
+
+
 
   const { data: cases, isLoading } = useQuery({
     queryKey: ["cases"],
