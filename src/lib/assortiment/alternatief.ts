@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logActie } from "@/lib/beheer/log";
 import { ARTIKEL_REFS, berekenImpact, type ImpactPerArtikel } from "./impact";
 
 /** Splits "20039090 20041319" → ["20039090","20041319"]. Negeert lege tokens. */
@@ -189,6 +190,17 @@ export async function voerAlternatiefMigratieDoor(
   } catch {
     /* best-effort — keuze persist mag sync niet blokkeren */
   }
+  const heeftFouten = stappen.some((s) => s.error);
+  await logActie({
+    actie: "alternatief_migratie",
+    omschrijving: `${voorstel.oud_nummer} → ${gekozen_nummer}: ${totaal} verwijzing(en) bijgewerkt over ${stappen.filter((s) => !s.error).length} tabel(len).`,
+    artikel_nummer: voorstel.oud_nummer,
+    oude_waarde: { artikel_nummer: voorstel.oud_nummer, artikel_id: voorstel.oud_id },
+    nieuwe_waarde: { artikel_nummer: gekozen_nummer, artikel_id: kandidaat.artikel_id },
+    aantal_aangepast: totaal,
+    resultaat: heeftFouten ? (totaal > 0 ? "gedeeltelijk" : "fout") : "ok",
+    details: { stappen, kandidaten: voorstel.kandidaten },
+  });
   return {
     oud_nummer: voorstel.oud_nummer,
     nieuw_nummer: gekozen_nummer,
@@ -277,6 +289,21 @@ export async function voerHandmatigeVervangingDoor(params: {
   } catch {
     /* best-effort */
   }
+  const heeftFoutenManual = stappen.some((s) => s.error);
+  await logActie({
+    actie: "handmatige_vervanging",
+    omschrijving:
+      `${params.oud_nummer} → ${params.nieuw_nummer}: ${totaal} verwijzing(en) handmatig vervangen` +
+      (params.refs && params.refs.length > 0 ? ` (subset van ${params.refs.length} ref(s))` : "") +
+      ".",
+    artikel_nummer: params.oud_nummer,
+    oude_waarde: { artikel_nummer: params.oud_nummer, artikel_id: params.oud_id },
+    nieuwe_waarde: { artikel_nummer: params.nieuw_nummer, artikel_id: params.nieuw_id },
+    aantal_aangepast: totaal,
+    resultaat: heeftFoutenManual ? (totaal > 0 ? "gedeeltelijk" : "fout") : "ok",
+    details: { stappen, notitie: params.notitie ?? null },
+    uitgevoerd_door: params.gekozen_door ?? null,
+  });
   return {
     oud_nummer: params.oud_nummer,
     nieuw_nummer: params.nieuw_nummer,
