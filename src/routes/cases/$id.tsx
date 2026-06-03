@@ -216,7 +216,7 @@ function CaseDetailPage() {
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-[100svh]">
       {/* Eén header-rij: identiteit + status tabs links, acties rechts */}
       <div ref={headerRef} className="flex items-center gap-4 px-4 sm:px-6 py-3 border-b border-border bg-card flex-shrink-0">
         <button onClick={goBack} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex-shrink-0">
