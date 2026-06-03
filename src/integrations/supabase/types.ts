@@ -119,6 +119,54 @@ export type Database = {
         }
         Relationships: []
       }
+      beheer_log: {
+        Row: {
+          aantal_aangepast: number
+          actie: string
+          artikel_nummer: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          nieuwe_waarde: Json | null
+          omschrijving: string
+          oude_waarde: Json | null
+          resultaat: string
+          rij_id: string | null
+          tabel: string | null
+          uitgevoerd_door: string | null
+        }
+        Insert: {
+          aantal_aangepast?: number
+          actie: string
+          artikel_nummer?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          nieuwe_waarde?: Json | null
+          omschrijving: string
+          oude_waarde?: Json | null
+          resultaat?: string
+          rij_id?: string | null
+          tabel?: string | null
+          uitgevoerd_door?: string | null
+        }
+        Update: {
+          aantal_aangepast?: number
+          actie?: string
+          artikel_nummer?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          nieuwe_waarde?: Json | null
+          omschrijving?: string
+          oude_waarde?: Json | null
+          resultaat?: string
+          rij_id?: string | null
+          tabel?: string | null
+          uitgevoerd_door?: string | null
+        }
+        Relationships: []
+      }
       beheer_notificaties: {
         Row: {
           aantal_correcties: number
