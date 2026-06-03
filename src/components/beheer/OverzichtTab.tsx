@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,9 +101,10 @@ export function OverzichtTab() {
   const refsMetHits = impact?.gebruikt_in.filter((g) => g.count > 0) ?? [];
   const hitKey = (g: { tabel: string; kolom: string }) => `${g.tabel}.${g.kolom}`;
   const allHitKeys = useMemo(() => refsMetHits.map(hitKey), [impact]);
-  // Sync default-selectie zodra impact verandert.
-  useMemo(() => {
+  // Reset selectie bij wisselen artikel / nieuwe impact.
+  useEffect(() => {
     setGekozenRefs(new Set(allHitKeys));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [oudId, impact?.totaal]);
 
   const eerdereKeuze = oudArtikel ? keuzes?.get(oudArtikel.artikel_nummer) : undefined;
