@@ -44,10 +44,17 @@ export function AssortimentTab() {
         throw new Error(`Geen artikelen gevonden in sheet "${SHEET_NAAM}"`);
       }
       const d = await berekenDiff(parsed);
-      // Impact alleen op artikelen die straks inactief gaan (uitgelopen + verwijderd-met-DB-match).
+      // Impact op alle artikelen die straks niet meer normaal actief zijn:
+      //  - uitgelopen (niet meer in Verbruik)
+      //  - verwijderd-met-DB-match (uit sheet "Lijst verwijderd")
+      //  - gewijzigd waarbij het artikel nu inactief wordt (Geblokkeerd, Uitloop-via-status, Inactief)
+      const gewijzigdNaarInactief = d.gewijzigd
+        .filter((g) => g.huidig.actief && g.nieuw.status.toLowerCase() !== "actief")
+        .map((g) => g.huidig.id);
       const ids = [
         ...d.uitgelopen.map((a) => a.id),
         ...d.verwijderd.map((v) => v.huidig?.id).filter((x): x is string => !!x),
+        ...gewijzigdNaarInactief,
       ];
       const imp = ids.length > 0 ? await berekenImpact(ids) : [];
       return { d, imp };
@@ -59,6 +66,7 @@ export function AssortimentTab() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const doorvoeren = useMutation({
     mutationFn: async () => {
