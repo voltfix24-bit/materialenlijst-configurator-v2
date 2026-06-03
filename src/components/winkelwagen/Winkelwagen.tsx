@@ -99,6 +99,9 @@ export function Winkelwagen({
   const [filter, setFilter] = useState("");
   const lijstRef = useRef<HTMLDivElement | null>(null);
   const [exportConfirmOpen, setExportConfirmOpen] = useState(false);
+  const [volledigOpen, setVolledigOpen] = useState(false);
+
+
 
 
   const slaCorrectieOp = useSlaCorrectieOp();
