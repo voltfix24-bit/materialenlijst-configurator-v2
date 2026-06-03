@@ -137,7 +137,31 @@ export function MaterialenConfigurator({
   const preview = useMemo<PreviewItem[]>(
     () => (sd.isLoading ? [] : berekenPreview(debounced, sd, caseType)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [debounced, sd.isLoading, caseType, sd.artikelen.data, sd.rmuConfigs.data, sd.rmuVeldArtikelen.data, sd.rmuZekeringen.data, sd.msMofTypes.data, sd.msMofMaterialen.data, sd.lsMofTypes.data, sd.lsMofMaterialen.data, sd.standaardTemplates.data, sd.stationVaste.data],
+    [
+      debounced,
+      sd.isLoading,
+      caseType,
+      sd.artikelen.data,
+      sd.rmuConfigs.data,
+      sd.rmuVeldArtikelen.data,
+      sd.rmuZekeringen.data,
+      sd.msMofTypes.data,
+      sd.msMofMaterialen.data,
+      sd.lsMofTypes.data,
+      sd.lsMofMaterialen.data,
+      sd.standaardTemplates.data,
+      sd.stationVaste.data,
+      // DB-gedreven regels (fase 2 refactor) — zonder deze deps herberekent
+      // de preview niet als deze queries later binnenkomen, waardoor o.a.
+      // LS-rek keuzes niet in de winkelwagen verschijnen.
+      sd.ggiRegels.data,
+      sd.trafoRegels.data,
+      sd.lsRekRegels.data,
+      sd.provRegels.data,
+      sd.msKabelRegels.data,
+      sd.rmuVeldRegels.data,
+      sd.trafoVultKabelSpecs.data,
+    ],
   );
   // Effectieve winkelwagen-items (na overrides / verwijderingen / handmatig toegevoegde)
   const winkelwagenItemsRef = useRef<PreviewItem[]>([]);
