@@ -523,15 +523,26 @@ export function Winkelwagen({
               <div className="text-[11px] text-muted-foreground mt-1">{teBestellen} te bestellen</div>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setShowZoeker(true)}
-            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-semibold shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Toevoegen
-          </button>
-        </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setVolledigOpen(true)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-semibold px-1.5 py-1 rounded hover:bg-muted"
+              title="Volledige materialenlijst openen"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              Volledig
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowZoeker(true)}
+              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-semibold px-1.5 py-1"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Toevoegen
+            </button>
+          </div>
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
           <input
