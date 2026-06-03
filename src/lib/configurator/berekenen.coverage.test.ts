@@ -415,7 +415,7 @@ describe("berekenPreview — integratiescenario (meerdere secties tegelijk)", ()
     expect(q("20020042")).toBe(1);              // 1 extra strook
     expect(q("20042042")).toBe(4);              // 4 kabels → 4 K56-klemmen
     expect(q("20018004")).toBe(4);              // 4 kabelinlegklemmen
-    expect(q("20039484")).toBe(40);             // 40m MS kabel
+    expect(q("20039484")).toBe(120);            // 40m × 3 fases (singel)
     expect(q("20009692")).toBe(15);             // 15m LS kabel
     expect(q("20036623")).toBe(3);              // mespatroon 400kVA × 3
     expect(q("20026895")).toBe(3);              // 1 richting × 3 mespatronen
