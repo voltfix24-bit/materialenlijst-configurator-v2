@@ -49,6 +49,7 @@ interface Props {
   onExport?: () => void;
   exportDisabled?: boolean;
   exportPending?: boolean;
+  exportSignal?: number;
 }
 
 // Nieuwe gegroepeerde sectievolgorde (TerreVolt redesign)
@@ -85,6 +86,7 @@ export function MaterialenConfigurator({
   onExport,
   exportDisabled,
   exportPending,
+  exportSignal,
 }: Props) {
   const isCompact = caseType === "compact" || caseType === "compact_prov";
   const isCompactProv = caseType === "compact_prov";
@@ -461,6 +463,7 @@ export function MaterialenConfigurator({
           onExport={onExport}
           exportDisabled={exportDisabled}
           exportPending={exportPending}
+          exportSignal={exportSignal}
         />
       </div>
     </div>

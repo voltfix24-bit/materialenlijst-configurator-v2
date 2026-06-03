@@ -1,5 +1,20 @@
 import { supabase } from "@/integrations/supabase/client";
 
+/** Splits "20039090 20041319" → ["20039090","20041319"]. Lokaal gedupliceerd om circulaire import met alternatief.ts te voorkomen. */
+function splitAltNummers(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const tok of raw.split(/\s+/)) {
+    const t = tok.trim();
+    if (!t || seen.has(t)) continue;
+    if (!/^\d{6,}$/.test(t)) continue;
+    seen.add(t);
+    out.push(t);
+  }
+  return out;
+}
+
 /**
  * Definities van alle plekken in de database waar naar een artikel verwezen wordt.
  * Gebruikt voor impactanalyse vóór een assortiment-sync en voor de
@@ -50,8 +65,17 @@ export interface ImpactPerArtikel {
   artikel_nummer: string;
   korte_omschrijving: string;
   alternatief_artikel_nummer: string | null;
-  /** Of het alternatief in de DB bestaat én actief is. null als geen alternatief. */
+  /**
+   * True als er precies één bekende én actieve kandidaat is in het
+   * `alternatief_artikel_nummer`-veld (auto-voorstel mogelijk).
+   * False bij 0 actieve kandidaten of bij meerdere actieve kandidaten
+   * (handmatige beoordeling/keuze nodig). null als veld leeg is.
+   */
   alternatiefBeschikbaar: boolean | null;
+  /** Aantal kandidaten dat actief is in de DB (0, 1, of meer). null als geen alternatief. */
+  actieveAlternatieven: number | null;
+  /** Lijst alle kandidaat-nummers uit het veld (na split). */
+  alternatiefKandidaten: string[];
   totaal: number;
   gebruikt_in: ImpactGebruik[];
 }
@@ -82,20 +106,21 @@ export async function berekenImpact(artikelIds: string[]): Promise<ImpactPerArti
     (artikelen ?? []).map((a) => [a.id as string, a as ArtikelInfo]),
   );
 
-  // Voor alternatief-check: laad alle alternatief-nummers in één query.
-  const altNummers = [
-    ...new Set(
-      (artikelen ?? [])
-        .map((a) => a.alternatief_artikel_nummer)
-        .filter((s): s is string => !!s),
-    ),
-  ];
+  // Voor alternatief-check: splits het veld op losse nummers en laad alle
+  // unieke kandidaten in één query. Een veld kan "20039090 20041319" zijn:
+  // dan worden beide kandidaten apart op actief/bekend gecontroleerd.
+  const alleKandidaatNummers = new Set<string>();
+  for (const a of artikelen ?? []) {
+    for (const n of splitAltNummers(a.alternatief_artikel_nummer)) {
+      alleKandidaatNummers.add(n);
+    }
+  }
   let altByNr = new Map<string, { id: string; actief: boolean }>();
-  if (altNummers.length > 0) {
+  if (alleKandidaatNummers.size > 0) {
     const { data: alts } = await supabase
       .from("artikelen")
       .select("id, artikel_nummer, actief")
-      .in("artikel_nummer", altNummers);
+      .in("artikel_nummer", [...alleKandidaatNummers]);
     altByNr = new Map(
       (alts ?? []).map((a) => [a.artikel_nummer as string, { id: a.id as string, actief: !!a.actief }]),
     );
@@ -106,14 +131,28 @@ export async function berekenImpact(artikelIds: string[]): Promise<ImpactPerArti
   for (const id of artikelIds) {
     const a = byId.get(id);
     if (!a) continue;
-    const altNr = a.alternatief_artikel_nummer;
-    const altInfo = altNr ? altByNr.get(altNr) : undefined;
+    const altRaw = a.alternatief_artikel_nummer;
+    const kandidaten = splitAltNummers(altRaw);
+    let actieveCount: number | null = null;
+    let beschikbaar: boolean | null = null;
+    if (altRaw && altRaw.trim()) {
+      actieveCount = 0;
+      for (const n of kandidaten) {
+        const info = altByNr.get(n);
+        if (info && info.actief) actieveCount++;
+      }
+      // exact 1 actieve kandidaat → auto-voorstel mogelijk;
+      // 0 of >1 → handmatige beoordeling/keuze nodig.
+      beschikbaar = actieveCount === 1;
+    }
     out.set(id, {
       artikel_id: id,
       artikel_nummer: a.artikel_nummer,
       korte_omschrijving: a.korte_omschrijving,
-      alternatief_artikel_nummer: altNr,
-      alternatiefBeschikbaar: altNr ? !!(altInfo && altInfo.actief) : null,
+      alternatief_artikel_nummer: altRaw,
+      alternatiefBeschikbaar: beschikbaar,
+      actieveAlternatieven: actieveCount,
+      alternatiefKandidaten: kandidaten,
       totaal: 0,
       gebruikt_in: [],
     });

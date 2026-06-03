@@ -41,6 +41,8 @@ interface Props {
   onExport?: () => void;
   exportDisabled?: boolean;
   exportPending?: boolean;
+  /** Verhoog deze counter om vanuit buiten (bv. case-header) de export-bevestigingscontrole te triggeren. */
+  exportSignal?: number;
 }
 
 // Mapping: configurator sectie → winkelwagen secties
@@ -78,6 +80,7 @@ export function Winkelwagen({
   onExport,
   exportDisabled,
   exportPending,
+  exportSignal,
 }: Props) {
   // Lokale state
   const [overrides, setOverrides] = useState<Map<string, number>>(new Map());
@@ -483,6 +486,17 @@ export function Winkelwagen({
     }
     onExport();
   };
+
+  // Externe trigger (case-header "Export"-knop) → zelfde bevestigingsflow als de
+  // winkelwagen-knop. Skip de eerste mount zodat we niet automatisch openen.
+  const exportSignalRef = useRef<number | undefined>(exportSignal);
+  useEffect(() => {
+    if (exportSignal === undefined) return;
+    if (exportSignalRef.current === exportSignal) return;
+    exportSignalRef.current = exportSignal;
+    handleExportClick();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exportSignal]);
 
 
 

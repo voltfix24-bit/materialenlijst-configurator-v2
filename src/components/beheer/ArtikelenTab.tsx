@@ -21,7 +21,7 @@ type Artikel = {
   actief: boolean;
 };
 
-const STATUSSEN = ["Actief", "Uitloop", "Geblokkeerd"];
+const STATUSSEN = ["Actief", "Uitgelopen", "Geblokkeerd"];
 const EENHEDEN = ["Stuks", "Doos", "Rol", "Meter"];
 const BASIS_EENHEDEN = ["ST", "M", "ROL"];
 const PAGE = 50;
@@ -224,10 +224,12 @@ export function ArtikelenTab() {
 
 function StatusBadge({ status }: { status: string | null }) {
   if (!status) return <span className="text-muted-foreground">—</span>;
+  // Legacy alias: oude DB-waarde "Uitloop" wordt als "Uitgelopen" behandeld.
+  const isUitgelopen = status === "Uitgelopen" || status === "Uitloop";
   const cls =
     status === "Geblokkeerd"
       ? "bg-destructive/15 text-destructive border-destructive/30"
-      : status === "Uitloop"
+      : isUitgelopen
         ? "bg-warning/15 text-warning border-warning/30"
         : "bg-success/15 text-success border-success/30";
   return <span className={cn("inline-block rounded border px-2 py-0.5 text-[10px]", cls)}>{status}</span>;

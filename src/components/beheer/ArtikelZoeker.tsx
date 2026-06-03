@@ -13,8 +13,13 @@ export interface ArtikelMini {
   categorie?: string | null;
 }
 
+/** Canonieke status "Uitgelopen"; "Uitloop" wordt als legacy DB-waarde ondersteund. */
+function isUitgelopenStatus(status: string | null | undefined): boolean {
+  return status === "Uitgelopen" || status === "Uitloop";
+}
+
 function statusColor(status: string | null | undefined) {
-  if (status === "Uitloop") return "text-muted-foreground";
+  if (isUitgelopenStatus(status)) return "text-muted-foreground";
   return "text-foreground";
 }
 
@@ -120,7 +125,7 @@ export function ArtikelZoeker({
         <div className="flex items-center gap-2 min-w-0">
           <span className={cn("font-mono text-xs shrink-0", statusColor(selected.status))}>{selected.artikel_nummer}</span>
           <span className={cn("truncate", statusColor(selected.status))}>{selected.korte_omschrijving}</span>
-          {selected.status === "Uitloop" && <span className="text-[10px] text-muted-foreground shrink-0">(uitloop)</span>}
+          {isUitgelopenStatus(selected.status) && <span className="text-[10px] text-muted-foreground shrink-0">(uitgelopen)</span>}
         </div>
         <button
           type="button"
@@ -171,7 +176,7 @@ export function ArtikelZoeker({
             <div className="px-3 py-2 text-xs text-muted-foreground">Geen resultaten.</div>
           )}
           {items.map((r) => {
-            const isUitloop = r.status === "Uitloop";
+            const isUitloop = isUitgelopenStatus(r.status);
             return (
               <button
                 key={r.id}
@@ -186,7 +191,7 @@ export function ArtikelZoeker({
                 <div className="flex items-center gap-2">
                   <span className={cn("font-mono text-xs shrink-0", isUitloop && "text-muted-foreground")}>{r.artikel_nummer}</span>
                   <span className={cn("text-sm truncate", isUitloop && "text-muted-foreground")}>{r.korte_omschrijving}</span>
-                  {isUitloop && <span className="text-[10px] text-muted-foreground shrink-0">(uitloop)</span>}
+                  {isUitloop && <span className="text-[10px] text-muted-foreground shrink-0">(uitgelopen)</span>}
                 </div>
                 {r.categorie && (
                   <div className="text-[10px] text-muted-foreground mt-0.5">{r.categorie}</div>
