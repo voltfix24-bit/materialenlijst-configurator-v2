@@ -216,8 +216,20 @@ export function useStamdata(caseType: string | undefined) {
     isLoading:
       artikelen.isLoading ||
       rmuConfigs.isLoading ||
+      rmuVeldArtikelen.isLoading ||
+      rmuZekeringen.isLoading ||
       msMofTypes.isLoading ||
-      lsMofTypes.isLoading,
+      msMofMaterialen.isLoading ||
+      lsMofTypes.isLoading ||
+      lsMofMaterialen.isLoading ||
+      stationVaste.isLoading ||
+      ggiRegels.isLoading ||
+      trafoRegels.isLoading ||
+      lsRekRegels.isLoading ||
+      provRegels.isLoading ||
+      msKabelRegels.isLoading ||
+      rmuVeldRegels.isLoading ||
+      trafoVultKabelSpecs.isLoading,
   };
 }
 
