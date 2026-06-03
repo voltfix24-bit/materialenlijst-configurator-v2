@@ -8,13 +8,22 @@ import { BRON_TABEL_DEFS, PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSec
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
 import type { CorrectieDialoogData, CorrectieScope } from "@/lib/leersysteem/types";
 import { CorrectieDialoog } from "./CorrectieDialoog";
+import {
+  ExportBevestigingDialoog,
+  type ExportProbleemArtikel,
+} from "./ExportBevestigingDialoog";
+import { splitAlternatieven } from "@/lib/assortiment/alternatief";
 
 interface ArtikelStam {
   id: string;
   artikel_nummer: string;
   korte_omschrijving: string;
   eenheid: string;
+  actief?: boolean;
+  status?: string | null;
+  alternatief_artikel_nummer?: string | null;
 }
+
 
 interface Props {
   items: PreviewItem[]; // berekende items vanuit configurator
