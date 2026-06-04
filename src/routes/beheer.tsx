@@ -13,6 +13,7 @@ import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
 import { RegelsSamenvattingTab } from "@/components/beheer/RegelsSamenvattingTab";
 import { WijzigingenTab } from "@/components/beheer/WijzigingenTab";
+import { useDeeplinkHighlight } from "@/lib/beheer/useDeeplinkHighlight";
 
 type BeheerSearch = { groep?: string; tab?: string; artikel?: string; row?: string };
 
