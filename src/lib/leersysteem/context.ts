@@ -80,11 +80,20 @@ function pickObj(c: Record<string, unknown> | null | undefined, k: string): Reco
   return v && typeof v === 'object' ? (v as Record<string, unknown>) : null
 }
 
+export interface SemantiekExtra {
+  bronTabel?: string | null
+  bronHerkomst?: string | null
+  artikelNummer?: string | null
+}
+
 /** Bepaal sectie/vraag/antwoord op basis van sectie + config snapshot.
- *  Geeft null wanneer er onvoldoende context is om semantisch te groeperen. */
+ *  Geeft null wanneer er onvoldoende context is om semantisch te groeperen.
+ *  `extra` mag bron-info bevatten zodat per-bronregel semantiek (zoals RMU
+ *  veldregels) verfijnd kan worden. */
 export function bepaalSemantiek(
   sectie: string | null,
   config: Record<string, unknown> | null | undefined,
+  extra?: SemantiekExtra,
 ): Semantiek {
   const sectie_key = sectie ?? null
   const sectie_label = sectie ? SECTIE_LABELS[sectie] ?? sectie : null
@@ -187,15 +196,108 @@ export function bepaalSemantiek(
       const merk = pickStr(config, 'rmuMerk')
       const rmuConfig = pickObj(config, 'rmuConfig')
       const code = rmuConfig ? pickStr(rmuConfig, 'code') : null
-      const inet = pickStr(config, 'rmuInet')
+      const aantalVelden = rmuConfig ? Number(rmuConfig.aantal_velden ?? 0) : 0
+      const aantalF = rmuConfig ? Number(rmuConfig.aantal_f ?? 0) : 0
+      const aantalC = rmuConfig ? Number(rmuConfig.aantal_c ?? 0) : 0
+      const aantalV = rmuConfig ? Number(rmuConfig.aantal_v ?? 0) : 0
+      const inetStr = pickStr(config, 'rmuInet')
+      const inet = inetStr === 'ja' ? 'ja' : inetStr === 'nee' ? 'nee' : null
+      const kva = pickStr(config, 'trafoKva')
+      const velden = Array.isArray(config.rmuVelden)
+        ? (config.rmuVelden as Array<Record<string, unknown>>)
+        : []
+
+      const bronTabel = extra?.bronTabel ?? null
+      const herk = extra?.bronHerkomst ?? null
+      const isVeldRegel = bronTabel === 'rmu_veld_regels' || bronTabel === 'rmu_veld_artikelen'
+      const isZekering = bronTabel === 'rmu_zekeringen'
+
+      // Veldcontext uit herkomst-label
+      let veldType: string | null = null
+      let veldNummer: number | null = null
+      let kabelType: string | null = null
+      let isReserve: boolean | null = null
+      if (herk) {
+        const mNr = herk.match(/veld\s*(\d+)/i)
+        if (mNr) veldNummer = Number(mNr[1])
+        const mLetter =
+          herk.match(/\bveld(?:en)?\s+([FCV])\b/i) ||
+          herk.match(/\b([FCV])-veld\b/i) ||
+          herk.match(/\(([FCV])\)/)
+        if (mLetter) veldType = mLetter[1].toUpperCase()
+        const mKabel = herk.match(/(240AL|630AL)/i)
+        if (mKabel) kabelType = mKabel[1].toUpperCase()
+        if (/\breserve\b/i.test(herk)) isReserve = true
+      }
+      // Aanvullen vanuit rmuVelden snapshot
+      if (veldNummer != null && veldType && velden.length) {
+        const found = velden.find(
+          (v) =>
+            Number(v.veldNummer) === veldNummer &&
+            String(v.veldType).toUpperCase() === veldType,
+        )
+        if (found) {
+          kabelType = kabelType ?? (found.kabelType ? String(found.kabelType) || null : null)
+          isReserve = isReserve ?? (typeof found.isReserve === 'boolean' ? (found.isReserve as boolean) : null)
+        }
+      }
+
       if (!merk && !code) return empty
+
+      const heeftBasis = !!merk && !!code
+      const veldContextHerkend = !!(veldType || veldNummer != null || kabelType)
+      const useTokenFormat = isVeldRegel || isZekering || !!inet
+      const heeftContextVoldoende = heeftBasis && (!isVeldRegel || veldContextHerkend)
+
+      let gekozen_antwoord: string
+      if (useTokenFormat) {
+        const tokens: string[] = []
+        if (merk) tokens.push(merk)
+        if (code) tokens.push(code)
+        if (aantalVelden) tokens.push(`${aantalVelden}v`)
+        if (inet) tokens.push(`iNet-${inet}`)
+        if (isVeldRegel) {
+          if (veldType) tokens.push(`veld-${veldType}`)
+          if (veldNummer != null) tokens.push(`#${veldNummer}`)
+          if (kabelType) tokens.push(kabelType)
+          if (isReserve) tokens.push('reserve')
+          if (!veldContextHerkend) tokens.push('veld-onbekend')
+        }
+        if (isZekering && kva) tokens.push(`trafo-${kva}kVA`)
+        gekozen_antwoord = tokens.join('/')
+      } else {
+        gekozen_antwoord = [merk, code].filter(Boolean).join(' / ')
+      }
+
       return {
         sectie_key,
         sectie_label,
-        vraag_key: 'rmu_merk_config',
-        vraag_label: 'RMU merk + configuratie',
-        gekozen_antwoord: [merk, code].filter(Boolean).join(' / '),
-        relevante_config: { rmuMerk: merk, rmuConfigCode: code, rmuInet: inet },
+        vraag_key: isVeldRegel
+          ? 'rmu_veld_regel'
+          : isZekering
+            ? 'rmu_zekering'
+            : 'rmu_merk_config',
+        vraag_label: isVeldRegel
+          ? 'RMU veldregel'
+          : isZekering
+            ? 'RMU zekering'
+            : 'RMU merk + configuratie',
+        gekozen_antwoord: heeftContextVoldoende ? gekozen_antwoord : null,
+        relevante_config: {
+          rmuMerk: merk,
+          rmuConfigCode: code,
+          rmuAantalVelden: aantalVelden || null,
+          rmuAantalF: aantalF || null,
+          rmuAantalC: aantalC || null,
+          rmuAantalV: aantalV || null,
+          rmuInet: inet,
+          trafoKva: isZekering ? kva : null,
+          veldType,
+          veldNummer,
+          kabelType,
+          isReserve,
+          bronTabel,
+        },
       }
     }
     case 'trafo':
@@ -359,7 +461,11 @@ export function bouwCorrectieContext(args: {
   const sectie = args.sectie ?? args.item?.sectie ?? null
   const artikelNummer = args.artikelNummer ?? args.item?.artikel_nummer ?? ''
   const fields = bouwConfigFields(args.configSnapshot ?? null)
-  const semantiek = bepaalSemantiek(sectie, args.configSnapshot ?? null)
+  const semantiek = bepaalSemantiek(sectie, args.configSnapshot ?? null, {
+    bronTabel: tabel,
+    bronHerkomst: herkomst,
+    artikelNummer,
+  })
   const context_volledig = !!(semantiek.vraag_key && semantiek.gekozen_antwoord)
   const leesbare_zin = bouwLeesbareZin({
     caseType: args.caseType,
