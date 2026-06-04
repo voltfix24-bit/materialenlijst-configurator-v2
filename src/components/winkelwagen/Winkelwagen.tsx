@@ -240,6 +240,12 @@ export function Winkelwagen({
       nieuwe_hoeveelheid: dialoogData.nieuwe_hoeveelheid,
       reden,
       scope,
+      bron_tabel: dialoogData.bron_tabel ?? null,
+      bron_id: dialoogData.bron_id ?? null,
+      bron_herkomst: dialoogData.bron_herkomst ?? null,
+      bijdragen: Array.isArray(dialoogData.bijdragen)
+        ? (dialoogData.bijdragen as unknown[])
+        : null,
     });
     setDialoogData(null);
     setPendingRevert(null);
@@ -251,6 +257,18 @@ export function Winkelwagen({
     setPendingRevert(null);
   };
 
+  /** Bepaal canonical bron-info voor een PreviewItem: alleen wanneer er
+   *  precies één bijdrage is met een bekende bron-tabel + id. Anders null. */
+  const bepaalBron = (it: PreviewItem) => {
+    if (!it.bijdragen || it.bijdragen.length !== 1) return { tabel: null, id: null, herkomst: null };
+    const b = it.bijdragen[0];
+    return {
+      tabel: b.bronTabel ?? null,
+      id: b.bronId ?? null,
+      herkomst: b.herkomst ?? null,
+    };
+  };
+
   const wijzigHoeveelheid = (it: PreviewItem, nieuw: number) => {
     const oudOriginal = items.find((x) => x.artikel_nummer === it.artikel_nummer)?.hoeveelheid ?? it.hoeveelheid;
     const huidig = overrides.get(it.artikel_nummer) ?? oudOriginal;
@@ -260,6 +278,7 @@ export function Winkelwagen({
       m.set(it.artikel_nummer, nieuw);
       return m;
     });
+    const bron = bepaalBron(it);
     openDialoog(
       {
         artikel_nummer: it.artikel_nummer,
@@ -267,6 +286,10 @@ export function Winkelwagen({
         actie: "hoeveelheid_gewijzigd",
         oude_hoeveelheid: oudOriginal,
         nieuwe_hoeveelheid: nieuw,
+        bron_tabel: bron.tabel,
+        bron_id: bron.id,
+        bron_herkomst: bron.herkomst,
+        bijdragen: it.bijdragen,
       },
       () => {
         setOverrides((prev) => {
@@ -291,6 +314,10 @@ export function Winkelwagen({
           actie: "verwijderd",
           oude_hoeveelheid: it.hoeveelheid,
           nieuwe_hoeveelheid: null,
+          bron_tabel: null,
+          bron_id: null,
+          bron_herkomst: "Handmatig toegevoegd",
+          bijdragen: it.bijdragen,
         },
         () => {
           setToegevoegd((prev) =>
@@ -301,6 +328,7 @@ export function Winkelwagen({
       return;
     }
     setVerwijderd((prev) => new Set([...prev, it.artikel_nummer]));
+    const bron = bepaalBron(it);
     openDialoog(
       {
         artikel_nummer: it.artikel_nummer,
@@ -308,6 +336,10 @@ export function Winkelwagen({
         actie: "verwijderd",
         oude_hoeveelheid: it.hoeveelheid,
         nieuwe_hoeveelheid: null,
+        bron_tabel: bron.tabel,
+        bron_id: bron.id,
+        bron_herkomst: bron.herkomst,
+        bijdragen: it.bijdragen,
       },
       () => {
         setVerwijderd((prev) => {
