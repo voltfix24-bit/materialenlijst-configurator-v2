@@ -461,7 +461,11 @@ export function bouwCorrectieContext(args: {
   const sectie = args.sectie ?? args.item?.sectie ?? null
   const artikelNummer = args.artikelNummer ?? args.item?.artikel_nummer ?? ''
   const fields = bouwConfigFields(args.configSnapshot ?? null)
-  const semantiek = bepaalSemantiek(sectie, args.configSnapshot ?? null)
+  const semantiek = bepaalSemantiek(sectie, args.configSnapshot ?? null, {
+    bronTabel: tabel,
+    bronHerkomst: herkomst,
+    artikelNummer,
+  })
   const context_volledig = !!(semantiek.vraag_key && semantiek.gekozen_antwoord)
   const leesbare_zin = bouwLeesbareZin({
     caseType: args.caseType,
