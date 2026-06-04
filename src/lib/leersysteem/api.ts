@@ -113,7 +113,6 @@ export function berekenVoorstel(notificatie: BeheerNotificatie): VoorstelPreview
 export async function voerGoedgekeurdeWijzigingDoor(
   notificatie: BeheerNotificatie
 ): Promise<void> {
-  // Bij meerdere bronnen of onbekende bron: niet blind automatiseren.
   if (notificatie.meerdere_bronnen || !notificatie.bron_tabel) {
     throw new Error(
       'Deze notificatie heeft meerdere of onbekende bronnen — pas de regel handmatig aan in Beheer.',
@@ -125,11 +124,23 @@ export async function voerGoedgekeurdeWijzigingDoor(
       `Automatisch doorvoeren op bron-tabel '${notificatie.bron_tabel}' wordt nog niet ondersteund — pas handmatig aan.`,
     )
   }
+  if (!notificatie.bron_id) {
+    throw new Error('Bron-id ontbreekt — handmatig aanpassen in Beheer.')
+  }
+
+  // Controleer eerst of de bronregel nog bestaat — voorkomt dat we een
+  // verouderd voorstel "stilletjes" doorvoeren op een regel die inmiddels weg is.
+  const { data: bestaand, error: checkErr } = await (supabase as never as any)
+    .from(notificatie.bron_tabel)
+    .select('id')
+    .eq('id', notificatie.bron_id)
+    .maybeSingle()
+  if (checkErr) throw checkErr
+  if (!bestaand) {
+    throw new Error('De bronregel bestaat niet meer — handmatig opnieuw beoordelen in Beheer.')
+  }
 
   if (notificatie.actie === 'verwijderd') {
-    if (!notificatie.bron_id) {
-      throw new Error('Bron-id ontbreekt — handmatig verwijderen in Beheer.')
-    }
     const { error } = await (supabase as never as any)
       .from(notificatie.bron_tabel)
       .delete()
@@ -139,8 +150,8 @@ export async function voerGoedgekeurdeWijzigingDoor(
   }
 
   if (notificatie.actie === 'hoeveelheid_gewijzigd' && notificatie.gemiddelde_wijziging != null) {
-    if (!notificatie.bron_id || !meta.qtyKol) {
-      throw new Error('Bron-id of hoeveelheid-kolom ontbreekt — handmatig aanpassen.')
+    if (!meta.qtyKol) {
+      throw new Error('Hoeveelheid-kolom onbekend voor deze bron — handmatig aanpassen.')
     }
     const nieuw = Math.round(notificatie.gemiddelde_wijziging)
     const { error } = await (supabase as never as any)
@@ -151,7 +162,7 @@ export async function voerGoedgekeurdeWijzigingDoor(
     return
   }
 
-  // 'toegevoegd' vereist altijd handmatige actie.
   throw new Error('Nieuwe artikelen moeten handmatig aan een regel worden toegevoegd in Beheer.')
 }
+
 

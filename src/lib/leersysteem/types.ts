@@ -3,6 +3,23 @@ export type CorrectieScope = 'eenmalig' | 'altijd' | 'soms'
 export type NotificatieStatus = 'open' | 'goedgekeurd' | 'afgewezen'
 export type NotificatieType = 'standaard_aanpassen' | 'artikel_verwijderen' | 'artikel_toevoegen'
 
+/** Rijke configuratie-context voor één correctie. Wordt gebruikt om vergelijkbare
+ *  correcties pas te groeperen wanneer ook de context overeenkomt. */
+export interface CorrectieContext {
+  case_type: string
+  sub_type: string
+  /** Sectie binnen de configurator (bv. "lsRek", "rmu", "provisorium"). */
+  sectie: string | null
+  /** Mens-leesbare vraag/antwoord-context die deze bronregel activeert. */
+  herkomst: string | null
+  bron_tabel: string | null
+  bron_id: string | null
+  bijdragen: unknown[] | null
+  meerdere_bronnen: boolean
+  /** Snapshot van de relevante configuratievelden op moment van correctie. */
+  config_fields: Record<string, unknown> | null
+}
+
 export interface WinkelwagenCorrectie {
   id?: string
   case_id: string
@@ -17,18 +34,17 @@ export interface WinkelwagenCorrectie {
   scope: CorrectieScope
   engineer_id?: string
   created_at?: string
-  /** Tabel waaruit het artikel kwam in de winkelwagen, bv. 'ls_rek_regels'. */
   bron_tabel?: string | null
-  /** Database-id van de regel/rij in die tabel. */
   bron_id?: string | null
-  /** Mens-leesbare herkomst, bv. "LS-rek vervangen · 12 richtingen". */
   bron_herkomst?: string | null
-  /** True wanneer het artikel uit meer dan één regel/bron komt — auto-approve uitgesloten. */
   meerdere_bronnen?: boolean
-  /** Alle bijdragen (bron + sectie + hoeveelheid). */
   bijdragen?: unknown[] | null
-  /** Snapshot van de relevante case-configuratievelden op moment van correctie. */
-  config_snapshot?: Record<string, unknown> | null
+  /** Rijke context (zie CorrectieContext). */
+  config_context?: CorrectieContext | null
+  /** Sectie waar wijziging bij hoort. */
+  sectie?: string | null
+  /** Stabiele groepeer-sleutel: case_type|sub_type|sectie|bron_tabel|bron_id|actie|artikel. */
+  context_key?: string | null
 }
 
 export interface BeheerNotificatie {
@@ -52,6 +68,9 @@ export interface BeheerNotificatie {
   bron_herkomst: string | null
   meerdere_bronnen: boolean
   bijdragen: unknown | null
+  config_context: CorrectieContext | null
+  sectie: string | null
+  context_key: string | null
 }
 
 export interface CorrectieDialoogData {
@@ -65,4 +84,27 @@ export interface CorrectieDialoogData {
   bron_herkomst?: string | null
   meerdere_bronnen?: boolean
   bijdragen?: unknown
+  sectie?: string | null
+}
+
+/** Bouw stabiele groepeer-sleutel voor een correctie. */
+export function bouwContextKey(args: {
+  case_type: string
+  sub_type: string
+  sectie: string | null
+  bron_tabel: string | null
+  bron_id: string | null
+  actie: string
+  artikel_nummer: string
+}): string {
+  const norm = (v: string | null | undefined) => (v == null || v === '' ? '-' : v)
+  return [
+    norm(args.case_type),
+    norm(args.sub_type),
+    norm(args.sectie),
+    norm(args.bron_tabel),
+    norm(args.bron_id),
+    norm(args.actie),
+    norm(args.artikel_nummer),
+  ].join('|')
 }

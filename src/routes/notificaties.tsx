@@ -34,10 +34,11 @@ const ACTIE_KLEUREN: Record<string, { border: string; badge: string }> = {
 };
 
 const CASE_TYPE_LABELS: Record<string, string> = {
+  nsa: "NSA",
   NSA: "NSA",
   provisorium: "Provisorium",
   compact: "Compact",
-  compact_prov: "Compact met Prov",
+  compact_prov: "Compact met Provisorium",
 };
 
 function NotificatiesPage() {
@@ -182,10 +183,20 @@ function NotificatieKaart({
               {CASE_TYPE_LABELS[notificatie.case_type] ?? notificatie.case_type}
               {notificatie.sub_type ? ` · ${notificatie.sub_type}` : ""}
             </span>
+            {notificatie.sectie && (
+              <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-info/10 text-info">
+                {notificatie.sectie}
+              </span>
+            )}
           </div>
           <h3 className="text-sm font-semibold text-foreground">
             {notificatie.korte_omschrijving ?? "Geen omschrijving"}
           </h3>
+          {notificatie.bron_herkomst && (
+            <p className="text-xs text-muted-foreground mt-0.5 italic">
+              Context: {notificatie.bron_herkomst}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground mt-1">
             {notificatie.aantal_correcties} engineer{notificatie.aantal_correcties === 1 ? "" : "s"} hebben dit aangepast
             {notificatie.gemiddelde_wijziging != null && (
@@ -198,6 +209,7 @@ function NotificatieKaart({
               </>
             )}
           </p>
+          <ConfigContextInfo notificatie={notificatie} />
           <BronInfo notificatie={notificatie} />
           <VoorstelInfo notificatie={notificatie} />
         </div>
@@ -369,5 +381,45 @@ function VoorstelInfo({ notificatie }: { notificatie: BeheerNotificatie }) {
     </div>
   );
 }
+
+const CONFIG_VELD_BLACKLIST = new Set([
+  "msRichtingen",
+  "lsMoffen",
+  "rmuConfig",
+  "provRmuConfig",
+]);
+
+function ConfigContextInfo({ notificatie }: { notificatie: BeheerNotificatie }) {
+  const ctx = notificatie.config_context;
+  if (!ctx || typeof ctx !== "object") return null;
+  const fields = ctx.config_fields ?? {};
+  const entries = Object.entries(fields).filter(([k, v]) => {
+    if (CONFIG_VELD_BLACKLIST.has(k)) return false;
+    if (v == null || v === "" || v === false) return false;
+    if (Array.isArray(v) && v.length === 0) return false;
+    return typeof v === "string" || typeof v === "number" || typeof v === "boolean";
+  });
+  if (entries.length === 0 && !ctx.herkomst && !ctx.sectie) return null;
+  return (
+    <div className="mt-2 pt-2 border-t border-border/60">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+        Configuratie-context
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {ctx.sectie && (
+          <span className="px-1.5 py-0.5 rounded bg-muted text-[10px]">
+            sectie: <span className="font-mono">{ctx.sectie}</span>
+          </span>
+        )}
+        {entries.map(([k, v]) => (
+          <span key={k} className="px-1.5 py-0.5 rounded bg-muted text-[10px]">
+            {k}: <span className="font-mono">{String(v)}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 
 
