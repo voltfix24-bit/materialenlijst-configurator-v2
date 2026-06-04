@@ -358,6 +358,7 @@ export function Winkelwagen({
           bron_herkomst: "Handmatig toegevoegd",
           meerdere_bronnen: false,
           bijdragen: it.bijdragen,
+          sectie: it.sectie ?? null,
         },
         () => {
           setToegevoegd((prev) =>
