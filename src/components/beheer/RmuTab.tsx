@@ -154,6 +154,7 @@ function ConfigsTable() {
       </div>
       <DataTable
         headers={["Code", "Merk", "I-Net", "F", "C", "V", "Velden", "RMU artikel", "Bodemplaat", "Actief", ""]}
+        rowIds={(data as RmuConfig[]).map((c) => c.id)}
         rows={(data as RmuConfig[]).map((c) => [
           c.code,
           c.merk,
