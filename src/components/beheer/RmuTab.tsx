@@ -439,6 +439,7 @@ function ZekeringenTable() {
       </div>
       <DataTable
         headers={["Merk", "Trafo kVA", "Artikel", "Hoeveelheid", ""]}
+        rowIds={(data as Zekering[]).map((z) => z.id)}
         rows={(data as Zekering[]).map((z) => [
           z.merk,
           z.trafo_kva,
