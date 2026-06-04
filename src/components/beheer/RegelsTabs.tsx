@@ -324,6 +324,7 @@ export function LsRekRegelsTab() {
       </p>
       <DataTable
         headers={["Compact", "Renov", "Actie", "Type", "Bev.aanp", "OV", "Schroef", "kVA", "Artikel", "Aantal/formule", "Herkomst", ""]}
+        rowIds={(data as LsRekRegel[]).map((r) => r.id)}
         rows={(data as LsRekRegel[]).map((r) => [
           <Cond v={r.conditie_compact} />,
           <Cond v={r.conditie_renovatie} />,
