@@ -361,27 +361,39 @@ export function VolledigeMaterialenlijst({
                               status.tone === "warn" && "bg-amber-500/5",
                               it.niet_bestellen && "opacity-60",
                             )}>
-                              <td className="px-3 py-1.5 font-mono text-xs text-primary">{it.artikel_nummer}</td>
-                              <td className="px-2 py-1.5">
-                                <div className="text-sm leading-snug">{it.korte_omschrijving}</div>
-                                {(isHand || isOver) && (
-                                  <div className="flex gap-1 mt-0.5">
-                                    {isHand && (
-                                      <span className="text-[9px] px-1 py-px rounded bg-primary/15 text-primary font-semibold uppercase tracking-wider">
-                                        handmatig
-                                      </span>
-                                    )}
-                                    {isOver && !isHand && (
-                                      <span className="text-[9px] px-1 py-px rounded bg-primary/15 text-primary font-semibold uppercase tracking-wider">
-                                        aangepast
-                                      </span>
+                              <td className="px-3 py-1.5 font-mono text-xs text-primary align-top">{it.artikel_nummer}</td>
+                              <td className="px-2 py-1.5 align-top">
+                                <div className="text-sm leading-snug break-words max-w-[420px]">
+                                  {it.korte_omschrijving}
+                                </div>
+                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                  {isHand && (
+                                    <span className="text-[9px] px-1 py-px rounded bg-primary/15 text-primary font-semibold uppercase tracking-wider">
+                                      handmatig
+                                    </span>
+                                  )}
+                                  {isOver && !isHand && (
+                                    <span className="text-[9px] px-1 py-px rounded bg-primary/15 text-primary font-semibold uppercase tracking-wider">
+                                      aangepast
+                                    </span>
+                                  )}
+                                  {it.inactief && (
+                                    <span className="text-[9px] px-1 py-px rounded bg-amber-500/20 text-amber-700 font-semibold uppercase tracking-wider">
+                                      inactief
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-2 py-1.5 text-xs text-muted-foreground align-top">
+                                <div className="flex items-start gap-2">
+                                  <div className="flex-1 min-w-0 break-words leading-snug">
+                                    {it.herkomst.slice(0, 2).join(" · ")}
+                                    {it.herkomst.length > 2 && (
+                                      <span className="text-muted-foreground/70"> +{it.herkomst.length - 2}</span>
                                     )}
                                   </div>
-                                )}
-                              </td>
-                              <td className="px-2 py-1.5 text-xs text-muted-foreground">
-                                {it.herkomst.slice(0, 2).join(" · ")}
-                                {it.herkomst.length > 2 && ` +${it.herkomst.length - 2}`}
+                                  <BronOverzichtPopover item={it} trigger="tekst" side="left" />
+                                </div>
                               </td>
                               <td className="px-2 py-1.5 text-center">
                                 <div className="inline-flex">
