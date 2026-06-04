@@ -3,10 +3,11 @@ import { bepaalSemantiek, bouwCorrectieContext } from './context'
 import { bouwContextKey } from './types'
 
 describe('bepaalSemantiek', () => {
-  it('herkent LS-rek vraag/antwoord uit configuratie', () => {
+  it('herkent LS-rek basis vraag/antwoord uit configuratie', () => {
     const s = bepaalSemantiek('lsRek', { lsRekActie: 'vervangen', lsRekType: '12' })
-    expect(s.vraag_key).toBe('lsrek_actie_type')
-    expect(s.gekozen_antwoord).toBe('vervangen / 12 richtingen')
+    expect(s.vraag_key).toBe('lsrek_volledig')
+    expect(s.gekozen_antwoord).toContain('vervangen/12r')
+    expect(s.gekozen_antwoord).toContain('geen-mof')
   })
 
   it('herkent RMU merk + configuratiecode', () => {
@@ -27,6 +28,114 @@ describe('bepaalSemantiek', () => {
   })
 })
 
+describe('bepaalSemantiek LS-rek details', () => {
+  const base = { lsRekActie: 'vervangen' as const }
+
+  it('onderscheidt 8 vs 12 richtingen', () => {
+    const a = bepaalSemantiek('lsRek', { ...base, lsRekType: '8' }).gekozen_antwoord
+    const b = bepaalSemantiek('lsRek', { ...base, lsRekType: '12' }).gekozen_antwoord
+    expect(a).not.toBe(b)
+    expect(a).toContain('8r')
+    expect(b).toContain('12r')
+  })
+
+  it('onderscheidt vervangen vs gehandhaafd', () => {
+    const a = bepaalSemantiek('lsRek', { lsRekActie: 'vervangen', lsRekType: '12' }).gekozen_antwoord
+    const b = bepaalSemantiek('lsRek', { lsRekActie: 'gehandhaafd', lsRekType: '12' }).gekozen_antwoord
+    expect(a).not.toBe(b)
+  })
+
+  it('onderscheidt OV-stuurpunt ja vs nee', () => {
+    const a = bepaalSemantiek('lsRek', { ...base, lsRekType: '12', lsRekOvStuurpunt: true }).gekozen_antwoord
+    const b = bepaalSemantiek('lsRek', { ...base, lsRekType: '12', lsRekOvStuurpunt: false }).gekozen_antwoord
+    expect(a).not.toBe(b)
+    expect(a).toContain('+OV')
+    expect(b).not.toContain('+OV')
+  })
+
+  it('onderscheidt LS-mof ja vs nee', () => {
+    const ja = bepaalSemantiek('lsRek', {
+      ...base,
+      lsRekType: '12',
+      lsMoffenActief: true,
+      lsMoffen: [{ type: 'aftakmof', bestaandType: '4x150AL', aantal: 1, kanZwaaien: true }],
+    }).gekozen_antwoord
+    const nee = bepaalSemantiek('lsRek', { ...base, lsRekType: '12', lsMoffenActief: false }).gekozen_antwoord
+    expect(ja).not.toBe(nee)
+    expect(ja).toContain('mof')
+    expect(nee).toContain('geen-mof')
+  })
+
+  it('onderscheidt verschillende mof-types', () => {
+    const a = bepaalSemantiek('lsRek', {
+      ...base,
+      lsRekType: '12',
+      lsMoffenActief: true,
+      lsMoffen: [{ type: 'aftakmof', bestaandType: '4x150AL', aantal: 1, kanZwaaien: true }],
+    }).gekozen_antwoord
+    const b = bepaalSemantiek('lsRek', {
+      ...base,
+      lsRekType: '12',
+      lsMoffenActief: true,
+      lsMoffen: [{ type: 'rechte mof', bestaandType: '4x150AL', aantal: 1, kanZwaaien: true }],
+    }).gekozen_antwoord
+    expect(a).not.toBe(b)
+  })
+
+  it('onderscheidt kabel omzwaaien ja vs nee', () => {
+    const ja = bepaalSemantiek('lsRek', {
+      ...base,
+      lsRekType: '12',
+      lsMoffenActief: true,
+      lsMoffen: [{ type: 'aftakmof', bestaandType: '4x150AL', aantal: 1, kanZwaaien: true }],
+    }).gekozen_antwoord
+    const nee = bepaalSemantiek('lsRek', {
+      ...base,
+      lsRekType: '12',
+      lsMoffenActief: true,
+      lsMoffen: [{ type: 'aftakmof', bestaandType: '4x150AL', aantal: 1, kanZwaaien: false, opnieuwAantal: 1 }],
+    }).gekozen_antwoord
+    expect(ja).not.toBe(nee)
+    expect(ja).toContain('zwaai-ja')
+    expect(nee).toContain('zwaai-nee')
+  })
+
+  it('onderscheidt beveiliging-aanpassen en schroefpatroon', () => {
+    const a = bepaalSemantiek('lsRek', {
+      ...base,
+      lsRekType: '12',
+      lsRekBeveiligingAanpassen: true,
+      lsRekSchroefpatroon: '35A',
+    }).gekozen_antwoord
+    const b = bepaalSemantiek('lsRek', {
+      ...base,
+      lsRekType: '12',
+      lsRekBeveiligingAanpassen: true,
+      lsRekSchroefpatroon: '50A',
+    }).gekozen_antwoord
+    expect(a).not.toBe(b)
+    expect(a).toContain('bev-aanp')
+    expect(a).toContain('35A')
+    expect(b).toContain('50A')
+  })
+
+  it('herkent LS-kabel trace zonder mof', () => {
+    const s = bepaalSemantiek('lsRek', {
+      lsRekActie: 'gehandhaafd',
+      lsKabelTraces: [{ lengteMeters: 25 }],
+    })
+    expect(s.vraag_key).toBe('lsrek_volledig')
+    expect(s.gekozen_antwoord).toContain('trace×1')
+  })
+
+  it('zet context_volledig=true alleen bij echte LS-rek context', () => {
+    const leeg = bepaalSemantiek('lsRek', {})
+    expect(leeg.vraag_key).toBeNull()
+    const ok = bepaalSemantiek('lsRek', { lsRekActie: 'vervangen', lsRekType: '12' })
+    expect(ok.vraag_key).toBe('lsrek_volledig')
+  })
+})
+
 describe('bouwContextKey', () => {
   const base = {
     case_type: 'compact_prov',
@@ -39,8 +148,8 @@ describe('bouwContextKey', () => {
   }
 
   it('verschillende gekozen antwoorden geven verschillende keys (LS-rek 8 vs 12)', () => {
-    const a = bouwContextKey({ ...base, sectie_key: 'lsRek', vraag_key: 'lsrek_actie_type', gekozen_antwoord: 'vervangen / 8 richtingen' })
-    const b = bouwContextKey({ ...base, sectie_key: 'lsRek', vraag_key: 'lsrek_actie_type', gekozen_antwoord: 'vervangen / 12 richtingen' })
+    const a = bouwContextKey({ ...base, sectie_key: 'lsRek', vraag_key: 'lsrek_volledig', gekozen_antwoord: 'vervangen/8r / geen-mof' })
+    const b = bouwContextKey({ ...base, sectie_key: 'lsRek', vraag_key: 'lsrek_volledig', gekozen_antwoord: 'vervangen/12r / geen-mof' })
     expect(a).not.toBe(b)
   })
 
@@ -51,8 +160,8 @@ describe('bouwContextKey', () => {
   })
 
   it('gelijke context geeft gelijke key', () => {
-    const a = bouwContextKey({ ...base, sectie_key: 'lsRek', vraag_key: 'lsrek_actie_type', gekozen_antwoord: 'vervangen / 12 richtingen' })
-    const b = bouwContextKey({ ...base, sectie_key: 'lsRek', vraag_key: 'lsrek_actie_type', gekozen_antwoord: 'vervangen / 12 richtingen' })
+    const a = bouwContextKey({ ...base, sectie_key: 'lsRek', vraag_key: 'lsrek_volledig', gekozen_antwoord: 'vervangen/12r / geen-mof' })
+    const b = bouwContextKey({ ...base, sectie_key: 'lsRek', vraag_key: 'lsrek_volledig', gekozen_antwoord: 'vervangen/12r / geen-mof' })
     expect(a).toBe(b)
   })
 })
@@ -73,8 +182,8 @@ describe('bouwCorrectieContext', () => {
       oudeHoeveelheid: 8,
       nieuweHoeveelheid: 12,
     })
-    expect(c.vraag_key).toBe('lsrek_actie_type')
-    expect(c.gekozen_antwoord).toBe('vervangen / 12 richtingen')
+    expect(c.vraag_key).toBe('lsrek_volledig')
+    expect(c.gekozen_antwoord).toContain('vervangen/12r')
     expect(c.context_volledig).toBe(true)
     expect(c.leesbare_zin).toContain('LS-rek')
     expect(c.leesbare_zin).toContain('12')
