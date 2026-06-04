@@ -179,12 +179,15 @@ export type Database = {
           bron_id: string | null
           bron_tabel: string | null
           case_type: string
+          config_context: Json | null
+          context_key: string | null
           correctie_ids: string[] | null
           created_at: string | null
           gemiddelde_wijziging: number | null
           id: string
           korte_omschrijving: string | null
           meerdere_bronnen: boolean
+          sectie: string | null
           status: string
           sub_type: string
           type: string
@@ -201,12 +204,15 @@ export type Database = {
           bron_id?: string | null
           bron_tabel?: string | null
           case_type: string
+          config_context?: Json | null
+          context_key?: string | null
           correctie_ids?: string[] | null
           created_at?: string | null
           gemiddelde_wijziging?: number | null
           id?: string
           korte_omschrijving?: string | null
           meerdere_bronnen?: boolean
+          sectie?: string | null
           status?: string
           sub_type: string
           type: string
@@ -223,12 +229,15 @@ export type Database = {
           bron_id?: string | null
           bron_tabel?: string | null
           case_type?: string
+          config_context?: Json | null
+          context_key?: string | null
           correctie_ids?: string[] | null
           created_at?: string | null
           gemiddelde_wijziging?: number | null
           id?: string
           korte_omschrijving?: string | null
           meerdere_bronnen?: boolean
+          sectie?: string | null
           status?: string
           sub_type?: string
           type?: string
@@ -1273,7 +1282,9 @@ export type Database = {
           bron_tabel: string | null
           case_id: string | null
           case_type: string
+          config_context: Json | null
           config_snapshot: Json | null
+          context_key: string | null
           created_at: string | null
           engineer_id: string | null
           id: string
@@ -1283,6 +1294,7 @@ export type Database = {
           oude_hoeveelheid: number | null
           reden: string | null
           scope: string
+          sectie: string | null
           sub_type: string
         }
         Insert: {
@@ -1294,7 +1306,9 @@ export type Database = {
           bron_tabel?: string | null
           case_id?: string | null
           case_type: string
+          config_context?: Json | null
           config_snapshot?: Json | null
+          context_key?: string | null
           created_at?: string | null
           engineer_id?: string | null
           id?: string
@@ -1304,6 +1318,7 @@ export type Database = {
           oude_hoeveelheid?: number | null
           reden?: string | null
           scope: string
+          sectie?: string | null
           sub_type: string
         }
         Update: {
@@ -1315,7 +1330,9 @@ export type Database = {
           bron_tabel?: string | null
           case_id?: string | null
           case_type?: string
+          config_context?: Json | null
           config_snapshot?: Json | null
+          context_key?: string | null
           created_at?: string | null
           engineer_id?: string | null
           id?: string
@@ -1325,6 +1342,7 @@ export type Database = {
           oude_hoeveelheid?: number | null
           reden?: string | null
           scope?: string
+          sectie?: string | null
           sub_type?: string
         }
         Relationships: [
