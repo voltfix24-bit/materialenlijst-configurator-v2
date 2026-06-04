@@ -7,7 +7,9 @@ import { Stepper } from "@/components/ui-prim/Stepper";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSectie } from "@/lib/configurator/types";
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
-import { bouwContextKey, type CorrectieContext, type CorrectieDialoogData, type CorrectieScope } from "@/lib/leersysteem/types";
+import { bouwContextKey, type CorrectieDialoogData, type CorrectieScope } from "@/lib/leersysteem/types";
+import { bouwCorrectieContext } from "@/lib/leersysteem/context";
+
 import { CorrectieDialoog } from "./CorrectieDialoog";
 import {
   ExportBevestigingDialoog,
