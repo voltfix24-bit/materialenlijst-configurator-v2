@@ -232,6 +232,33 @@ export function Winkelwagen({
 
   const bevestigDialoog = (reden: string, scope: CorrectieScope) => {
     if (!dialoogData) return;
+    const sectie = dialoogData.sectie ?? null;
+    const bronTabel = dialoogData.bron_tabel ?? null;
+    const bronId = dialoogData.bron_id ?? null;
+    const meerdere = dialoogData.meerdere_bronnen ?? false;
+    const bijdragen = Array.isArray(dialoogData.bijdragen)
+      ? (dialoogData.bijdragen as unknown[])
+      : null;
+    const contextKey = bouwContextKey({
+      case_type: caseType,
+      sub_type: subType,
+      sectie,
+      bron_tabel: bronTabel,
+      bron_id: bronId,
+      actie: dialoogData.actie,
+      artikel_nummer: dialoogData.artikel_nummer,
+    });
+    const configContext: CorrectieContext = {
+      case_type: caseType,
+      sub_type: subType,
+      sectie,
+      herkomst: dialoogData.bron_herkomst ?? null,
+      bron_tabel: bronTabel,
+      bron_id: bronId,
+      bijdragen,
+      meerdere_bronnen: meerdere,
+      config_fields: configSnapshot ?? null,
+    };
     slaCorrectieOp.mutate({
       case_id: caseId,
       case_type: caseType,
@@ -243,14 +270,14 @@ export function Winkelwagen({
       nieuwe_hoeveelheid: dialoogData.nieuwe_hoeveelheid,
       reden,
       scope,
-      bron_tabel: dialoogData.bron_tabel ?? null,
-      bron_id: dialoogData.bron_id ?? null,
+      bron_tabel: bronTabel,
+      bron_id: bronId,
       bron_herkomst: dialoogData.bron_herkomst ?? null,
-      meerdere_bronnen: dialoogData.meerdere_bronnen ?? false,
-      bijdragen: Array.isArray(dialoogData.bijdragen)
-        ? (dialoogData.bijdragen as unknown[])
-        : null,
-      config_snapshot: configSnapshot ?? null,
+      meerdere_bronnen: meerdere,
+      bijdragen,
+      sectie,
+      config_context: configContext,
+      context_key: contextKey,
     });
     setDialoogData(null);
     setPendingRevert(null);
