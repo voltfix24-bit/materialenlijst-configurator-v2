@@ -377,6 +377,8 @@ function VoorstelInfo({ notificatie }: { notificatie: BeheerNotificatie }) {
           {v.kind === "auto_hoeveelheid" &&
             `Voorstel: ${v.tabel} → ${v.qtyKol} = ${v.nieuwe_hoeveelheid}`}
           {v.kind === "auto_verwijderen" && `Voorstel: regel verwijderen uit ${v.tabel}`}
+          {v.kind === "auto_toevoegen_standaard" &&
+            `Voorstel: toevoegen aan standaard materialen (${v.case_type}) — ${v.nieuwe_hoeveelheid}×`}
           {v.kind === "handmatig" && "Handmatig beoordelen"}
         </div>
         <div className="opacity-80">{v.reden}</div>

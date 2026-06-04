@@ -60,7 +60,11 @@ const AUTO_BRON_TABELLEN: Record<string, { qtyKol?: string }> = {
   station_vaste_artikelen: { qtyKol: 'hoeveelheid' },
 }
 
-export type VoorstelKind = 'auto_hoeveelheid' | 'auto_verwijderen' | 'handmatig'
+export type VoorstelKind =
+  | 'auto_hoeveelheid'
+  | 'auto_verwijderen'
+  | 'auto_toevoegen_standaard'
+  | 'handmatig'
 
 export interface VoorstelPreview {
   kind: VoorstelKind
@@ -69,10 +73,35 @@ export interface VoorstelPreview {
   qtyKol?: string
   bron_id?: string
   nieuwe_hoeveelheid?: number
+  artikel_nummer?: string
+  case_type?: string
 }
 
 /** Bereken vooraf welk concreet voorstel uit een notificatie zou volgen. */
 export function berekenVoorstel(notificatie: BeheerNotificatie): VoorstelPreview {
+  // Fallback voor 'toegevoegd' zonder bekende flow/bron: altijd kunnen doorvoeren
+  // naar de standaard-materialenlijst voor dit case_type. Beheerder houdt nog
+  // steeds de keuze (Afwijzen blijft mogelijk).
+  if (notificatie.actie === 'toegevoegd') {
+    const heeftBron = !!notificatie.bron_tabel && !!notificatie.bron_id
+    const contextOk = notificatie.config_context?.context_volledig !== false
+    if (!heeftBron || !contextOk || notificatie.meerdere_bronnen) {
+      const aantal =
+        notificatie.gemiddelde_wijziging != null
+          ? Math.max(1, Math.round(notificatie.gemiddelde_wijziging))
+          : 1
+      return {
+        kind: 'auto_toevoegen_standaard',
+        reden:
+          'Geen specifieke flow gevonden — voeg toe aan standaard materialen voor dit case-type.',
+        tabel: 'standaard_materialen_templates',
+        qtyKol: 'standaard_hoeveelheid',
+        artikel_nummer: notificatie.artikel_nummer,
+        case_type: notificatie.case_type,
+        nieuwe_hoeveelheid: aantal,
+      }
+    }
+  }
   if (notificatie.config_context?.context_volledig === false) {
     return { kind: 'handmatig', reden: 'Context onvolledig — handmatig beoordelen.' }
   }
@@ -116,22 +145,70 @@ export function berekenVoorstel(notificatie: BeheerNotificatie): VoorstelPreview
 export async function voerGoedgekeurdeWijzigingDoor(
   notificatie: BeheerNotificatie
 ): Promise<void> {
-  if (notificatie.config_context?.context_volledig === false) {
-    throw new Error('Context onvolledig; voorstel moet handmatig beoordeeld worden.')
+  const voorstel = berekenVoorstel(notificatie)
+
+  // Fallback: toegevoegd-artikel zonder herleidbare flow → toevoegen aan
+  // standaard_materialen_templates voor dit case_type. Werkt ook wanneer
+  // context_volledig=false of bron_tabel ontbreekt.
+  if (voorstel.kind === 'auto_toevoegen_standaard') {
+    if (!notificatie.artikel_nummer) {
+      throw new Error('Artikelnummer ontbreekt — kan niet toevoegen.')
+    }
+    if (!notificatie.case_type) {
+      throw new Error('Case-type ontbreekt — kan niet toevoegen aan standaard materialen.')
+    }
+
+    const { data: art, error: artErr } = await supabase
+      .from('artikelen')
+      .select('id')
+      .eq('artikel_nummer', notificatie.artikel_nummer)
+      .maybeSingle()
+    if (artErr) throw artErr
+    if (!art) {
+      throw new Error(`Artikel ${notificatie.artikel_nummer} niet gevonden in assortiment.`)
+    }
+
+    const { data: bestaand, error: dupErr } = await supabase
+      .from('standaard_materialen_templates')
+      .select('id')
+      .eq('case_type', notificatie.case_type)
+      .eq('artikel_id', art.id)
+      .maybeSingle()
+    if (dupErr) throw dupErr
+
+    const aantal = voorstel.nieuwe_hoeveelheid ?? 1
+
+    if (bestaand) {
+      const { error } = await supabase
+        .from('standaard_materialen_templates')
+        .update({ standaard_hoeveelheid: aantal })
+        .eq('id', bestaand.id)
+      if (error) throw error
+    } else {
+      const { error } = await supabase
+        .from('standaard_materialen_templates')
+        .insert({
+          case_type: notificatie.case_type,
+          artikel_id: art.id,
+          standaard_hoeveelheid: aantal,
+        })
+      if (error) throw error
+    }
+    return
   }
-  if (notificatie.meerdere_bronnen || !notificatie.bron_tabel) {
-    throw new Error(
-      'Deze notificatie heeft meerdere of onbekende bronnen — pas de regel handmatig aan in Beheer.',
-    )
+
+  if (voorstel.kind === 'handmatig') {
+    throw new Error(voorstel.reden)
+  }
+
+  if (!notificatie.bron_tabel || !notificatie.bron_id) {
+    throw new Error('Bron ontbreekt — handmatig aanpassen in Beheer.')
   }
   const meta = AUTO_BRON_TABELLEN[notificatie.bron_tabel]
   if (!meta) {
     throw new Error(
       `Automatisch doorvoeren op bron-tabel '${notificatie.bron_tabel}' wordt nog niet ondersteund — pas handmatig aan.`,
     )
-  }
-  if (!notificatie.bron_id) {
-    throw new Error('Bron-id ontbreekt — handmatig aanpassen in Beheer.')
   }
 
   // Controleer eerst of de bronregel nog bestaat — voorkomt dat we een
@@ -146,7 +223,7 @@ export async function voerGoedgekeurdeWijzigingDoor(
     throw new Error('De bronregel bestaat niet meer — handmatig opnieuw beoordelen in Beheer.')
   }
 
-  if (notificatie.actie === 'verwijderd') {
+  if (voorstel.kind === 'auto_verwijderen') {
     const { error } = await (supabase as never as any)
       .from(notificatie.bron_tabel)
       .delete()
@@ -155,20 +232,16 @@ export async function voerGoedgekeurdeWijzigingDoor(
     return
   }
 
-  if (notificatie.actie === 'hoeveelheid_gewijzigd' && notificatie.gemiddelde_wijziging != null) {
-    if (!meta.qtyKol) {
-      throw new Error('Hoeveelheid-kolom onbekend voor deze bron — handmatig aanpassen.')
-    }
-    const nieuw = Math.round(notificatie.gemiddelde_wijziging)
+  if (voorstel.kind === 'auto_hoeveelheid' && voorstel.nieuwe_hoeveelheid != null && meta.qtyKol) {
     const { error } = await (supabase as never as any)
       .from(notificatie.bron_tabel)
-      .update({ [meta.qtyKol]: nieuw })
+      .update({ [meta.qtyKol]: voorstel.nieuwe_hoeveelheid })
       .eq('id', notificatie.bron_id)
     if (error) throw error
     return
   }
 
-  throw new Error('Nieuwe artikelen moeten handmatig aan een regel worden toegevoegd in Beheer.')
+  throw new Error('Onbekend voorstel — handmatig aanpassen in Beheer.')
 }
 
 
