@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ClipboardList, Download, Info, Loader2, Maximize2, Plus, Search, Trash2, X } from "lucide-react";
+import { ChevronDown, ClipboardList, Download, Loader2, Maximize2, Plus, Search, Trash2, X } from "lucide-react";
 import { VolledigeMaterialenlijst } from "./VolledigeMaterialenlijst";
 import { BronOverzichtPopover } from "./BronOverzichtPopover";
 import { cn } from "@/lib/utils";
 import { Stepper } from "@/components/ui-prim/Stepper";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { BRON_TABEL_DEFS, PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSectie } from "@/lib/configurator/types";
+import { PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSectie } from "@/lib/configurator/types";
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
 import type { CorrectieDialoogData, CorrectieScope } from "@/lib/leersysteem/types";
 import { CorrectieDialoog } from "./CorrectieDialoog";
