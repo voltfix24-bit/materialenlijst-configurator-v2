@@ -17,6 +17,14 @@ export interface WinkelwagenCorrectie {
   scope: CorrectieScope
   engineer_id?: string
   created_at?: string
+  /** Tabel waaruit het artikel kwam in de winkelwagen, bv. 'ls_rek_regels'. */
+  bron_tabel?: string | null
+  /** Database-id van de regel/rij in die tabel. */
+  bron_id?: string | null
+  /** Mens-leesbare herkomst, bv. "LS-rek vervangen · 12 richtingen". */
+  bron_herkomst?: string | null
+  /** Alle bijdragen (bron + sectie + hoeveelheid). */
+  bijdragen?: unknown
 }
 
 export interface BeheerNotificatie {
@@ -35,6 +43,11 @@ export interface BeheerNotificatie {
   afgehandeld_op: string | null
   created_at: string
   updated_at: string
+  bron_tabel: string | null
+  bron_id: string | null
+  bron_herkomst: string | null
+  meerdere_bronnen: boolean
+  bijdragen: unknown | null
 }
 
 export interface CorrectieDialoogData {
@@ -43,4 +56,8 @@ export interface CorrectieDialoogData {
   actie: CorrectieActie
   oude_hoeveelheid: number | null
   nieuwe_hoeveelheid: number | null
+  bron_tabel?: string | null
+  bron_id?: string | null
+  bron_herkomst?: string | null
+  bijdragen?: unknown
 }
