@@ -105,4 +105,3 @@ export async function voerGoedgekeurdeWijzigingDoor(
   throw new Error('Nieuwe artikelen moeten handmatig aan een regel worden toegevoegd in Beheer.')
 }
 
-}
