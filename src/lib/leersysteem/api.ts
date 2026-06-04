@@ -2,9 +2,10 @@ import { supabase } from '@/integrations/supabase/client'
 import type { WinkelwagenCorrectie, BeheerNotificatie } from './types'
 
 export async function slaCorrectieOp(correctie: WinkelwagenCorrectie): Promise<void> {
+  // Cast om Supabase-types/Json mismatch met bijdragen (jsonb) op te lossen.
   const { error } = await supabase
     .from('winkelwagen_correcties')
-    .insert(correctie)
+    .insert(correctie as never)
   if (error) throw error
 }
 
