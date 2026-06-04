@@ -80,11 +80,20 @@ function pickObj(c: Record<string, unknown> | null | undefined, k: string): Reco
   return v && typeof v === 'object' ? (v as Record<string, unknown>) : null
 }
 
+export interface SemantiekExtra {
+  bronTabel?: string | null
+  bronHerkomst?: string | null
+  artikelNummer?: string | null
+}
+
 /** Bepaal sectie/vraag/antwoord op basis van sectie + config snapshot.
- *  Geeft null wanneer er onvoldoende context is om semantisch te groeperen. */
+ *  Geeft null wanneer er onvoldoende context is om semantisch te groeperen.
+ *  `extra` mag bron-info bevatten zodat per-bronregel semantiek (zoals RMU
+ *  veldregels) verfijnd kan worden. */
 export function bepaalSemantiek(
   sectie: string | null,
   config: Record<string, unknown> | null | undefined,
+  extra?: SemantiekExtra,
 ): Semantiek {
   const sectie_key = sectie ?? null
   const sectie_label = sectie ? SECTIE_LABELS[sectie] ?? sectie : null
