@@ -478,6 +478,7 @@ export function ProvRegelsTab() {
       </p>
       <DataTable
         headers={["Merk", "kVA", "Artikel", "Aantal/formule", "Herkomst", "Actief", ""]}
+        rowIds={(data as ProvRegel[]).map((r) => r.id)}
         rows={(data as ProvRegel[]).map((r) => [
           <Cond v={r.conditie_merk} />,
           <Cond v={r.conditie_kva} />,
