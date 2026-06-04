@@ -60,6 +60,56 @@ const AUTO_BRON_TABELLEN: Record<string, { qtyKol?: string }> = {
   station_vaste_artikelen: { qtyKol: 'hoeveelheid' },
 }
 
+export type VoorstelKind = 'auto_hoeveelheid' | 'auto_verwijderen' | 'handmatig'
+
+export interface VoorstelPreview {
+  kind: VoorstelKind
+  reden: string
+  tabel?: string
+  qtyKol?: string
+  bron_id?: string
+  nieuwe_hoeveelheid?: number
+}
+
+/** Bereken vooraf welk concreet voorstel uit een notificatie zou volgen. */
+export function berekenVoorstel(notificatie: BeheerNotificatie): VoorstelPreview {
+  if (notificatie.meerdere_bronnen) {
+    return { kind: 'handmatig', reden: 'Meerdere bronnen — beheerder kiest welke regel.' }
+  }
+  if (!notificatie.bron_tabel || !notificatie.bron_id) {
+    return { kind: 'handmatig', reden: 'Bron onbekend — voeg/wijzig regel handmatig in beheer.' }
+  }
+  const meta = AUTO_BRON_TABELLEN[notificatie.bron_tabel]
+  if (!meta) {
+    return {
+      kind: 'handmatig',
+      reden: `Bron-tabel '${notificatie.bron_tabel}' niet veilig automatisch aan te passen.`,
+      tabel: notificatie.bron_tabel,
+      bron_id: notificatie.bron_id,
+    }
+  }
+  if (notificatie.actie === 'verwijderd') {
+    return {
+      kind: 'auto_verwijderen',
+      reden: 'Eén bronregel — wordt verwijderd na goedkeuring.',
+      tabel: notificatie.bron_tabel,
+      bron_id: notificatie.bron_id,
+    }
+  }
+  if (notificatie.actie === 'hoeveelheid_gewijzigd' && notificatie.gemiddelde_wijziging != null && meta.qtyKol) {
+    return {
+      kind: 'auto_hoeveelheid',
+      reden: 'Eén bronregel — hoeveelheid wordt na goedkeuring aangepast.',
+      tabel: notificatie.bron_tabel,
+      qtyKol: meta.qtyKol,
+      bron_id: notificatie.bron_id,
+      nieuwe_hoeveelheid: Math.round(notificatie.gemiddelde_wijziging),
+    }
+  }
+  return { kind: 'handmatig', reden: 'Nieuwe artikelen worden handmatig aan een regel gekoppeld.' }
+}
+
+
 export async function voerGoedgekeurdeWijzigingDoor(
   notificatie: BeheerNotificatie
 ): Promise<void> {
