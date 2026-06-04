@@ -44,6 +44,8 @@ interface Props {
   exportPending?: boolean;
   /** Verhoog deze counter om vanuit buiten (bv. case-header) de export-bevestigingscontrole te triggeren. */
   exportSignal?: number;
+  /** Volledige case-configuratie — wordt als snapshot bij elke correctie opgeslagen. */
+  configSnapshot?: Record<string, unknown> | null;
 }
 
 // Mapping: configurator sectie → winkelwagen secties
