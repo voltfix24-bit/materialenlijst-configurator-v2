@@ -1273,10 +1273,12 @@ export type Database = {
           bron_tabel: string | null
           case_id: string | null
           case_type: string
+          config_snapshot: Json | null
           created_at: string | null
           engineer_id: string | null
           id: string
           korte_omschrijving: string | null
+          meerdere_bronnen: boolean
           nieuwe_hoeveelheid: number | null
           oude_hoeveelheid: number | null
           reden: string | null
@@ -1292,10 +1294,12 @@ export type Database = {
           bron_tabel?: string | null
           case_id?: string | null
           case_type: string
+          config_snapshot?: Json | null
           created_at?: string | null
           engineer_id?: string | null
           id?: string
           korte_omschrijving?: string | null
+          meerdere_bronnen?: boolean
           nieuwe_hoeveelheid?: number | null
           oude_hoeveelheid?: number | null
           reden?: string | null
@@ -1311,10 +1315,12 @@ export type Database = {
           bron_tabel?: string | null
           case_id?: string | null
           case_type?: string
+          config_snapshot?: Json | null
           created_at?: string | null
           engineer_id?: string | null
           id?: string
           korte_omschrijving?: string | null
+          meerdere_bronnen?: boolean
           nieuwe_hoeveelheid?: number | null
           oude_hoeveelheid?: number | null
           reden?: string | null
