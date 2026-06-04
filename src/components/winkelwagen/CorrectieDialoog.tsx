@@ -26,19 +26,19 @@ const SCOPES: ScopeOpt[] = [
   {
     value: "eenmalig",
     label: "Alleen deze keer",
-    uitleg: "De wijziging geldt alleen voor deze case. Stamdata en regels blijven ongewijzigd.",
+    uitleg: "Alleen deze case. Stamdata en regels blijven ongewijzigd. Geen beheer-voorstel.",
   },
   {
     value: "soms",
     label: "Vaker bij dit type case",
     uitleg:
-      "We slaan dit op als signaal. Beheer ziet het in Notificaties als voorstel — geen automatische regelwijziging.",
+      "Pas na 3 vergelijkbare correcties (zelfde artikel, case-type en sub-type) komt er een voorstel in beheer. Stamdata wijzigt nooit automatisch.",
   },
   {
     value: "altijd",
     label: "Altijd bij dit type case",
     uitleg:
-      "Verzoek tot structurele aanpassing. Beheer moet dit expliciet goedkeuren vóórdat stamdata of regels wijzigen.",
+      "Direct een beheer-voorstel met de bronregel erbij. Beheer moet expliciet goedkeuren voordat stamdata of regels wijzigen.",
   },
 ];
 
