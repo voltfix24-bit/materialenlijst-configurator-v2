@@ -2,18 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { BeheerNotificatie, CorrectieContext } from './types'
 
 vi.mock('@/integrations/supabase/client', () => {
-  const builder: any = {
-    select: vi.fn(() => builder),
-    eq: vi.fn(() => builder),
-    maybeSingle: vi.fn(async () => ({ data: { id: 'r1' }, error: null })),
-    update: vi.fn(async () => ({ error: null })),
-    delete: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
+  const supabase = {
+    from: vi.fn(() => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({ data: { id: 'r1' }, error: null }),
+        }),
+      }),
+      update: () => ({
+        eq: async () => ({ error: null }),
+      }),
+      delete: () => ({
+        eq: async () => ({ error: null }),
+      }),
+    })),
   }
-  return {
-    supabase: {
-      from: vi.fn(() => builder),
-    },
-  }
+  return { supabase }
 })
 
 import { berekenVoorstel, voerGoedgekeurdeWijzigingDoor } from './api'
