@@ -23,8 +23,12 @@ export interface WinkelwagenCorrectie {
   bron_id?: string | null
   /** Mens-leesbare herkomst, bv. "LS-rek vervangen · 12 richtingen". */
   bron_herkomst?: string | null
+  /** True wanneer het artikel uit meer dan één regel/bron komt — auto-approve uitgesloten. */
+  meerdere_bronnen?: boolean
   /** Alle bijdragen (bron + sectie + hoeveelheid). */
   bijdragen?: unknown[] | null
+  /** Snapshot van de relevante case-configuratievelden op moment van correctie. */
+  config_snapshot?: Record<string, unknown> | null
 }
 
 export interface BeheerNotificatie {
@@ -59,5 +63,6 @@ export interface CorrectieDialoogData {
   bron_tabel?: string | null
   bron_id?: string | null
   bron_herkomst?: string | null
+  meerdere_bronnen?: boolean
   bijdragen?: unknown
 }
