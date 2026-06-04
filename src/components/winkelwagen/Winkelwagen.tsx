@@ -250,17 +250,20 @@ export function Winkelwagen({
       actie: dialoogData.actie,
       artikel_nummer: dialoogData.artikel_nummer,
     });
-    const configContext: CorrectieContext = {
-      case_type: caseType,
-      sub_type: subType,
+    const configContext = bouwCorrectieContext({
+      caseType,
+      subType,
+      actie: dialoogData.actie,
+      artikelNummer: dialoogData.artikel_nummer,
       sectie,
-      herkomst: dialoogData.bron_herkomst ?? null,
-      bron_tabel: bronTabel,
-      bron_id: bronId,
+      bronTabel: bronTabel,
+      bronId: bronId,
+      bronHerkomst: dialoogData.bron_herkomst ?? null,
+      meerdereBronnen: meerdere,
       bijdragen,
-      meerdere_bronnen: meerdere,
-      config_fields: configSnapshot ?? null,
-    };
+      configSnapshot: configSnapshot ?? null,
+    });
+
     slaCorrectieOp.mutate({
       case_id: caseId,
       case_type: caseType,
