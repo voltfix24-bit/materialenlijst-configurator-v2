@@ -53,6 +53,7 @@ export function GgiRegelsTab() {
       </div>
       <DataTable
         headers={["Volgorde", "Artikel", "Hoeveelheid", "Actief", ""]}
+        rowIds={(data as Ggi[]).map((g) => g.id)}
         rows={(data as Ggi[]).map((g) => [
           g.sort_order,
           <ArtikelLabel id={g.artikel_id} />,
