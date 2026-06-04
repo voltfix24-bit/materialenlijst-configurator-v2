@@ -399,16 +399,31 @@ function ConfigContextInfo({ notificatie }: { notificatie: BeheerNotificatie }) 
     if (Array.isArray(v) && v.length === 0) return false;
     return typeof v === "string" || typeof v === "number" || typeof v === "boolean";
   });
-  if (entries.length === 0 && !ctx.herkomst && !ctx.sectie) return null;
+  const heeftSemantiek = !!(ctx.vraag_key && ctx.gekozen_antwoord);
+  if (entries.length === 0 && !ctx.herkomst && !ctx.sectie && !ctx.leesbare_zin) return null;
   return (
-    <div className="mt-2 pt-2 border-t border-border/60">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+    <div className="mt-2 pt-2 border-t border-border/60 space-y-1.5">
+      {ctx.leesbare_zin && (
+        <p className="text-xs text-foreground italic">{ctx.leesbare_zin}</p>
+      )}
+      {!heeftSemantiek && (
+        <div className="flex items-start gap-1.5 text-[11px] text-amber-700 bg-amber-50 dark:bg-amber-950/30 rounded px-2 py-1.5">
+          <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+          <span><strong>Context onvolledig</strong> — handmatig beoordelen.</span>
+        </div>
+      )}
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
         Configuratie-context
       </div>
       <div className="flex flex-wrap gap-1">
-        {ctx.sectie && (
+        {ctx.sectie_label && (
           <span className="px-1.5 py-0.5 rounded bg-muted text-[10px]">
-            sectie: <span className="font-mono">{ctx.sectie}</span>
+            sectie: <span className="font-mono">{ctx.sectie_label}</span>
+          </span>
+        )}
+        {ctx.vraag_label && ctx.gekozen_antwoord && (
+          <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px]">
+            {ctx.vraag_label}: <span className="font-mono">{ctx.gekozen_antwoord}</span>
           </span>
         )}
         {entries.map(([k, v]) => (
@@ -420,6 +435,7 @@ function ConfigContextInfo({ notificatie }: { notificatie: BeheerNotificatie }) 
     </div>
   );
 }
+
 
 
 
