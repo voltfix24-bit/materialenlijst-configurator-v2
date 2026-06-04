@@ -468,6 +468,7 @@ export function LsBeveiligingOptiesTab() {
       </div>
       <DataTable
         headers={["Volgorde", "Label", "Artikel", "Actief", ""]}
+        rowIds={rows.map((r) => r.id)}
         rows={rows.map((r) => [
           r.sort_order,
           <span className="font-medium">{r.label}</span>,
