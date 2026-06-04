@@ -103,19 +103,83 @@ export function bepaalSemantiek(
     case 'lsRek': {
       const actie = pickStr(config, 'lsRekActie')
       const type = pickStr(config, 'lsRekType')
-      if (!actie && !type) return empty
+      const schroef = pickStr(config, 'lsRekSchroefpatroon')
+      const bevAanp = config.lsRekBeveiligingAanpassen === true
+      const ov = config.lsRekOvStuurpunt === true
+      const extraStroken = Number(config.lsRekExtraStroken ?? 0)
+      const aansluitKabels = Number(config.lsRekAanSluitenKabels ?? 0)
+      const aantalBev = Number(config.lsRekAantalBeveiligingen ?? 0)
+      const bevArtikelen = Array.isArray(config.lsRekBeveiligingen)
+        ? (config.lsRekBeveiligingen as unknown[]).filter((x) => typeof x === 'string' && x).length
+        : 0
+
+      const moffenActief = config.lsMoffenActief === true
+      const lsMoffenRaw = Array.isArray(config.lsMoffen) ? (config.lsMoffen as Array<Record<string, unknown>>) : []
+      const moffen = moffenActief ? lsMoffenRaw : []
+      const aantalMoffen = moffen.reduce((s, m) => s + (Number(m.aantal) || 0), 0)
+      const mofTypes = Array.from(new Set(moffen.map((m) => String(m.type ?? '')).filter(Boolean))).sort()
+      const bestaandeTypes = Array.from(new Set(moffen.map((m) => String(m.bestaandType ?? '')).filter(Boolean))).sort()
+      const heeftZwaaiNee = moffen.some((m) => m.kanZwaaien === false)
+      const heeftZwaaiJa = moffen.some((m) => m.kanZwaaien === true)
+      const opnieuwMax = moffen.reduce((s, m) => Math.max(s, Number(m.opnieuwAantal) || 0), 0)
+      const kabelMeters = moffen.reduce((s, m) => s + (Number(m.kabelLengteMeters) || 0), 0)
+
+      const tracesRaw = Array.isArray(config.lsKabelTraces) ? (config.lsKabelTraces as Array<Record<string, unknown>>) : []
+      const traces = tracesRaw.filter((t) => Number(t.lengteMeters) > 0)
+
+      if (!actie && !type && !moffenActief && traces.length === 0) return empty
+
+      // Compact maar onderscheidend antwoord. Volgorde: basis → schroef/OV → moffen → trace.
+      const parts: string[] = []
+      if (actie || type) parts.push([actie, type ? `${type}r` : null].filter(Boolean).join('/'))
+      if (schroef) parts.push(schroef)
+      if (bevAanp) parts.push('bev-aanp')
+      if (ov) parts.push('+OV')
+      if (extraStroken > 0) parts.push('+stroken')
+      if (aansluitKabels > 0) parts.push('+aansluitk')
+      if (aantalBev > 0 || bevArtikelen > 0) parts.push(`mespatroon×${aantalBev || bevArtikelen}`)
+      if (moffenActief) {
+        const mofToken = [
+          'mof',
+          mofTypes.length ? mofTypes.join('+') : null,
+          bestaandeTypes.length ? `op ${bestaandeTypes.join('+')}` : null,
+          heeftZwaaiNee ? 'zwaai-nee' : heeftZwaaiJa ? 'zwaai-ja' : null,
+        ]
+          .filter(Boolean)
+          .join(' ')
+        parts.push(mofToken)
+      } else {
+        parts.push('geen-mof')
+      }
+      if (traces.length > 0) parts.push(`trace×${traces.length}`)
+
+      const gekozen_antwoord = parts.join(' / ')
+
       return {
         sectie_key,
         sectie_label,
-        vraag_key: 'lsrek_actie_type',
-        vraag_label: 'LS-rek actie + aantal richtingen',
-        gekozen_antwoord: [actie, type ? `${type} richtingen` : null].filter(Boolean).join(' / '),
+        vraag_key: 'lsrek_volledig',
+        vraag_label: 'LS-rek configuratie',
+        gekozen_antwoord,
         relevante_config: {
           lsRekActie: actie,
           lsRekType: type,
-          lsRekSchroefpatroon: pickStr(config, 'lsRekSchroefpatroon'),
-          lsRekBeveiligingAanpassen: config.lsRekBeveiligingAanpassen ?? null,
-          lsRekOvStuurpunt: config.lsRekOvStuurpunt ?? null,
+          lsRekSchroefpatroon: schroef,
+          lsRekBeveiligingAanpassen: bevAanp,
+          lsRekOvStuurpunt: ov,
+          lsRekExtraStroken: extraStroken,
+          lsRekAanSluitenKabels: aansluitKabels,
+          lsRekAantalBeveiligingen: aantalBev,
+          lsRekAantalBeveiligingArtikelen: bevArtikelen,
+          lsMoffenActief: moffenActief,
+          lsMofTypes: mofTypes,
+          lsMofBestaandeTypes: bestaandeTypes,
+          lsMofAantal: aantalMoffen,
+          lsMofKanZwaaien: heeftZwaaiNee ? false : heeftZwaaiJa ? true : null,
+          lsMofOpnieuwAantalMax: opnieuwMax,
+          lsMofKabelMetersTotaal: kabelMeters,
+          lsKabelTracesAantal: traces.length,
+          lsKabelTracesMetersTotaal: traces.reduce((s, t) => s + (Number(t.lengteMeters) || 0), 0),
         },
       }
     }
