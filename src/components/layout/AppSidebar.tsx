@@ -6,6 +6,8 @@ import { useTheme } from "@/lib/theme";
 import { getGlobalDirty, onGlobalDirtyChange } from "@/lib/dirty-state";
 import { useNotificatieBadge } from "@/lib/leersysteem/hooks";
 
+import terrevoltIcon from "@/assets/terrevolt-icon.png.asset.json";
+
 const items = [
   { to: "/cases", label: "Cases", icon: LayoutGrid },
   { to: "/beheer", label: "Beheer", icon: Database },
@@ -14,17 +16,7 @@ const items = [
 
 function TerreVoltLogo({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 100 130" className={className} fill="none" aria-hidden>
-      <path
-        d="M55 5L10 65h35L30 115l60-70H55L70 5z"
-        fill="#2db85a"
-        stroke="#2db85a"
-        strokeWidth="2"
-      />
-      <rect x="20" y="108" width="60" height="6" rx="3" fill="#eaab20" />
-      <rect x="30" y="116" width="40" height="4" rx="2" fill="#eaab20" />
-      <rect x="40" y="122" width="20" height="3" rx="1.5" fill="#eaab20" />
-    </svg>
+    <img src={terrevoltIcon.url} alt="TerreVolt" className={className} />
   );
 }
 
