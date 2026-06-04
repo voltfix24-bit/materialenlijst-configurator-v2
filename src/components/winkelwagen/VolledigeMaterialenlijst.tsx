@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 import {
   PREVIEW_SECTIE_DEFS,
   type PreviewItem,
-  type PreviewSectie,
 } from "@/lib/configurator/types";
 import type { ExportProbleemArtikel } from "./ExportBevestigingDialoog";
+import { BronOverzichtPopover } from "./BronOverzichtPopover";
 
 interface ArtikelStam {
   id: string;
