@@ -303,3 +303,110 @@ describe('bepaalSemantiek RMU details', () => {
   })
 })
 
+
+describe('bepaalSemantiek MS/LS verbindingen (Fase 3C)', () => {
+  it('LS aftakmof: token bevat soort/kabel/zwaai/lengtecategorie', () => {
+    const s = bepaalSemantiek('lsVerbindingen', {
+      lsMoffenActief: true,
+      lsMoffen: [{ type: 'aftakmof', bestaandType: 'GPLK', kanZwaaien: false, kabelLengteMeters: 8 }],
+    }, { bronTabel: 'ls_mof_materialen' })
+    expect(s.vraag_key).toBe('ls_mof_context')
+    expect(s.gekozen_antwoord).toBe('ls/mof/aftakmof/GPLK/zwaai-nee/1-10m')
+  })
+
+  it('MS vs LS mof geven verschillende context-key', () => {
+    const ms = bepaalSemantiek('msVerbindingen', {
+      msRichtingen: [{ id: 'r1', mofTijdelijk: { nieuwType: '3x240AL', bestaandType: '3x240AL', isEindmof: false }, kabelTraceId: null }],
+    }, { bronTabel: 'ms_mof_materialen' }).gekozen_antwoord
+    const ls = bepaalSemantiek('lsVerbindingen', {
+      lsMoffenActief: true,
+      lsMoffen: [{ type: 'verbinding', bestaandType: 'GPLK', kanZwaaien: true, kabelLengteMeters: 5 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    expect(ms).not.toBe(ls)
+    expect(ms?.startsWith('ms/')).toBe(true)
+    expect(ls?.startsWith('ls/')).toBe(true)
+  })
+
+  it('verbindingsmof vs aftakmof verschillen', () => {
+    const a = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'verbinding', bestaandType: 'GPLK', kabelLengteMeters: 5 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    const b = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'aftakmof', bestaandType: 'GPLK', kabelLengteMeters: 5 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    expect(a).not.toBe(b)
+  })
+
+  it('eindmof vs verbindingsmof verschillen (MS via isEindmof)', () => {
+    const eind = bepaalSemantiek('msVerbindingen', {
+      msRichtingen: [{ id: 'r1', mofTijdelijk: { nieuwType: '3x240AL', bestaandType: '3x240AL', isEindmof: true }, kabelTraceId: null }],
+    }, { bronTabel: 'ms_mof_materialen' }).gekozen_antwoord
+    const verb = bepaalSemantiek('msVerbindingen', {
+      msRichtingen: [{ id: 'r1', mofTijdelijk: { nieuwType: '3x240AL', bestaandType: '3x240AL', isEindmof: false }, kabelTraceId: null }],
+    }, { bronTabel: 'ms_mof_materialen' }).gekozen_antwoord
+    expect(eind).not.toBe(verb)
+    expect(eind).toContain('eindmof')
+    expect(verb).toContain('verbindingsmof')
+  })
+
+  it('kabeltype A vs B verschillende context-key (LS)', () => {
+    const a = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'aftakmof', bestaandType: 'GPLK', kabelLengteMeters: 5 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    const b = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'aftakmof', bestaandType: 'kunststof', kabelLengteMeters: 5 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    expect(a).not.toBe(b)
+  })
+
+  it('5m vs 30m vallen in verschillende lengtecategorieën', () => {
+    const a = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'aftakmof', bestaandType: 'GPLK', kabelLengteMeters: 5 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    const b = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'aftakmof', bestaandType: 'GPLK', kabelLengteMeters: 30 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    expect(a).not.toBe(b)
+    expect(a).toContain('1-10m')
+    expect(b).toContain('26-50m')
+  })
+
+  it('exacte meters binnen dezelfde categorie geven dezelfde key', () => {
+    const a = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'aftakmof', bestaandType: 'GPLK', kabelLengteMeters: 12 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    const b = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'aftakmof', bestaandType: 'GPLK', kabelLengteMeters: 20 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    expect(a).toBe(b)
+    expect(a).toContain('11-25m')
+  })
+
+  it('kabel omzwaaien ja vs nee verschillende key', () => {
+    const ja = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'aftakmof', bestaandType: 'GPLK', kanZwaaien: true, kabelLengteMeters: 5 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    const nee = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'aftakmof', bestaandType: 'GPLK', kanZwaaien: false, kabelLengteMeters: 5 }],
+    }, { bronTabel: 'ls_mof_materialen' }).gekozen_antwoord
+    expect(ja).not.toBe(nee)
+    expect(ja).toContain('zwaai-ja')
+    expect(nee).toContain('zwaai-nee')
+  })
+
+  it('ontbrekend kabeltype → context_volledig=false (gekozen_antwoord null)', () => {
+    const s = bepaalSemantiek('lsVerbindingen', {
+      lsMoffen: [{ type: 'aftakmof', kabelLengteMeters: 5 }],
+    }, { bronTabel: 'ls_mof_materialen' })
+    expect(s.vraag_key).toBe('ls_mof_context')
+    expect(s.gekozen_antwoord).toBeNull()
+  })
+
+  it('MS kabeltrace context: kabeltype + lengtecategorie', () => {
+    const s = bepaalSemantiek('msVerbindingen', {
+      msKabelTraces: [{ id: 't1', kabelType: '3x240AL', lengteMeters: 30 }],
+    }, { bronTabel: 'ms_kabel_regels' })
+    expect(s.vraag_key).toBe('ms_trace_context')
+    expect(s.gekozen_antwoord).toBe('ms/trace/3x240AL/26-50m')
+  })
+})
