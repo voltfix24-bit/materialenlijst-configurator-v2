@@ -332,29 +332,9 @@ export function bepaalSemantiek(
         relevante_config: { provRmuMerk: merk, provRmuConfigCode: code, provZekeringKva: kva },
       }
     }
-    case 'msVerbindingen': {
-      const richtingen = Array.isArray(config.msRichtingen) ? (config.msRichtingen as unknown[]).length : 0
-      if (richtingen === 0) return empty
-      return {
-        sectie_key,
-        sectie_label,
-        vraag_key: 'ms_aantal_richtingen',
-        vraag_label: 'MS aantal richtingen',
-        gekozen_antwoord: `${richtingen} richting${richtingen === 1 ? '' : 'en'}`,
-        relevante_config: { aantal_richtingen: richtingen },
-      }
-    }
+    case 'msVerbindingen':
     case 'lsVerbindingen': {
-      const aantal = Array.isArray(config.lsMoffen) ? (config.lsMoffen as unknown[]).length : 0
-      if (aantal === 0) return empty
-      return {
-        sectie_key,
-        sectie_label,
-        vraag_key: 'ls_aantal_moffen',
-        vraag_label: 'LS aantal moffen',
-        gekozen_antwoord: `${aantal} mof${aantal === 1 ? '' : 'fen'}`,
-        relevante_config: { aantal_ls_moffen: aantal },
-      }
+      return semantiekVerbindingen(sectie, sectie_key, sectie_label, config, extra ?? {})
     }
     case 'ggi': {
       const v = config.ggiVervangen
