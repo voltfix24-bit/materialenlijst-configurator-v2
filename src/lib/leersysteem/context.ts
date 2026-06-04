@@ -86,6 +86,243 @@ export interface SemantiekExtra {
   artikelNummer?: string | null
 }
 
+/** Lengtecategorie om versnippering te voorkomen. */
+function lengteCategorie(meters: number | null | undefined): string | null {
+  if (meters == null) return null
+  const m = Number(meters)
+  if (!Number.isFinite(m) || m < 0) return null
+  if (m === 0) return '0m'
+  if (m <= 10) return '1-10m'
+  if (m <= 25) return '11-25m'
+  if (m <= 50) return '26-50m'
+  return '>50m'
+}
+
+const MOF_SOORT_MAP: Record<string, string> = {
+  verbinding: 'verbindingsmof',
+  verbindingsmof: 'verbindingsmof',
+  aftakmof: 'aftakmof',
+  aftak: 'aftakmof',
+  eindmof: 'eindmof',
+  eind: 'eindmof',
+  'rechte mof': 'verbindingsmof',
+  rechtemof: 'verbindingsmof',
+}
+
+function normaliseerMofSoort(s: string | null | undefined): string | null {
+  if (!s) return null
+  const key = String(s).toLowerCase().trim()
+  if (MOF_SOORT_MAP[key]) return MOF_SOORT_MAP[key]
+  if (/aftak/.test(key)) return 'aftakmof'
+  if (/eind/.test(key)) return 'eindmof'
+  if (/verbind|recht/.test(key)) return 'verbindingsmof'
+  return null
+}
+
+const MS_KABEL_TOKENS = ['3x240AL', '3x150AL', '3x95AL', '240AL_singel', '630AL_singel', '240AL', '630AL']
+const LS_KABEL_TOKENS = ['4x150AL', '4x95AL', '4x50AL', '4x25AL', 'GPLK', 'kunststof']
+
+function detectKabelType(s: string | null | undefined, lijst: string[]): string | null {
+  if (!s) return null
+  for (const k of lijst) {
+    const re = new RegExp(k.replace(/[+]/g, '\\+'), 'i')
+    if (re.test(s)) return k
+  }
+  return null
+}
+
+interface VerbindingenExtra {
+  bronTabel?: string | null
+  bronHerkomst?: string | null
+  artikelNummer?: string | null
+}
+
+function emptySemantiek(sectie_key: string | null, sectie_label: string | null): Semantiek {
+  return {
+    sectie_key,
+    sectie_label,
+    vraag_key: null,
+    vraag_label: null,
+    gekozen_antwoord: null,
+    relevante_config: null,
+  }
+}
+
+function semantiekVerbindingen(
+  sectie: 'msVerbindingen' | 'lsVerbindingen',
+  sectie_key: string | null,
+  sectie_label: string | null,
+  config: Record<string, unknown>,
+  extra: VerbindingenExtra,
+): Semantiek {
+  const isMs = sectie === 'msVerbindingen'
+  const prefix = isMs ? 'ms' : 'ls'
+  const bronTabel = extra.bronTabel ?? null
+  const herk = extra.bronHerkomst ?? null
+
+  const isMof =
+    bronTabel === 'ms_mof_materialen' ||
+    bronTabel === 'ls_mof_materialen' ||
+    /mof/i.test(herk ?? '')
+  const isTrace =
+    bronTabel === 'ms_kabel_regels' ||
+    (!isMof && /trace|kabel/i.test(herk ?? ''))
+
+  const kabelLijst = isMs ? MS_KABEL_TOKENS : LS_KABEL_TOKENS
+
+  if (!isMs && isMof) {
+    const moffen = Array.isArray(config.lsMoffen)
+      ? (config.lsMoffen as Array<Record<string, unknown>>)
+      : []
+    let mof: Record<string, unknown> | null = null
+    if (moffen.length === 1) mof = moffen[0]
+    if (!mof && herk) {
+      const mIdx = herk.match(/mof\s*(\d+)/i)
+      if (mIdx) mof = moffen[Number(mIdx[1]) - 1] ?? null
+    }
+    const soort =
+      normaliseerMofSoort(mof ? String(mof.type ?? '') : null) ??
+      normaliseerMofSoort(herk)
+    const bestaand =
+      (mof && mof.bestaandType ? String(mof.bestaandType) : '') ||
+      detectKabelType(herk, LS_KABEL_TOKENS) ||
+      null
+    const kanZwaaien =
+      mof && typeof mof.kanZwaaien === 'boolean' ? (mof.kanZwaaien as boolean) : null
+    const lengte = mof ? Number(mof.kabelLengteMeters) : NaN
+    const cat = lengteCategorie(Number.isFinite(lengte) ? lengte : null)
+
+    if (!soort && !bestaand) return emptySemantiek(sectie_key, sectie_label)
+    const tokens = [prefix, 'mof']
+    if (soort) tokens.push(soort)
+    if (bestaand) tokens.push(bestaand)
+    if (kanZwaaien === true) tokens.push('zwaai-ja')
+    else if (kanZwaaien === false) tokens.push('zwaai-nee')
+    if (cat) tokens.push(cat)
+    const compleet = !!soort && !!bestaand
+    return {
+      sectie_key,
+      sectie_label,
+      vraag_key: 'ls_mof_context',
+      vraag_label: 'LS mof context',
+      gekozen_antwoord: compleet ? tokens.join('/') : null,
+      relevante_config: {
+        mofSoort: soort,
+        bestaandKabel: bestaand,
+        kanZwaaien,
+        lengteCategorie: cat,
+        bronTabel,
+      },
+    }
+  }
+
+  if (isMs && isMof) {
+    const richtingen = Array.isArray(config.msRichtingen)
+      ? (config.msRichtingen as Array<Record<string, unknown>>)
+      : []
+    const traces = Array.isArray(config.msKabelTraces)
+      ? (config.msKabelTraces as Array<Record<string, unknown>>)
+      : []
+    let r: Record<string, unknown> | null = null
+    if (richtingen.length === 1) r = richtingen[0]
+    if (!r && herk) {
+      const mIdx = herk.match(/richting\s*(\d+)/i)
+      if (mIdx) r = richtingen[Number(mIdx[1]) - 1] ?? null
+    }
+    const mofCfg = (r?.mofTijdelijk ?? null) as Record<string, unknown> | null
+    const isEind = mofCfg?.isEindmof === true
+    const soortHerk = normaliseerMofSoort(herk)
+    const soort = isEind ? 'eindmof' : soortHerk ?? 'verbindingsmof'
+    const nieuw =
+      (mofCfg && mofCfg.nieuwType ? String(mofCfg.nieuwType) : '') ||
+      detectKabelType(herk, MS_KABEL_TOKENS) ||
+      null
+    const bestaand = (mofCfg && mofCfg.bestaandType ? String(mofCfg.bestaandType) : '') || null
+    const traceId = r?.kabelTraceId ? String(r.kabelTraceId) : null
+    const trace = traceId ? traces.find((t) => String(t.id) === traceId) ?? null : null
+    const cat = lengteCategorie(trace ? Number(trace.lengteMeters) : null)
+
+    if (!nieuw && !bestaand && !soortHerk && !isEind) {
+      return emptySemantiek(sectie_key, sectie_label)
+    }
+    const tokens = [prefix, 'mof', soort]
+    if (nieuw) tokens.push(nieuw)
+    if (bestaand) tokens.push(`op-${bestaand}`)
+    if (cat) tokens.push(cat)
+    const compleet = !!(nieuw || bestaand)
+    return {
+      sectie_key,
+      sectie_label,
+      vraag_key: 'ms_mof_context',
+      vraag_label: 'MS mof context',
+      gekozen_antwoord: compleet ? tokens.join('/') : null,
+      relevante_config: {
+        mofSoort: soort,
+        nieuwKabel: nieuw,
+        bestaandKabel: bestaand,
+        lengteCategorie: cat,
+        bronTabel,
+      },
+    }
+  }
+
+  if (isTrace) {
+    const tracesRaw = isMs
+      ? (Array.isArray(config.msKabelTraces) ? (config.msKabelTraces as Array<Record<string, unknown>>) : [])
+      : (Array.isArray(config.lsKabelTraces) ? (config.lsKabelTraces as Array<Record<string, unknown>>) : [])
+    let t: Record<string, unknown> | null = null
+    if (tracesRaw.length === 1) t = tracesRaw[0]
+    if (!t && herk) {
+      const mIdx = herk.match(/trace\s*(\d+)/i)
+      if (mIdx) t = tracesRaw[Number(mIdx[1]) - 1] ?? null
+    }
+    const kabel =
+      (t && t.kabelType ? String(t.kabelType) : null) ||
+      detectKabelType(herk, kabelLijst) ||
+      null
+    const lengte = t ? Number(t.lengteMeters) : NaN
+    const cat = lengteCategorie(Number.isFinite(lengte) ? lengte : null)
+    if (!kabel && !cat) return emptySemantiek(sectie_key, sectie_label)
+    const tokens = [prefix, 'trace']
+    if (kabel) tokens.push(kabel)
+    if (cat) tokens.push(cat)
+    const compleet = !!kabel
+    return {
+      sectie_key,
+      sectie_label,
+      vraag_key: isMs ? 'ms_trace_context' : 'ls_trace_context',
+      vraag_label: isMs ? 'MS kabeltrace' : 'LS kabeltrace',
+      gekozen_antwoord: compleet ? tokens.join('/') : null,
+      relevante_config: { kabelType: kabel, lengteCategorie: cat, bronTabel },
+    }
+  }
+
+  // Fallback: legacy korte semantiek (geen bron-info)
+  if (isMs) {
+    const richtingen = Array.isArray(config.msRichtingen) ? (config.msRichtingen as unknown[]).length : 0
+    if (richtingen === 0) return emptySemantiek(sectie_key, sectie_label)
+    return {
+      sectie_key,
+      sectie_label,
+      vraag_key: 'ms_aantal_richtingen',
+      vraag_label: 'MS aantal richtingen',
+      gekozen_antwoord: `${richtingen} richting${richtingen === 1 ? '' : 'en'}`,
+      relevante_config: { aantal_richtingen: richtingen },
+    }
+  }
+  const aantal = Array.isArray(config.lsMoffen) ? (config.lsMoffen as unknown[]).length : 0
+  if (aantal === 0) return emptySemantiek(sectie_key, sectie_label)
+  return {
+    sectie_key,
+    sectie_label,
+    vraag_key: 'ls_aantal_moffen',
+    vraag_label: 'LS aantal moffen',
+    gekozen_antwoord: `${aantal} mof${aantal === 1 ? '' : 'fen'}`,
+    relevante_config: { aantal_ls_moffen: aantal },
+  }
+}
+
+
 /** Bepaal sectie/vraag/antwoord op basis van sectie + config snapshot.
  *  Geeft null wanneer er onvoldoende context is om semantisch te groeperen.
  *  `extra` mag bron-info bevatten zodat per-bronregel semantiek (zoals RMU
