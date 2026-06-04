@@ -93,6 +93,7 @@ export function StandaardMaterialenTab() {
       </div>
       <DataTable
         headers={["Case type", "Artikel", "Hoeveelheid", ""]}
+        rowIds={gefilterd.map((s) => s.id)}
         rows={gefilterd.map((s) => [
           s.case_type,
           <ArtikelLabel id={s.artikel_id} />,
