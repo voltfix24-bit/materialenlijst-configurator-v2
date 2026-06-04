@@ -211,7 +211,11 @@ export function MsMofTab() {
             )}
             {(data as MsMof[]).map((m) => (
               <React.Fragment key={m.id}>
-                <tr key={m.id} className="hover:bg-accent/40">
+                <tr
+                  key={m.id}
+                  data-row-id={m.id}
+                  className="hover:bg-accent/40 data-[highlight=true]:bg-primary/10 data-[highlight=true]:ring-2 data-[highlight=true]:ring-primary data-[highlight=true]:ring-inset"
+                >
                   <td className="px-3 py-2 w-8"><ExpandRow expanded={expanded.has(m.id)} onToggle={() => toggle(m.id)} /></td>
                   <td className="px-3 py-2 font-mono text-xs">{m.code}</td>
                   <td className="px-3 py-2">{m.bestaand_type}</td>
