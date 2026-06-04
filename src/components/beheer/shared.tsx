@@ -52,6 +52,7 @@ export function LegeStaat({
 export function DataTable({
   headers,
   rows,
+  rowIds,
   loading = false,
   emptyMessage = "Geen data.",
   emptyAction,
@@ -60,6 +61,8 @@ export function DataTable({
 }: {
   headers: string[];
   rows: React.ReactNode[][];
+  /** Optioneel: stabiele DB-id per rij voor `data-row-id` deeplink-highlight. */
+  rowIds?: (string | undefined)[];
   loading?: boolean;
   emptyMessage?: string;
   emptyAction?: React.ReactNode;
@@ -102,15 +105,25 @@ export function DataTable({
               </td>
             </tr>
           )}
-          {rows.map((r, i) => (
-            <tr key={i} className="hover:bg-accent-subtle/50 align-top transition-colors">
-              {r.map((c, j) => (
-                <td key={j} className="px-3 py-2">
-                  {c ?? "—"}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {rows.map((r, i) => {
+            const rid = rowIds?.[i];
+            return (
+              <tr
+                key={rid ?? i}
+                data-row-id={rid}
+                className={cn(
+                  "hover:bg-accent-subtle/50 align-top transition-colors",
+                  "data-[highlight=true]:bg-primary/10 data-[highlight=true]:ring-2 data-[highlight=true]:ring-primary data-[highlight=true]:ring-inset",
+                )}
+              >
+                {r.map((c, j) => (
+                  <td key={j} className="px-3 py-2">
+                    {c ?? "—"}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

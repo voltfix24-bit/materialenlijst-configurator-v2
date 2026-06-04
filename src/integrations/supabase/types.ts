@@ -174,12 +174,17 @@ export type Database = {
           afgehandeld_door: string | null
           afgehandeld_op: string | null
           artikel_nummer: string
+          bijdragen: Json | null
+          bron_herkomst: string | null
+          bron_id: string | null
+          bron_tabel: string | null
           case_type: string
           correctie_ids: string[] | null
           created_at: string | null
           gemiddelde_wijziging: number | null
           id: string
           korte_omschrijving: string | null
+          meerdere_bronnen: boolean
           status: string
           sub_type: string
           type: string
@@ -191,12 +196,17 @@ export type Database = {
           afgehandeld_door?: string | null
           afgehandeld_op?: string | null
           artikel_nummer: string
+          bijdragen?: Json | null
+          bron_herkomst?: string | null
+          bron_id?: string | null
+          bron_tabel?: string | null
           case_type: string
           correctie_ids?: string[] | null
           created_at?: string | null
           gemiddelde_wijziging?: number | null
           id?: string
           korte_omschrijving?: string | null
+          meerdere_bronnen?: boolean
           status?: string
           sub_type: string
           type: string
@@ -208,12 +218,17 @@ export type Database = {
           afgehandeld_door?: string | null
           afgehandeld_op?: string | null
           artikel_nummer?: string
+          bijdragen?: Json | null
+          bron_herkomst?: string | null
+          bron_id?: string | null
+          bron_tabel?: string | null
           case_type?: string
           correctie_ids?: string[] | null
           created_at?: string | null
           gemiddelde_wijziging?: number | null
           id?: string
           korte_omschrijving?: string | null
+          meerdere_bronnen?: boolean
           status?: string
           sub_type?: string
           type?: string
@@ -1252,6 +1267,10 @@ export type Database = {
         Row: {
           actie: string
           artikel_nummer: string
+          bijdragen: Json | null
+          bron_herkomst: string | null
+          bron_id: string | null
+          bron_tabel: string | null
           case_id: string | null
           case_type: string
           created_at: string | null
@@ -1267,6 +1286,10 @@ export type Database = {
         Insert: {
           actie: string
           artikel_nummer: string
+          bijdragen?: Json | null
+          bron_herkomst?: string | null
+          bron_id?: string | null
+          bron_tabel?: string | null
           case_id?: string | null
           case_type: string
           created_at?: string | null
@@ -1282,6 +1305,10 @@ export type Database = {
         Update: {
           actie?: string
           artikel_nummer?: string
+          bijdragen?: Json | null
+          bron_herkomst?: string | null
+          bron_id?: string | null
+          bron_tabel?: string | null
           case_id?: string | null
           case_type?: string
           created_at?: string | null

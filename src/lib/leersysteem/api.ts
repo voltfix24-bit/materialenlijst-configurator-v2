@@ -2,9 +2,10 @@ import { supabase } from '@/integrations/supabase/client'
 import type { WinkelwagenCorrectie, BeheerNotificatie } from './types'
 
 export async function slaCorrectieOp(correctie: WinkelwagenCorrectie): Promise<void> {
+  // Cast om Supabase-types/Json mismatch met bijdragen (jsonb) op te lossen.
   const { error } = await supabase
     .from('winkelwagen_correcties')
-    .insert(correctie)
+    .insert(correctie as never)
   if (error) throw error
 }
 
@@ -43,38 +44,64 @@ export async function verwerkNotificatie(
   if (error) throw error
 }
 
+/** Veilige set van bron-tabellen die we automatisch durven aanpassen. */
+const AUTO_BRON_TABELLEN: Record<string, { qtyKol?: string }> = {
+  standaard_materialen_templates: { qtyKol: 'standaard_hoeveelheid' },
+  ls_rek_regels: { qtyKol: 'hoeveelheid' },
+  rmu_veld_regels: { qtyKol: 'hoeveelheid' },
+  rmu_veld_artikelen: { qtyKol: 'hoeveelheid' },
+  rmu_zekeringen: { qtyKol: 'hoeveelheid' },
+  trafo_regels: { qtyKol: 'hoeveelheid' },
+  prov_regels: { qtyKol: 'hoeveelheid' },
+  ms_kabel_regels: { qtyKol: 'hoeveelheid' },
+  ms_mof_materialen: { qtyKol: 'hoeveelheid' },
+  ls_mof_materialen: { qtyKol: 'hoeveelheid' },
+  ggi_artikelen: { qtyKol: 'hoeveelheid' },
+  station_vaste_artikelen: { qtyKol: 'hoeveelheid' },
+}
+
 export async function voerGoedgekeurdeWijzigingDoor(
   notificatie: BeheerNotificatie
 ): Promise<void> {
-  if (notificatie.actie === 'verwijderd') {
-    const { data: artData } = await supabase
-      .from('artikelen')
-      .select('id')
-      .eq('artikel_nummer', notificatie.artikel_nummer)
-      .single()
-    if (artData) {
-      await supabase
-        .from('standaard_materialen_templates')
-        .delete()
-        .eq('case_type', notificatie.case_type)
-        .eq('artikel_id', artData.id)
-    }
-  } else if (
-    notificatie.actie === 'hoeveelheid_gewijzigd' &&
-    notificatie.gemiddelde_wijziging != null
-  ) {
-    const { data: artData } = await supabase
-      .from('artikelen')
-      .select('id')
-      .eq('artikel_nummer', notificatie.artikel_nummer)
-      .single()
-    if (artData) {
-      await supabase
-        .from('standaard_materialen_templates')
-        .update({ standaard_hoeveelheid: Math.round(notificatie.gemiddelde_wijziging) })
-        .eq('case_type', notificatie.case_type)
-        .eq('artikel_id', artData.id)
-    }
+  // Bij meerdere bronnen of onbekende bron: niet blind automatiseren.
+  if (notificatie.meerdere_bronnen || !notificatie.bron_tabel) {
+    throw new Error(
+      'Deze notificatie heeft meerdere of onbekende bronnen — pas de regel handmatig aan in Beheer.',
+    )
   }
-  // 'toegevoegd' vereist handmatige actie via beheer pagina
+  const meta = AUTO_BRON_TABELLEN[notificatie.bron_tabel]
+  if (!meta) {
+    throw new Error(
+      `Automatisch doorvoeren op bron-tabel '${notificatie.bron_tabel}' wordt nog niet ondersteund — pas handmatig aan.`,
+    )
+  }
+
+  if (notificatie.actie === 'verwijderd') {
+    if (!notificatie.bron_id) {
+      throw new Error('Bron-id ontbreekt — handmatig verwijderen in Beheer.')
+    }
+    const { error } = await (supabase as never as any)
+      .from(notificatie.bron_tabel)
+      .delete()
+      .eq('id', notificatie.bron_id)
+    if (error) throw error
+    return
+  }
+
+  if (notificatie.actie === 'hoeveelheid_gewijzigd' && notificatie.gemiddelde_wijziging != null) {
+    if (!notificatie.bron_id || !meta.qtyKol) {
+      throw new Error('Bron-id of hoeveelheid-kolom ontbreekt — handmatig aanpassen.')
+    }
+    const nieuw = Math.round(notificatie.gemiddelde_wijziging)
+    const { error } = await (supabase as never as any)
+      .from(notificatie.bron_tabel)
+      .update({ [meta.qtyKol]: nieuw })
+      .eq('id', notificatie.bron_id)
+    if (error) throw error
+    return
+  }
+
+  // 'toegevoegd' vereist altijd handmatige actie.
+  throw new Error('Nieuwe artikelen moeten handmatig aan een regel worden toegevoegd in Beheer.')
 }
+

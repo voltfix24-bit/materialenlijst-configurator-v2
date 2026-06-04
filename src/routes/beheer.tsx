@@ -13,6 +13,7 @@ import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
 import { RegelsSamenvattingTab } from "@/components/beheer/RegelsSamenvattingTab";
 import { WijzigingenTab } from "@/components/beheer/WijzigingenTab";
+import { useDeeplinkHighlight } from "@/lib/beheer/useDeeplinkHighlight";
 
 type BeheerSearch = { groep?: string; tab?: string; artikel?: string; row?: string };
 
@@ -208,24 +209,35 @@ function BeheerPage() {
         ))}
       </div>
 
-      {(search.artikel || search.row) && (
-        <div className="mb-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs space-y-0.5">
-          {search.artikel && (
-            <div>
-              Geopend vanuit winkelwagen — zoek hier naar artikel{" "}
-              <strong className="font-mono">{search.artikel}</strong>.
-            </div>
-          )}
-          {search.row && (
-            <div className="text-muted-foreground">
-              Exacte regel-ID: <strong className="font-mono">{search.row}</strong> — gebruik
-              browser-zoek (Ctrl/Cmd+F) om de regel te vinden.
-            </div>
-          )}
-        </div>
-      )}
+      <DeeplinkBanner artikel={search.artikel} row={search.row} />
 
       {tab.render()}
+    </div>
+  );
+}
+
+function DeeplinkBanner({ artikel, row }: { artikel?: string; row?: string }) {
+  const { status } = useDeeplinkHighlight(row);
+  if (!artikel && !row) return null;
+  return (
+    <div className="mb-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs space-y-0.5">
+      {artikel && (
+        <div>
+          Geopend vanuit winkelwagen: deze regel voegt artikel{" "}
+          <strong className="font-mono">{artikel}</strong> toe.
+        </div>
+      )}
+      {row && status === "searching" && (
+        <div className="text-muted-foreground">Regel zoeken in deze tab…</div>
+      )}
+      {row && status === "found" && (
+        <div className="text-success">Regel gevonden en gemarkeerd.</div>
+      )}
+      {row && status === "not_found" && (
+        <div className="text-amber-700">
+          Regel niet gevonden — mogelijk verwijderd, gewijzigd of in een andere tab.
+        </div>
+      )}
     </div>
   );
 }
