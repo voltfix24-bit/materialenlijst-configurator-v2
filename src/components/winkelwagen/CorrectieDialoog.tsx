@@ -26,19 +26,19 @@ const SCOPES: ScopeOpt[] = [
   {
     value: "eenmalig",
     label: "Alleen deze keer",
-    uitleg: "De wijziging geldt alleen voor deze case. Stamdata en regels blijven ongewijzigd.",
+    uitleg: "Alleen deze case. Stamdata en regels blijven ongewijzigd. Geen beheer-voorstel.",
   },
   {
     value: "soms",
     label: "Vaker bij dit type case",
     uitleg:
-      "We slaan dit op als signaal. Beheer ziet het in Notificaties als voorstel — geen automatische regelwijziging.",
+      "Pas na 3 vergelijkbare correcties (zelfde artikel, case-type en sub-type) komt er een voorstel in beheer. Stamdata wijzigt nooit automatisch.",
   },
   {
     value: "altijd",
     label: "Altijd bij dit type case",
     uitleg:
-      "Verzoek tot structurele aanpassing. Beheer moet dit expliciet goedkeuren vóórdat stamdata of regels wijzigen.",
+      "Direct een beheer-voorstel met de bronregel erbij. Beheer moet expliciet goedkeuren voordat stamdata of regels wijzigen.",
   },
 ];
 
@@ -131,8 +131,18 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
               <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 flex items-start gap-2 text-[11px] text-amber-800">
                 <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0" />
                 <span>
-                  Dit raakt geen stamdata direct. Beheer moet het voorstel
-                  goedkeuren in Notificaties voordat regels of standaardhoeveelheden veranderen.
+                  Er wordt direct een beheer-voorstel aangemaakt. Stamdata wijzigt pas
+                  nadat beheer dit voorstel goedkeurt in Notificaties.
+                </span>
+              </div>
+            )}
+            {data.meerdere_bronnen && scope !== "eenmalig" && (
+              <div className="mt-2 rounded-md border border-orange-500/40 bg-orange-500/10 px-2.5 py-1.5 flex items-start gap-2 text-[11px] text-orange-800">
+                <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0" />
+                <span>
+                  Dit artikel komt uit meerdere regels. Het voorstel wordt
+                  gemarkeerd als <strong>handmatig beoordelen</strong> — beheer
+                  kiest welke regel aangepast wordt.
                 </span>
               </div>
             )}

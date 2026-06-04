@@ -464,6 +464,7 @@ export function MaterialenConfigurator({
           exportDisabled={exportDisabled}
           exportPending={exportPending}
           exportSignal={exportSignal}
+          configSnapshot={config as unknown as Record<string, unknown>}
         />
       </div>
     </div>

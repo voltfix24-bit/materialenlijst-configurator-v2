@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useNotificaties, useVerwerkNotificatie } from "@/lib/leersysteem/hooks";
+import { berekenVoorstel } from "@/lib/leersysteem/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, ChevronDown, ChevronUp, Loader2, Bell, AlertTriangle, ExternalLink } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Loader2, Bell, AlertTriangle, ExternalLink, Wand2, Hand } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BRON_TABEL_DEFS, type BronTabel } from "@/lib/configurator/types";
 import {
@@ -198,6 +199,7 @@ function NotificatieKaart({
             )}
           </p>
           <BronInfo notificatie={notificatie} />
+          <VoorstelInfo notificatie={notificatie} />
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -212,8 +214,9 @@ function NotificatieKaart({
           <button
             type="button"
             onClick={onDoorvoeren}
-            disabled={bezig}
-            className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-50"
+            disabled={bezig || berekenVoorstel(notificatie).kind === "handmatig"}
+            title={berekenVoorstel(notificatie).kind === "handmatig" ? "Handmatig beoordelen vereist — open de exacte regel in beheer." : undefined}
+            className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Doorvoeren
           </button>
@@ -333,4 +336,38 @@ function BronInfo({ notificatie }: { notificatie: BeheerNotificatie }) {
     </div>
   );
 }
+
+function VoorstelInfo({ notificatie }: { notificatie: BeheerNotificatie }) {
+  const v = berekenVoorstel(notificatie);
+  const isAuto = v.kind !== "handmatig";
+  return (
+    <div
+      className={cn(
+        "mt-2 rounded-md border px-2.5 py-2 flex items-start gap-2 text-[11px]",
+        isAuto
+          ? "border-success/40 bg-success/5 text-foreground"
+          : "border-amber-500/40 bg-amber-500/10 text-amber-800",
+      )}
+    >
+      {isAuto ? (
+        <Wand2 className="w-3.5 h-3.5 mt-px flex-shrink-0 text-success" />
+      ) : (
+        <Hand className="w-3.5 h-3.5 mt-px flex-shrink-0" />
+      )}
+      <div className="space-y-0.5 min-w-0">
+        <div className="font-semibold">
+          {v.kind === "auto_hoeveelheid" &&
+            `Voorstel: ${v.tabel} → ${v.qtyKol} = ${v.nieuwe_hoeveelheid}`}
+          {v.kind === "auto_verwijderen" && `Voorstel: regel verwijderen uit ${v.tabel}`}
+          {v.kind === "handmatig" && "Handmatig beoordelen"}
+        </div>
+        <div className="opacity-80">{v.reden}</div>
+        {isAuto && v.bron_id && (
+          <div className="font-mono text-[10px] opacity-70 break-all">id: {v.bron_id}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
