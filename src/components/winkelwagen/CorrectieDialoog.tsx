@@ -131,8 +131,18 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
               <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 flex items-start gap-2 text-[11px] text-amber-800">
                 <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0" />
                 <span>
-                  Dit raakt geen stamdata direct. Beheer moet het voorstel
-                  goedkeuren in Notificaties voordat regels of standaardhoeveelheden veranderen.
+                  Er wordt direct een beheer-voorstel aangemaakt. Stamdata wijzigt pas
+                  nadat beheer dit voorstel goedkeurt in Notificaties.
+                </span>
+              </div>
+            )}
+            {data.meerdere_bronnen && scope !== "eenmalig" && (
+              <div className="mt-2 rounded-md border border-orange-500/40 bg-orange-500/10 px-2.5 py-1.5 flex items-start gap-2 text-[11px] text-orange-800">
+                <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0" />
+                <span>
+                  Dit artikel komt uit meerdere regels. Het voorstel wordt
+                  gemarkeerd als <strong>handmatig beoordelen</strong> — beheer
+                  kiest welke regel aangepast wordt.
                 </span>
               </div>
             )}
