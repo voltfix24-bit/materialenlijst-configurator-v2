@@ -4,7 +4,7 @@ import { useNotificaties, useVerwerkNotificatie } from "@/lib/leersysteem/hooks"
 import { berekenVoorstel } from "@/lib/leersysteem/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, ChevronDown, ChevronUp, Loader2, Bell, AlertTriangle, ExternalLink, Wand2, HandIcon } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Loader2, Bell, AlertTriangle, ExternalLink, Wand2, Hand } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BRON_TABEL_DEFS, type BronTabel } from "@/lib/configurator/types";
 import {
