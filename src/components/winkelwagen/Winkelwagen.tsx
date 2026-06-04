@@ -382,6 +382,7 @@ export function Winkelwagen({
         bron_herkomst: bron.herkomst,
         meerdere_bronnen: bron.meerdere,
         bijdragen: it.bijdragen,
+        sectie: it.sectie ?? null,
       },
       () => {
         setVerwijderd((prev) => {
