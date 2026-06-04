@@ -35,10 +35,12 @@ export function useVerwerkNotificatie() {
       notificatie: BeheerNotificatie
       status: 'goedgekeurd' | 'afgewezen'
     }) => {
-      await verwerkNotificatie(notificatie.id, status)
       if (status === 'goedgekeurd') {
+        // Eerst proberen door te voeren; als bron onveilig is breekt dit af
+        // zónder de notificatie te sluiten.
         await voerGoedgekeurdeWijzigingDoor(notificatie)
       }
+      await verwerkNotificatie(notificatie.id, status)
     },
     onSuccess: (_, { status }) => {
       qc.invalidateQueries({ queryKey: ['beheer_notificaties'] })
@@ -47,6 +49,9 @@ export function useVerwerkNotificatie() {
       toast.success(
         status === 'goedgekeurd' ? 'Wijziging doorgevoerd' : 'Notificatie afgewezen'
       )
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Doorvoeren mislukt')
     },
   })
 }
