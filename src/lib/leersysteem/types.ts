@@ -24,7 +24,7 @@ export interface WinkelwagenCorrectie {
   /** Mens-leesbare herkomst, bv. "LS-rek vervangen · 12 richtingen". */
   bron_herkomst?: string | null
   /** Alle bijdragen (bron + sectie + hoeveelheid). */
-  bijdragen?: unknown
+  bijdragen?: unknown[] | null
 }
 
 export interface BeheerNotificatie {
