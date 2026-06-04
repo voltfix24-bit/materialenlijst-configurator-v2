@@ -60,7 +60,11 @@ const AUTO_BRON_TABELLEN: Record<string, { qtyKol?: string }> = {
   station_vaste_artikelen: { qtyKol: 'hoeveelheid' },
 }
 
-export type VoorstelKind = 'auto_hoeveelheid' | 'auto_verwijderen' | 'handmatig'
+export type VoorstelKind =
+  | 'auto_hoeveelheid'
+  | 'auto_verwijderen'
+  | 'auto_toevoegen_standaard'
+  | 'handmatig'
 
 export interface VoorstelPreview {
   kind: VoorstelKind
@@ -69,10 +73,35 @@ export interface VoorstelPreview {
   qtyKol?: string
   bron_id?: string
   nieuwe_hoeveelheid?: number
+  artikel_nummer?: string
+  case_type?: string
 }
 
 /** Bereken vooraf welk concreet voorstel uit een notificatie zou volgen. */
 export function berekenVoorstel(notificatie: BeheerNotificatie): VoorstelPreview {
+  // Fallback voor 'toegevoegd' zonder bekende flow/bron: altijd kunnen doorvoeren
+  // naar de standaard-materialenlijst voor dit case_type. Beheerder houdt nog
+  // steeds de keuze (Afwijzen blijft mogelijk).
+  if (notificatie.actie === 'toegevoegd') {
+    const heeftBron = !!notificatie.bron_tabel && !!notificatie.bron_id
+    const contextOk = notificatie.config_context?.context_volledig !== false
+    if (!heeftBron || !contextOk || notificatie.meerdere_bronnen) {
+      const aantal =
+        notificatie.gemiddelde_wijziging != null
+          ? Math.max(1, Math.round(notificatie.gemiddelde_wijziging))
+          : 1
+      return {
+        kind: 'auto_toevoegen_standaard',
+        reden:
+          'Geen specifieke flow gevonden — voeg toe aan standaard materialen voor dit case-type.',
+        tabel: 'standaard_materialen_templates',
+        qtyKol: 'standaard_hoeveelheid',
+        artikel_nummer: notificatie.artikel_nummer,
+        case_type: notificatie.case_type,
+        nieuwe_hoeveelheid: aantal,
+      }
+    }
+  }
   if (notificatie.config_context?.context_volledig === false) {
     return { kind: 'handmatig', reden: 'Context onvolledig — handmatig beoordelen.' }
   }
