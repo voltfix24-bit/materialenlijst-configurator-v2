@@ -7,7 +7,9 @@ import { Stepper } from "@/components/ui-prim/Stepper";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSectie } from "@/lib/configurator/types";
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
-import { bouwContextKey, type CorrectieContext, type CorrectieDialoogData, type CorrectieScope } from "@/lib/leersysteem/types";
+import { bouwContextKey, type CorrectieDialoogData, type CorrectieScope } from "@/lib/leersysteem/types";
+import { bouwCorrectieContext } from "@/lib/leersysteem/context";
+
 import { CorrectieDialoog } from "./CorrectieDialoog";
 import {
   ExportBevestigingDialoog,
@@ -248,17 +250,20 @@ export function Winkelwagen({
       actie: dialoogData.actie,
       artikel_nummer: dialoogData.artikel_nummer,
     });
-    const configContext: CorrectieContext = {
-      case_type: caseType,
-      sub_type: subType,
+    const configContext = bouwCorrectieContext({
+      caseType,
+      subType,
+      actie: dialoogData.actie,
+      artikelNummer: dialoogData.artikel_nummer,
       sectie,
-      herkomst: dialoogData.bron_herkomst ?? null,
-      bron_tabel: bronTabel,
-      bron_id: bronId,
+      bronTabel: bronTabel,
+      bronId: bronId,
+      bronHerkomst: dialoogData.bron_herkomst ?? null,
+      meerdereBronnen: meerdere,
       bijdragen,
-      meerdere_bronnen: meerdere,
-      config_fields: configSnapshot ?? null,
-    };
+      configSnapshot: configSnapshot ?? null,
+    });
+
     slaCorrectieOp.mutate({
       case_id: caseId,
       case_type: caseType,
