@@ -477,8 +477,10 @@ function RegelRij({
   const { wanneer } = regelZin(regel);
   return (
     <div
+      data-row-id={regel.id}
       className={cn(
         "px-4 py-3 flex items-start gap-4 hover:bg-accent/30",
+        "data-[highlight=true]:bg-primary/10 data-[highlight=true]:ring-2 data-[highlight=true]:ring-primary data-[highlight=true]:ring-inset",
         !regel.actief && "opacity-50",
       )}
     >
