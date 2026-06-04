@@ -337,3 +337,37 @@ function BronInfo({ notificatie }: { notificatie: BeheerNotificatie }) {
   );
 }
 
+function VoorstelInfo({ notificatie }: { notificatie: BeheerNotificatie }) {
+  const v = berekenVoorstel(notificatie);
+  const isAuto = v.kind !== "handmatig";
+  return (
+    <div
+      className={cn(
+        "mt-2 rounded-md border px-2.5 py-2 flex items-start gap-2 text-[11px]",
+        isAuto
+          ? "border-success/40 bg-success/5 text-foreground"
+          : "border-amber-500/40 bg-amber-500/10 text-amber-800",
+      )}
+    >
+      {isAuto ? (
+        <Wand2 className="w-3.5 h-3.5 mt-px flex-shrink-0 text-success" />
+      ) : (
+        <Hand className="w-3.5 h-3.5 mt-px flex-shrink-0" />
+      )}
+      <div className="space-y-0.5 min-w-0">
+        <div className="font-semibold">
+          {v.kind === "auto_hoeveelheid" &&
+            `Voorstel: ${v.tabel} → ${v.qtyKol} = ${v.nieuwe_hoeveelheid}`}
+          {v.kind === "auto_verwijderen" && `Voorstel: regel verwijderen uit ${v.tabel}`}
+          {v.kind === "handmatig" && "Handmatig beoordelen"}
+        </div>
+        <div className="opacity-80">{v.reden}</div>
+        {isAuto && v.bron_id && (
+          <div className="font-mono text-[10px] opacity-70 break-all">id: {v.bron_id}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
