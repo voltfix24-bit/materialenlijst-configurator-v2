@@ -165,6 +165,7 @@ export function TrafoRegelsTab() {
       </p>
       <DataTable
         headers={["Actie", "kVA", "Kabel", "Artikel", "Aantal", "Herkomst label", "Actief", ""]}
+        rowIds={(data as TrafoRegel[]).map((r) => r.id)}
         rows={(data as TrafoRegel[]).map((r) => [
           <Cond v={r.conditie_actie} />,
           <Cond v={r.conditie_kva} />,
