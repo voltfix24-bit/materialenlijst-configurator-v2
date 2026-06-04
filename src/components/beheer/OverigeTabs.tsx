@@ -204,6 +204,7 @@ export function VasteArtikelenTab() {
       </div>
       <DataTable
         headers={["Groep", "Van toepassing bij", "Artikel", "Hoeveelheid", "Actief", ""]}
+        rowIds={(data as Vast[]).map((v) => v.id)}
         rows={(data as Vast[]).map((v) => [
           v.groep ?? "—",
           <div className="flex flex-wrap gap-1">
