@@ -624,6 +624,7 @@ export function MsKabelRegelsTab() {
       </p>
       <DataTable
         headers={["Kabeltype", "Oversteek", "Artikel", "Aantal/formule", "Herkomst", "Actief", ""]}
+        rowIds={(data as MsKabelRegel[]).map((r) => r.id)}
         rows={(data as MsKabelRegel[]).map((r) => [
           <Cond v={r.conditie_kabel_type} />,
           <Cond v={r.conditie_oversteek} />,
