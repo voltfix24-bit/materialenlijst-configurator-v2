@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import type { CorrectieDialoogData, CorrectieScope } from "@/lib/leersysteem/types";
@@ -15,10 +16,30 @@ const TITELS: Record<CorrectieDialoogData["actie"], string> = {
   toegevoegd: "Waarom voeg je dit artikel toe?",
 };
 
-const SCOPES: { value: CorrectieScope; label: string }[] = [
-  { value: "eenmalig", label: "Alleen deze keer" },
-  { value: "soms", label: "Vaker bij dit type case" },
-  { value: "altijd", label: "Altijd bij dit type case" },
+interface ScopeOpt {
+  value: CorrectieScope;
+  label: string;
+  uitleg: string;
+}
+
+const SCOPES: ScopeOpt[] = [
+  {
+    value: "eenmalig",
+    label: "Alleen deze keer",
+    uitleg: "De wijziging geldt alleen voor deze case. Stamdata en regels blijven ongewijzigd.",
+  },
+  {
+    value: "soms",
+    label: "Vaker bij dit type case",
+    uitleg:
+      "We slaan dit op als signaal. Beheer ziet het in Notificaties als voorstel — geen automatische regelwijziging.",
+  },
+  {
+    value: "altijd",
+    label: "Altijd bij dit type case",
+    uitleg:
+      "Verzoek tot structurele aanpassing. Beheer moet dit expliciet goedkeuren vóórdat stamdata of regels wijzigen.",
+  },
 ];
 
 export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
@@ -26,15 +47,13 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
   const [scope, setScope] = useState<CorrectieScope>("eenmalig");
   const [bezig, setBezig] = useState(false);
 
-  const wijziging =
-    data.actie === "hoeveelheid_gewijzigd"
-      ? `${data.oude_hoeveelheid ?? "?"} → ${data.nieuwe_hoeveelheid ?? "?"}`
-      : data.actie === "verwijderd"
-        ? `Verwijderd (was ${data.oude_hoeveelheid ?? "?"})`
-        : `Toegevoegd (${data.nieuwe_hoeveelheid ?? "?"})`;
+  const oud = data.oude_hoeveelheid ?? "?";
+  const nieuw = data.nieuwe_hoeveelheid ?? "?";
+  const scopeDef = SCOPES.find((s) => s.value === scope)!;
+  const redenOk = reden.trim().length > 0;
 
   const bevestig = () => {
-    if (!reden.trim() || bezig) return;
+    if (!redenOk || bezig) return;
     setBezig(true);
     onBevestig(reden.trim(), scope);
   };
@@ -51,10 +70,27 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
           <DialogTitle>{TITELS[data.actie]}</DialogTitle>
           <DialogDescription className="text-xs">
             <span className="font-mono">{data.artikel_nummer}</span> · {data.korte_omschrijving}
-            <br />
-            <span className="text-foreground/80">{wijziging}</span>
           </DialogDescription>
         </DialogHeader>
+
+        {/* Oud → Nieuw — visueel prominent */}
+        <div className="rounded-md border border-border bg-muted/30 px-3 py-2 flex items-center justify-center gap-3 text-sm">
+          {data.actie === "hoeveelheid_gewijzigd" ? (
+            <>
+              <span className="font-mono text-muted-foreground tabular-nums">{oud}</span>
+              <span className="text-muted-foreground">→</span>
+              <span className="font-mono font-semibold text-foreground tabular-nums">{nieuw}</span>
+            </>
+          ) : data.actie === "verwijderd" ? (
+            <>
+              <span className="font-mono text-muted-foreground tabular-nums">{oud}</span>
+              <span className="text-muted-foreground">→</span>
+              <span className="font-semibold text-destructive">Verwijderd</span>
+            </>
+          ) : (
+            <span className="font-semibold text-foreground">Toegevoegd ({nieuw})</span>
+          )}
+        </div>
 
         <div className="space-y-3">
           <textarea
@@ -64,23 +100,42 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
             className="w-full min-h-[80px] rounded-md border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             autoFocus
           />
+          {!redenOk && (
+            <p className="text-[11px] text-muted-foreground">
+              Vul een reden in om te kunnen bevestigen.
+            </p>
+          )}
 
-          <div className="flex flex-wrap gap-1.5">
-            {SCOPES.map((s) => (
-              <button
-                key={s.value}
-                type="button"
-                onClick={() => setScope(s.value)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
-                  scope === s.value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border hover:bg-accent",
-                )}
-              >
-                {s.label}
-              </button>
-            ))}
+          <div>
+            <div className="flex flex-wrap gap-1.5">
+              {SCOPES.map((s) => (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => setScope(s.value)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                    scope === s.value
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-border hover:bg-accent",
+                  )}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
+              {scopeDef.uitleg}
+            </p>
+            {scope === "altijd" && (
+              <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 flex items-start gap-2 text-[11px] text-amber-800">
+                <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0" />
+                <span>
+                  Dit raakt geen stamdata direct. Beheer moet het voorstel
+                  goedkeuren in Notificaties voordat regels of standaardhoeveelheden veranderen.
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -95,8 +150,9 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
           <button
             type="button"
             onClick={bevestig}
-            disabled={!reden.trim() || bezig}
+            disabled={!redenOk || bezig}
             className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+            title={!redenOk ? "Vul eerst een reden in" : undefined}
           >
             Bevestigen
           </button>
