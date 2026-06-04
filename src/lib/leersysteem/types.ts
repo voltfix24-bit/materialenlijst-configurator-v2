@@ -12,6 +12,12 @@ export interface CorrectieContext {
   sectie: string | null
   /** Mens-leesbare vraag/antwoord-context die deze bronregel activeert. */
   herkomst: string | null
+  /** Alias van `herkomst` — vraag of bronregel-label dat dit artikel activeerde. */
+  vraag_of_bron: string | null
+  /** Snapshot van top-level configuratiekeuzes (gekozen waarden). */
+  gekozen_waarden: Record<string, unknown> | null
+  artikel_nummer: string
+  actie: CorrectieActie
   bron_tabel: string | null
   bron_id: string | null
   bijdragen: unknown[] | null
@@ -19,6 +25,7 @@ export interface CorrectieContext {
   /** Snapshot van de relevante configuratievelden op moment van correctie. */
   config_fields: Record<string, unknown> | null
 }
+
 
 export interface WinkelwagenCorrectie {
   id?: string
