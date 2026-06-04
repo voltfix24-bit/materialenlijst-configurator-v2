@@ -34,10 +34,11 @@ const ACTIE_KLEUREN: Record<string, { border: string; badge: string }> = {
 };
 
 const CASE_TYPE_LABELS: Record<string, string> = {
+  nsa: "NSA",
   NSA: "NSA",
   provisorium: "Provisorium",
   compact: "Compact",
-  compact_prov: "Compact met Prov",
+  compact_prov: "Compact met Provisorium",
 };
 
 function NotificatiesPage() {
