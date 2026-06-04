@@ -217,3 +217,89 @@ describe('bouwCorrectieContext', () => {
     expect(c.meerdere_bronnen).toBe(true)
   })
 })
+
+describe('bepaalSemantiek RMU details', () => {
+  const baseCfg = {
+    rmuMerk: 'Magnefix',
+    rmuConfig: { code: 'FCVC', aantal_velden: 4, aantal_f: 1, aantal_c: 2, aantal_v: 1 },
+    rmuInet: 'ja',
+    trafoKva: '630',
+    rmuVelden: [
+      { veldType: 'C', veldNummer: 1, kabelType: '240AL', isReserve: false },
+      { veldType: 'V', veldNummer: 1, kabelType: '630AL', isReserve: false },
+    ],
+  }
+
+  it('onderscheidt ABB vs Magnefix', () => {
+    const a = bepaalSemantiek('rmu', { ...baseCfg, rmuMerk: 'ABB' }).gekozen_antwoord
+    const b = bepaalSemantiek('rmu', { ...baseCfg, rmuMerk: 'Magnefix' }).gekozen_antwoord
+    expect(a).not.toBe(b)
+    expect(a).toContain('ABB')
+    expect(b).toContain('Magnefix')
+  })
+
+  it('onderscheidt configuratiecode FCVC vs KKKT', () => {
+    const a = bepaalSemantiek('rmu', { ...baseCfg, rmuConfig: { code: 'FCVC' } }).gekozen_antwoord
+    const b = bepaalSemantiek('rmu', { ...baseCfg, rmuConfig: { code: 'KKKT' } }).gekozen_antwoord
+    expect(a).not.toBe(b)
+  })
+
+  it('onderscheidt iNet ja vs nee', () => {
+    const a = bepaalSemantiek('rmu', { ...baseCfg, rmuInet: 'ja' }).gekozen_antwoord
+    const b = bepaalSemantiek('rmu', { ...baseCfg, rmuInet: 'nee' }).gekozen_antwoord
+    expect(a).not.toBe(b)
+    expect(a).toContain('iNet-ja')
+    expect(b).toContain('iNet-nee')
+  })
+
+  it('onderscheidt veld C vs veld V uit veldregel herkomst', () => {
+    const a = bepaalSemantiek('rmu', baseCfg, {
+      bronTabel: 'rmu_veld_regels',
+      bronHerkomst: 'RMU velden C veld 1',
+    }).gekozen_antwoord
+    const b = bepaalSemantiek('rmu', baseCfg, {
+      bronTabel: 'rmu_veld_regels',
+      bronHerkomst: 'RMU velden V veld 1',
+    }).gekozen_antwoord
+    expect(a).not.toBe(b)
+    expect(a).toContain('veld-C')
+    expect(b).toContain('veld-V')
+  })
+
+  it('veldregel: context_volledig=true bij merk/config/veld bekend', () => {
+    const s = bepaalSemantiek('rmu', baseCfg, {
+      bronTabel: 'rmu_veld_regels',
+      bronHerkomst: 'RMU velden C veld 1',
+    })
+    expect(s.vraag_key).toBe('rmu_veld_regel')
+    expect(s.gekozen_antwoord).not.toBeNull()
+    expect(s.gekozen_antwoord).toContain('240AL')
+  })
+
+  it('veldregel zonder veld-info → gekozen_antwoord=null (context onvolledig)', () => {
+    const s = bepaalSemantiek('rmu', baseCfg, {
+      bronTabel: 'rmu_veld_regels',
+      bronHerkomst: 'iets zonder veldinfo',
+    })
+    expect(s.vraag_key).toBe('rmu_veld_regel')
+    expect(s.gekozen_antwoord).toBeNull()
+  })
+
+  it('zonder merk én config → empty (context_volledig=false)', () => {
+    const s = bepaalSemantiek('rmu', { rmuInet: 'ja' })
+    expect(s.vraag_key).toBeNull()
+  })
+
+  it('bestaande simpele rmu test blijft compatibel', () => {
+    const s = bepaalSemantiek('rmu', { rmuMerk: 'Magnefix', rmuConfig: { code: 'FCVC' } })
+    expect(s.vraag_key).toBe('rmu_merk_config')
+    expect(s.gekozen_antwoord).toBe('Magnefix / FCVC')
+  })
+
+  it('zekering bron met kVA krijgt rmu_zekering context', () => {
+    const s = bepaalSemantiek('rmu', baseCfg, { bronTabel: 'rmu_zekeringen' })
+    expect(s.vraag_key).toBe('rmu_zekering')
+    expect(s.gekozen_antwoord).toContain('trafo-630kVA')
+  })
+})
+
