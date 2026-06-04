@@ -66,6 +66,7 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
       </div>
       <DataTable
         headers={["Artikel", "Hoeveelheid", "Formule", ""]}
+        rowIds={(data as unknown as Mat[]).map((m) => m.id)}
         rows={(data as unknown as Mat[]).map((m) => [
           <ArtikelLabel id={m.artikel_id} />,
           m.hoeveelheid,
