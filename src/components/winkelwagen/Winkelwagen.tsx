@@ -328,6 +328,7 @@ export function Winkelwagen({
           bron_tabel: null,
           bron_id: null,
           bron_herkomst: "Handmatig toegevoegd",
+          meerdere_bronnen: false,
           bijdragen: it.bijdragen,
         },
         () => {
