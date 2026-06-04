@@ -246,9 +246,11 @@ export function Winkelwagen({
       bron_tabel: dialoogData.bron_tabel ?? null,
       bron_id: dialoogData.bron_id ?? null,
       bron_herkomst: dialoogData.bron_herkomst ?? null,
+      meerdere_bronnen: dialoogData.meerdere_bronnen ?? false,
       bijdragen: Array.isArray(dialoogData.bijdragen)
         ? (dialoogData.bijdragen as unknown[])
         : null,
+      config_snapshot: configSnapshot ?? null,
     });
     setDialoogData(null);
     setPendingRevert(null);
@@ -261,14 +263,19 @@ export function Winkelwagen({
   };
 
   /** Bepaal canonical bron-info voor een PreviewItem: alleen wanneer er
-   *  precies één bijdrage is met een bekende bron-tabel + id. Anders null. */
+   *  precies één bijdrage is met een bekende bron-tabel + id. Anders null.
+   *  meerdere_bronnen is true zodra er > 1 bijdrage is. */
   const bepaalBron = (it: PreviewItem) => {
-    if (!it.bijdragen || it.bijdragen.length !== 1) return { tabel: null, id: null, herkomst: null };
+    const aantal = it.bijdragen?.length ?? 0;
+    if (aantal !== 1) {
+      return { tabel: null, id: null, herkomst: null, meerdere: aantal > 1 };
+    }
     const b = it.bijdragen[0];
     return {
       tabel: b.bronTabel ?? null,
       id: b.bronId ?? null,
       herkomst: b.herkomst ?? null,
+      meerdere: false,
     };
   };
 
