@@ -197,6 +197,7 @@ function NotificatieKaart({
               </>
             )}
           </p>
+          <BronInfo notificatie={notificatie} />
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
