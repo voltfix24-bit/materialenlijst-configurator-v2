@@ -335,6 +335,7 @@ export function TrafoVultKabelTab() {
       </div>
       <DataTable
         headers={["kVA", "Aantal kabels", "Doorsnede", "Kabel", "# Pers", "Perskabelschoen", "Muurbeugel", "Omschrijving", ""]}
+        rowIds={(data as TrafoKabel[]).map((t) => t.id)}
         rows={(data as TrafoKabel[]).map((t) => [
           t.trafo_kva,
           t.aantal_kabels,
