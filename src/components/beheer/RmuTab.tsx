@@ -327,6 +327,7 @@ function VeldenTable() {
       </div>
       <DataTable
         headers={["Merk", "I-Net", "Veld", "Artikel", "Hoeveelheid", "Formule", ""]}
+        rowIds={(data as VeldArt[]).map((v) => v.id)}
         rows={(data as VeldArt[]).map((v) => [
           v.merk,
           v.is_inet ? "Ja" : "Nee",
