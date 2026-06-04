@@ -182,10 +182,20 @@ function NotificatieKaart({
               {CASE_TYPE_LABELS[notificatie.case_type] ?? notificatie.case_type}
               {notificatie.sub_type ? ` · ${notificatie.sub_type}` : ""}
             </span>
+            {notificatie.sectie && (
+              <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-info/10 text-info">
+                {notificatie.sectie}
+              </span>
+            )}
           </div>
           <h3 className="text-sm font-semibold text-foreground">
             {notificatie.korte_omschrijving ?? "Geen omschrijving"}
           </h3>
+          {notificatie.bron_herkomst && (
+            <p className="text-xs text-muted-foreground mt-0.5 italic">
+              Context: {notificatie.bron_herkomst}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground mt-1">
             {notificatie.aantal_correcties} engineer{notificatie.aantal_correcties === 1 ? "" : "s"} hebben dit aangepast
             {notificatie.gemiddelde_wijziging != null && (
@@ -198,6 +208,7 @@ function NotificatieKaart({
               </>
             )}
           </p>
+          <ConfigContextInfo notificatie={notificatie} />
           <BronInfo notificatie={notificatie} />
           <VoorstelInfo notificatie={notificatie} />
         </div>
