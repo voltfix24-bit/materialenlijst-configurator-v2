@@ -3,8 +3,9 @@ import { useState } from "react";
 import { useNotificaties, useVerwerkNotificatie } from "@/lib/leersysteem/hooks";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, ChevronDown, ChevronUp, Loader2, Bell } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Loader2, Bell, AlertTriangle, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BRON_TABEL_DEFS, type BronTabel } from "@/lib/configurator/types";
 import {
   Dialog,
   DialogContent,
@@ -196,6 +197,7 @@ function NotificatieKaart({
               </>
             )}
           </p>
+          <BronInfo notificatie={notificatie} />
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -258,3 +260,77 @@ function NotificatieKaart({
     </div>
   );
 }
+
+function BronInfo({ notificatie }: { notificatie: BeheerNotificatie }) {
+  const { bron_tabel, bron_id, bron_herkomst, meerdere_bronnen, bijdragen } = notificatie;
+  const def = bron_tabel ? BRON_TABEL_DEFS[bron_tabel as BronTabel] : null;
+
+  const link = (() => {
+    if (!def) return null;
+    const p = new URLSearchParams();
+    p.set("groep", def.beheerGroep);
+    p.set("tab", def.beheerTab);
+    p.set("artikel", notificatie.artikel_nummer);
+    if (bron_id) p.set("row", bron_id);
+    return `/beheer?${p.toString()}`;
+  })();
+
+  const bijdragenArr = Array.isArray(bijdragen) ? (bijdragen as Array<{ herkomst?: string; sectie?: string; hoeveelheid?: number; bronTabel?: string; bronId?: string }>) : [];
+
+  if (!bron_tabel && !bron_herkomst && bijdragenArr.length === 0) return null;
+
+  return (
+    <div className="mt-2 pt-2 border-t border-border/60 space-y-1.5">
+      <div className="flex items-center gap-2 flex-wrap text-[11px]">
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Bron</span>
+        {def && (
+          <span className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px]">{def.label}</span>
+        )}
+        {bron_herkomst && <span className="text-muted-foreground">{bron_herkomst}</span>}
+        {link && (
+          <a
+            href={link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+          >
+            <ExternalLink className="w-3 h-3" />
+            {bron_id ? "Open exacte regel" : "Open beheer"}
+          </a>
+        )}
+      </div>
+      {meerdere_bronnen && (
+        <div className="flex items-start gap-1.5 text-[11px] text-amber-700 bg-amber-50 dark:bg-amber-950/30 rounded px-2 py-1.5">
+          <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+          <div>
+            <strong>Meerdere bronnen</strong> — dit artikel komt uit verschillende regels. Beheerder moet handmatig beoordelen welke regel aangepast wordt.
+          </div>
+        </div>
+      )}
+      {bijdragenArr.length > 1 && (
+        <ul className="space-y-0.5 pl-1">
+          {bijdragenArr.map((b, i) => {
+            const bDef = b.bronTabel ? BRON_TABEL_DEFS[b.bronTabel as BronTabel] : null;
+            const p = new URLSearchParams();
+            if (bDef) {
+              p.set("groep", bDef.beheerGroep);
+              p.set("tab", bDef.beheerTab);
+            }
+            p.set("artikel", notificatie.artikel_nummer);
+            if (b.bronId) p.set("row", b.bronId);
+            return (
+              <li key={i} className="text-[10px] flex items-baseline gap-2">
+                <span className="font-mono text-muted-foreground">·</span>
+                <span className="flex-1 break-words">{b.herkomst ?? "?"} {bDef && <span className="text-muted-foreground">({bDef.label})</span>}</span>
+                {(bDef || b.bronId) && (
+                  <a href={`/beheer?${p.toString()}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">open →</a>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+

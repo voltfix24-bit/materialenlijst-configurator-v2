@@ -53,6 +53,7 @@ export function GgiRegelsTab() {
       </div>
       <DataTable
         headers={["Volgorde", "Artikel", "Hoeveelheid", "Actief", ""]}
+        rowIds={(data as Ggi[]).map((g) => g.id)}
         rows={(data as Ggi[]).map((g) => [
           g.sort_order,
           <ArtikelLabel id={g.artikel_id} />,
@@ -164,6 +165,7 @@ export function TrafoRegelsTab() {
       </p>
       <DataTable
         headers={["Actie", "kVA", "Kabel", "Artikel", "Aantal", "Herkomst label", "Actief", ""]}
+        rowIds={(data as TrafoRegel[]).map((r) => r.id)}
         rows={(data as TrafoRegel[]).map((r) => [
           <Cond v={r.conditie_actie} />,
           <Cond v={r.conditie_kva} />,
@@ -322,6 +324,7 @@ export function LsRekRegelsTab() {
       </p>
       <DataTable
         headers={["Compact", "Renov", "Actie", "Type", "Bev.aanp", "OV", "Schroef", "kVA", "Artikel", "Aantal/formule", "Herkomst", ""]}
+        rowIds={(data as LsRekRegel[]).map((r) => r.id)}
         rows={(data as LsRekRegel[]).map((r) => [
           <Cond v={r.conditie_compact} />,
           <Cond v={r.conditie_renovatie} />,
@@ -475,6 +478,7 @@ export function ProvRegelsTab() {
       </p>
       <DataTable
         headers={["Merk", "kVA", "Artikel", "Aantal/formule", "Herkomst", "Actief", ""]}
+        rowIds={(data as ProvRegel[]).map((r) => r.id)}
         rows={(data as ProvRegel[]).map((r) => [
           <Cond v={r.conditie_merk} />,
           <Cond v={r.conditie_kva} />,
@@ -620,6 +624,7 @@ export function MsKabelRegelsTab() {
       </p>
       <DataTable
         headers={["Kabeltype", "Oversteek", "Artikel", "Aantal/formule", "Herkomst", "Actief", ""]}
+        rowIds={(data as MsKabelRegel[]).map((r) => r.id)}
         rows={(data as MsKabelRegel[]).map((r) => [
           <Cond v={r.conditie_kabel_type} />,
           <Cond v={r.conditie_oversteek} />,

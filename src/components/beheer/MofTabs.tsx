@@ -66,6 +66,7 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
       </div>
       <DataTable
         headers={["Artikel", "Hoeveelheid", "Formule", ""]}
+        rowIds={(data as unknown as Mat[]).map((m) => m.id)}
         rows={(data as unknown as Mat[]).map((m) => [
           <ArtikelLabel id={m.artikel_id} />,
           m.hoeveelheid,
@@ -210,7 +211,11 @@ export function MsMofTab() {
             )}
             {(data as MsMof[]).map((m) => (
               <React.Fragment key={m.id}>
-                <tr key={m.id} className="hover:bg-accent/40">
+                <tr
+                  key={m.id}
+                  data-row-id={m.id}
+                  className="hover:bg-accent/40 data-[highlight=true]:bg-primary/10 data-[highlight=true]:ring-2 data-[highlight=true]:ring-primary data-[highlight=true]:ring-inset"
+                >
                   <td className="px-3 py-2 w-8"><ExpandRow expanded={expanded.has(m.id)} onToggle={() => toggle(m.id)} /></td>
                   <td className="px-3 py-2 font-mono text-xs">{m.code}</td>
                   <td className="px-3 py-2">{m.bestaand_type}</td>
@@ -382,7 +387,11 @@ export function LsMofTab() {
             )}
             {(data as LsMof[]).map((m) => (
               <React.Fragment key={m.id}>
-                <tr key={m.id} className="hover:bg-accent/40">
+                <tr
+                  key={m.id}
+                  data-row-id={m.id}
+                  className="hover:bg-accent/40 data-[highlight=true]:bg-primary/10 data-[highlight=true]:ring-2 data-[highlight=true]:ring-primary data-[highlight=true]:ring-inset"
+                >
                   <td className="px-3 py-2 w-8"><ExpandRow expanded={expanded.has(m.id)} onToggle={() => toggle(m.id)} /></td>
                   <td className="px-3 py-2">{m.type}</td>
                   <td className="px-3 py-2">{m.bestaand_type}</td>

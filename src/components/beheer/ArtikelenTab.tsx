@@ -155,6 +155,7 @@ export function ArtikelenTab() {
 
       <DataTable
         headers={["Nummer", "Omschrijving", "Eenheid", "Categorie", "Status", "Actief", ""]}
+        rowIds={(data?.rows ?? []).map((a) => a.id)}
         rows={(data?.rows ?? []).map((a) => [
           <span className="font-mono text-xs">{a.artikel_nummer}</span>,
           a.korte_omschrijving,

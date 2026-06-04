@@ -93,6 +93,7 @@ export function StandaardMaterialenTab() {
       </div>
       <DataTable
         headers={["Case type", "Artikel", "Hoeveelheid", ""]}
+        rowIds={gefilterd.map((s) => s.id)}
         rows={gefilterd.map((s) => [
           s.case_type,
           <ArtikelLabel id={s.artikel_id} />,
@@ -203,6 +204,7 @@ export function VasteArtikelenTab() {
       </div>
       <DataTable
         headers={["Groep", "Van toepassing bij", "Artikel", "Hoeveelheid", "Actief", ""]}
+        rowIds={(data as Vast[]).map((v) => v.id)}
         rows={(data as Vast[]).map((v) => [
           v.groep ?? "—",
           <div className="flex flex-wrap gap-1">
@@ -333,6 +335,7 @@ export function TrafoVultKabelTab() {
       </div>
       <DataTable
         headers={["kVA", "Aantal kabels", "Doorsnede", "Kabel", "# Pers", "Perskabelschoen", "Muurbeugel", "Omschrijving", ""]}
+        rowIds={(data as TrafoKabel[]).map((t) => t.id)}
         rows={(data as TrafoKabel[]).map((t) => [
           t.trafo_kva,
           t.aantal_kabels,
@@ -465,6 +468,7 @@ export function LsBeveiligingOptiesTab() {
       </div>
       <DataTable
         headers={["Volgorde", "Label", "Artikel", "Actief", ""]}
+        rowIds={rows.map((r) => r.id)}
         rows={rows.map((r) => [
           r.sort_order,
           <span className="font-medium">{r.label}</span>,

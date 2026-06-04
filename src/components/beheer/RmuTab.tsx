@@ -154,6 +154,7 @@ function ConfigsTable() {
       </div>
       <DataTable
         headers={["Code", "Merk", "I-Net", "F", "C", "V", "Velden", "RMU artikel", "Bodemplaat", "Actief", ""]}
+        rowIds={(data as RmuConfig[]).map((c) => c.id)}
         rows={(data as RmuConfig[]).map((c) => [
           c.code,
           c.merk,
@@ -326,6 +327,7 @@ function VeldenTable() {
       </div>
       <DataTable
         headers={["Merk", "I-Net", "Veld", "Artikel", "Hoeveelheid", "Formule", ""]}
+        rowIds={(data as VeldArt[]).map((v) => v.id)}
         rows={(data as VeldArt[]).map((v) => [
           v.merk,
           v.is_inet ? "Ja" : "Nee",
@@ -437,6 +439,7 @@ function ZekeringenTable() {
       </div>
       <DataTable
         headers={["Merk", "Trafo kVA", "Artikel", "Hoeveelheid", ""]}
+        rowIds={(data as Zekering[]).map((z) => z.id)}
         rows={(data as Zekering[]).map((z) => [
           z.merk,
           z.trafo_kva,
