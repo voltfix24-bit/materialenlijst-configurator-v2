@@ -73,6 +73,9 @@ export interface VoorstelPreview {
 
 /** Bereken vooraf welk concreet voorstel uit een notificatie zou volgen. */
 export function berekenVoorstel(notificatie: BeheerNotificatie): VoorstelPreview {
+  if (notificatie.config_context?.context_volledig === false) {
+    return { kind: 'handmatig', reden: 'Context onvolledig — handmatig beoordelen.' }
+  }
   if (notificatie.meerdere_bronnen) {
     return { kind: 'handmatig', reden: 'Meerdere bronnen — beheerder kiest welke regel.' }
   }
@@ -113,6 +116,9 @@ export function berekenVoorstel(notificatie: BeheerNotificatie): VoorstelPreview
 export async function voerGoedgekeurdeWijzigingDoor(
   notificatie: BeheerNotificatie
 ): Promise<void> {
+  if (notificatie.config_context?.context_volledig === false) {
+    throw new Error('Context onvolledig; voorstel moet handmatig beoordeeld worden.')
+  }
   if (notificatie.meerdere_bronnen || !notificatie.bron_tabel) {
     throw new Error(
       'Deze notificatie heeft meerdere of onbekende bronnen — pas de regel handmatig aan in Beheer.',
