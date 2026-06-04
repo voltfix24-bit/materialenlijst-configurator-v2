@@ -382,4 +382,44 @@ function VoorstelInfo({ notificatie }: { notificatie: BeheerNotificatie }) {
   );
 }
 
+const CONFIG_VELD_BLACKLIST = new Set([
+  "msRichtingen",
+  "lsMoffen",
+  "rmuConfig",
+  "provRmuConfig",
+]);
+
+function ConfigContextInfo({ notificatie }: { notificatie: BeheerNotificatie }) {
+  const ctx = notificatie.config_context;
+  if (!ctx || typeof ctx !== "object") return null;
+  const fields = ctx.config_fields ?? {};
+  const entries = Object.entries(fields).filter(([k, v]) => {
+    if (CONFIG_VELD_BLACKLIST.has(k)) return false;
+    if (v == null || v === "" || v === false) return false;
+    if (Array.isArray(v) && v.length === 0) return false;
+    return typeof v === "string" || typeof v === "number" || typeof v === "boolean";
+  });
+  if (entries.length === 0 && !ctx.herkomst && !ctx.sectie) return null;
+  return (
+    <div className="mt-2 pt-2 border-t border-border/60">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+        Configuratie-context
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {ctx.sectie && (
+          <span className="px-1.5 py-0.5 rounded bg-muted text-[10px]">
+            sectie: <span className="font-mono">{ctx.sectie}</span>
+          </span>
+        )}
+        {entries.map(([k, v]) => (
+          <span key={k} className="px-1.5 py-0.5 rounded bg-muted text-[10px]">
+            {k}: <span className="font-mono">{String(v)}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 
