@@ -313,7 +313,7 @@ export function MaterialenConfigurator({
       // materiaallijst van de case wissen.
       const { error: rpcError } = await supabase.rpc("sla_case_op", {
         p_case_id: caseId,
-        p_sub_type: config.subType || null,
+        p_sub_type: config.subType ?? "",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         p_config_json: configToSave as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
