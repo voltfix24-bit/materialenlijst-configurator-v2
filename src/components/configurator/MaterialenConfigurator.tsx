@@ -32,7 +32,7 @@ import {
   type SubType,
   type WinkelwagenAanpassingen,
 } from "@/lib/configurator/types";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Winkelwagen } from "@/components/winkelwagen/Winkelwagen";
@@ -93,6 +93,7 @@ export function MaterialenConfigurator({
   exportPending,
   exportSignal,
 }: Props) {
+  const qc = useQueryClient();
   const isCompact = caseType === "compact" || caseType === "compact_prov";
   const isCompactProv = caseType === "compact_prov";
   const initial = useMemo(() => {
@@ -322,7 +323,7 @@ export function MaterialenConfigurator({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         p_ls_moffen: lsMofRows as any,
       });
-      if (!rpcError) return;
+      if (!rpcError) return { configToSave };
 
       // Fallback zolang de sla_case_op-migratie nog niet is uitgevoerd:
       // sequentieel opslaan, maar mét foutcontrole op elke stap.
@@ -362,8 +363,21 @@ export function MaterialenConfigurator({
         const { error } = await supabase.from("case_ls_moffen").insert(lsMofRows);
         if (error) throw error;
       }
+      return { configToSave };
     },
-    onSuccess: () => {
+    onSuccess: ({ configToSave }) => {
+      // Cache van de case direct bijwerken met wat zojuist is opgeslagen.
+      // Zonder dit rendert de case-pagina bij terugkeren eerst uit de oude
+      // cache (config_json van vóór de save) en initialiseert de configurator
+      // + winkelwagen zich op verouderde data — correcties lijken dan verdwenen.
+      qc.setQueryData(["case", caseId], (old: Record<string, unknown> | undefined) =>
+        old
+          ? { ...old, sub_type: config.subType || null, config_json: configToSave }
+          : old,
+      );
+      qc.invalidateQueries({ queryKey: ["case-materialen", caseId] });
+      qc.invalidateQueries({ queryKey: ["case-materialen-full", caseId] });
+      qc.invalidateQueries({ queryKey: ["cases"] });
       onDirtyChange?.(false);
       toast.success("Materiaallijst opgeslagen");
     },
