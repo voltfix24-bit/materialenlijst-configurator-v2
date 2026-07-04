@@ -5,7 +5,13 @@ import { BronOverzichtPopover } from "./BronOverzichtPopover";
 import { cn } from "@/lib/utils";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { PREVIEW_SECTIE_DEFS, type PreviewItem, type PreviewSectie } from "@/lib/configurator/types";
+import {
+  PREVIEW_SECTIE_DEFS,
+  type PreviewItem,
+  type PreviewSectie,
+  type ToegevoegdArtikel,
+  type WinkelwagenAanpassingen,
+} from "@/lib/configurator/types";
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
 import { bouwContextKey, type CorrectieDialoogData, type CorrectieScope } from "@/lib/leersysteem/types";
 import { bouwCorrectieContext } from "@/lib/leersysteem/context";
@@ -48,6 +54,10 @@ interface Props {
   exportSignal?: number;
   /** Volledige case-configuratie — wordt als snapshot bij elke correctie opgeslagen. */
   configSnapshot?: Record<string, unknown> | null;
+  /** Eerder opgeslagen aanpassingen (uit config_json.winkelwagen) — hersteld bij openen. */
+  initieleAanpassingen?: WinkelwagenAanpassingen | null;
+  /** Meldt elke wijziging in overrides/verwijderd/toegevoegd zodat de parent ze kan opslaan. */
+  onAanpassingenChange?: (aanpassingen: WinkelwagenAanpassingen) => void;
 }
 
 // Mapping: configurator sectie → winkelwagen secties
@@ -59,14 +69,6 @@ const CONFIG_SECTIE_NAAR_WINKELWAGEN: Record<string, PreviewSectie[]> = {
   ls: ["lsVerbindingen", "lsRek"],
   overig: ["ggi", "standaard"],
 };
-
-interface ToegevoegdArtikel {
-  artikel_id: string;
-  artikel_nummer: string;
-  korte_omschrijving: string;
-  eenheid: string;
-  hoeveelheid: number;
-}
 
 const HIGHLIGHT_MS = 1500;
 const REMOVED_MS = 2000;
@@ -87,11 +89,24 @@ export function Winkelwagen({
   exportPending,
   exportSignal,
   configSnapshot,
+  initieleAanpassingen,
+  onAanpassingenChange,
 }: Props) {
-  // Lokale state
-  const [overrides, setOverrides] = useState<Map<string, number>>(new Map());
-  const [verwijderd, setVerwijderd] = useState<Set<string>>(new Set());
-  const [toegevoegd, setToegevoegd] = useState<ToegevoegdArtikel[]>([]);
+  // Lokale state — geïnitialiseerd vanuit de opgeslagen aanpassingen zodat
+  // eerdere correcties na een herlaad terugkomen in plaats van te verdwijnen.
+  const initieleAanpassingenRef = useRef(initieleAanpassingen);
+  initieleAanpassingenRef.current = initieleAanpassingen;
+  // True zolang de eerstvolgende aanpassingen-report hydratie is (geen gebruikersactie).
+  const eersteAanpassingenRunRef = useRef(true);
+  const [overrides, setOverrides] = useState<Map<string, number>>(
+    () => new Map(Object.entries(initieleAanpassingen?.overrides ?? {})),
+  );
+  const [verwijderd, setVerwijderd] = useState<Set<string>>(
+    () => new Set(initieleAanpassingen?.verwijderd ?? []),
+  );
+  const [toegevoegd, setToegevoegd] = useState<ToegevoegdArtikel[]>(
+    () => initieleAanpassingen?.toegevoegd ?? [],
+  );
   const [dialoogData, setDialoogData] = useState<CorrectieDialoogData | null>(null);
   const [pendingRevert, setPendingRevert] = useState<(() => void) | null>(null);
   const [showZoeker, setShowZoeker] = useState(false);
@@ -111,11 +126,21 @@ export function Winkelwagen({
 
   const slaCorrectieOp = useSlaCorrectieOp();
 
-  // Reset bij wisselen case
+  // Reset bij wisselen case — terug naar de opgeslagen aanpassingen van dié
+  // case. Eerste mount overslaan: de state-initializers hebben dezelfde data
+  // al gezet en een extra setter-ronde zou de case direct dirty markeren.
+  const eersteResetRef = useRef(true);
   useEffect(() => {
-    setOverrides(new Map());
-    setVerwijderd(new Set());
-    setToegevoegd([]);
+    if (eersteResetRef.current) {
+      eersteResetRef.current = false;
+      return;
+    }
+    const init = initieleAanpassingenRef.current;
+    // Dit is hydratie, geen gebruikersactie — eerstvolgende report overslaan.
+    eersteAanpassingenRunRef.current = true;
+    setOverrides(new Map(Object.entries(init?.overrides ?? {})));
+    setVerwijderd(new Set(init?.verwijderd ?? []));
+    setToegevoegd(init?.toegevoegd ?? []);
     setDialoogData(null);
     setPendingRevert(null);
     setOpenSecties(new Set());
@@ -184,6 +209,23 @@ export function Winkelwagen({
   useEffect(() => {
     onItemsChangeRef.current(effectief);
   }, [effectief]);
+
+  // Aanpassingen doorgeven aan parent zodat ze in config_json bewaard worden.
+  // De eerste run (hydratie vanuit opgeslagen state) slaan we over — anders
+  // wordt de case direct als "niet opgeslagen" gemarkeerd bij openen.
+  const onAanpassingenChangeRef = useRef(onAanpassingenChange);
+  onAanpassingenChangeRef.current = onAanpassingenChange;
+  useEffect(() => {
+    if (eersteAanpassingenRunRef.current) {
+      eersteAanpassingenRunRef.current = false;
+      return;
+    }
+    onAanpassingenChangeRef.current?.({
+      overrides: Object.fromEntries(overrides),
+      verwijderd: [...verwijderd],
+      toegevoegd,
+    });
+  }, [overrides, verwijderd, toegevoegd]);
 
   // Diff voor animaties (alleen op effectief)
   const vorigeRef = useRef<Map<string, number>>(new Map());

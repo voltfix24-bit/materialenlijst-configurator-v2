@@ -12,6 +12,7 @@ import {
   DEFAULT_INET_ARTIKELEN,
   emptyConfig,
   emptyMofConfig,
+  legeWinkelwagenAanpassingen,
   newLsMof,
   newLsKabelTrace,
   newRichting,
@@ -29,6 +30,7 @@ import {
   type PreviewSectie,
   type RmuVeldConfig,
   type SubType,
+  type WinkelwagenAanpassingen,
 } from "@/lib/configurator/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +41,8 @@ interface Props {
   caseId: string;
   caseType: string;
   initialConfig?: MaterialenConfig | null;
+  /** Opgeslagen winkelwagen-aanpassingen (uit config_json.winkelwagen). */
+  initialAanpassingen?: WinkelwagenAanpassingen | null;
   onDirtyChange?: (isDirty: boolean) => void;
   onProgressChange?: (completed: number, total: number) => void;
   onSavingChange?: (saving: boolean) => void;
@@ -76,6 +80,7 @@ export function MaterialenConfigurator({
   caseId,
   caseType,
   initialConfig,
+  initialAanpassingen,
   onDirtyChange,
   onProgressChange,
   onSavingChange,
@@ -167,6 +172,10 @@ export function MaterialenConfigurator({
   );
   // Effectieve winkelwagen-items (na overrides / verwijderingen / handmatig toegevoegde)
   const winkelwagenItemsRef = useRef<PreviewItem[]>([]);
+  // Handmatige aanpassingen — meegeschreven in config_json zodat ze een herlaad overleven
+  const aanpassingenRef = useRef<WinkelwagenAanpassingen>(
+    initialAanpassingen ?? legeWinkelwagenAanpassingen(),
+  );
 
   const showTrafo = !isCompact && RENOVATIE(config.subType);
   const showLsRek = !isCompact && RENOVATIE(config.subType);
@@ -236,11 +245,92 @@ export function MaterialenConfigurator({
       }
       // Volledige config opslaan als JSON. rmuConfig wordt afgeslankt tot {id};
       // bij rehydratie wordt het volledige object opgezocht in de stamdata.
+      // De winkelwagen-aanpassingen (overrides/verwijderd/toegevoegd) gaan mee
+      // zodat handmatige correcties een herlaad overleven.
       const configToSave = {
         ...config,
         rmuConfig: config.rmuConfig ? { id: config.rmuConfig.id } : null,
         provRmuConfig: config.provRmuConfig ? { id: config.provRmuConfig.id } : null,
+        winkelwagen: aanpassingenRef.current,
       };
+
+      // Effectieve winkelwagen-items (incl. overrides, excl. verwijderde,
+      // incl. handmatig toegevoegde)
+      const effectief = winkelwagenItemsRef.current.length > 0 || preview.length === 0
+        ? winkelwagenItemsRef.current
+        : preview;
+      const materiaalRows = effectief.map((p) => ({
+        case_id: caseId,
+        artikel_id: p.artikel_id,
+        gewenste_hoeveelheid: p.hoeveelheid,
+        niet_bestellen: p.niet_bestellen,
+        herkomst_label: p.herkomst.join(", "),
+      }));
+
+      // ms moffen — één rij per richting met alle definitief-velden ingebed
+      const msMofRows = config.msRichtingen.map((r, i) => ({
+        case_id: caseId,
+        positie: i + 1,
+        zwaaien: r.kanZwaaien === true,
+        fase: isProvisorum ? "tijdelijk" : "enkel",
+        bestaand_type: r.mofTijdelijk.bestaandType || null,
+        doorsnede: r.mofTijdelijk.bestaandDoorsnede,
+        nieuw_type: r.mofTijdelijk.nieuwType || null,
+        nieuw_doorsnede: r.mofTijdelijk.nieuwDoorsnede,
+        mof_type_id: r.mofTijdelijk.mofTypeId,
+        mof_handmatig: r.mofTijdelijk.mofHandmatig,
+        is_eindmof: r.mofTijdelijk.isEindmof ?? false,
+        mof_definitief_type_id: r.mofDefinitief?.mofTypeId ?? null,
+        def_bestaand_type: r.mofDefinitief?.bestaandType ?? null,
+        def_doorsnede: r.mofDefinitief?.bestaandDoorsnede ?? null,
+        def_nieuw_type: r.mofDefinitief?.nieuwType ?? null,
+        def_nieuw_doorsnede: r.mofDefinitief?.nieuwDoorsnede ?? null,
+        def_mof_handmatig: r.mofDefinitief?.mofHandmatig ?? false,
+        def_is_eindmof: r.mofDefinitief?.isEindmof ?? false,
+      }));
+
+      // ls moffen
+      const lsMofRows = (config.lsMoffenActief ? config.lsMoffen : []).map((m, i) => ({
+        case_id: caseId,
+        positie: i + 1,
+        type: m.type || "verbinding",
+        bestaand_type: m.bestaandType || "GPLK",
+        hoofdkabel_doorsnede: m.hoofdkabelDoorsnede,
+        hoofdkabel_materiaal: m.hoofdkabelMateriaal || null,
+        aantal_aftakken: m.aantalAftakken,
+        aftak_doorsnede: m.aftakDoorsnede,
+        ringklem_artikel_nummer: m.ringklemArtikelNummer,
+        ringklem_handmatig: m.ringklemHandmatig,
+        aantal: m.aantal,
+        kan_zwaaien: m.kanZwaaien,
+        kabel_lengte_meters: m.kabelLengteMeters,
+        overzettingen: 0,
+      }));
+
+      // Transactioneel via RPC: alles slaagt of niets wijzigt. De oude
+      // client-side delete-dan-insert kon bij een fout halverwege de
+      // materiaallijst van de case wissen.
+      const { error: rpcError } = await supabase.rpc("sla_case_op", {
+        p_case_id: caseId,
+        p_sub_type: config.subType || null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        p_config_json: configToSave as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        p_materialen: materiaalRows as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        p_ms_moffen: msMofRows as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        p_ls_moffen: lsMofRows as any,
+      });
+      if (!rpcError) return;
+
+      // Fallback zolang de sla_case_op-migratie nog niet is uitgevoerd:
+      // sequentieel opslaan, maar mét foutcontrole op elke stap.
+      const functieOntbreekt =
+        rpcError.code === "PGRST202" ||
+        rpcError.code === "42883" ||
+        /sla_case_op/i.test(rpcError.message ?? "");
+      if (!functieOntbreekt) throw rpcError;
 
       const { error: caseErr } = await supabase
         .from("cases")
@@ -252,71 +342,24 @@ export function MaterialenConfigurator({
         .eq("id", caseId);
       if (caseErr) throw caseErr;
 
-      // case_materialen vervangen — gebruik de effectieve winkelwagen-items
-      // (incl. overrides, excl. verwijderde, incl. handmatig toegevoegde)
-      const effectief = winkelwagenItemsRef.current.length > 0 || preview.length === 0
-        ? winkelwagenItemsRef.current
-        : preview;
-      await supabase.from("case_materialen").delete().eq("case_id", caseId);
-      if (effectief.length > 0) {
-        const rows = effectief.map((p) => ({
-          case_id: caseId,
-          artikel_id: p.artikel_id,
-          gewenste_hoeveelheid: p.hoeveelheid,
-          niet_bestellen: p.niet_bestellen,
-          herkomst_label: p.herkomst.join(", "),
-        }));
-        const { error } = await supabase.from("case_materialen").insert(rows);
+      const { error: delMatErr } = await supabase.from("case_materialen").delete().eq("case_id", caseId);
+      if (delMatErr) throw delMatErr;
+      if (materiaalRows.length > 0) {
+        const { error } = await supabase.from("case_materialen").insert(materiaalRows);
         if (error) throw error;
       }
 
-      // ms moffen — één rij per richting met alle definitief-velden ingebed
-      await supabase.from("case_ms_moffen").delete().eq("case_id", caseId);
-      if (config.msRichtingen.length > 0) {
-        const rows = config.msRichtingen.map((r, i) => ({
-          case_id: caseId,
-          positie: i + 1,
-          zwaaien: r.kanZwaaien === true,
-          fase: isProvisorum ? "tijdelijk" : "enkel",
-          bestaand_type: r.mofTijdelijk.bestaandType || null,
-          doorsnede: r.mofTijdelijk.bestaandDoorsnede,
-          nieuw_type: r.mofTijdelijk.nieuwType || null,
-          nieuw_doorsnede: r.mofTijdelijk.nieuwDoorsnede,
-          mof_type_id: r.mofTijdelijk.mofTypeId,
-          mof_handmatig: r.mofTijdelijk.mofHandmatig,
-          is_eindmof: r.mofTijdelijk.isEindmof ?? false,
-          mof_definitief_type_id: r.mofDefinitief?.mofTypeId ?? null,
-          def_bestaand_type: r.mofDefinitief?.bestaandType ?? null,
-          def_doorsnede: r.mofDefinitief?.bestaandDoorsnede ?? null,
-          def_nieuw_type: r.mofDefinitief?.nieuwType ?? null,
-          def_nieuw_doorsnede: r.mofDefinitief?.nieuwDoorsnede ?? null,
-          def_mof_handmatig: r.mofDefinitief?.mofHandmatig ?? false,
-          def_is_eindmof: r.mofDefinitief?.isEindmof ?? false,
-        }));
-        const { error } = await supabase.from("case_ms_moffen").insert(rows);
+      const { error: delMsErr } = await supabase.from("case_ms_moffen").delete().eq("case_id", caseId);
+      if (delMsErr) throw delMsErr;
+      if (msMofRows.length > 0) {
+        const { error } = await supabase.from("case_ms_moffen").insert(msMofRows);
         if (error) throw error;
       }
 
-      // ls moffen
-      await supabase.from("case_ls_moffen").delete().eq("case_id", caseId);
-      if (config.lsMoffenActief && config.lsMoffen.length > 0) {
-        const rows = config.lsMoffen.map((m, i) => ({
-          case_id: caseId,
-          positie: i + 1,
-          type: m.type || "verbinding",
-          bestaand_type: m.bestaandType || "GPLK",
-          hoofdkabel_doorsnede: m.hoofdkabelDoorsnede,
-          hoofdkabel_materiaal: m.hoofdkabelMateriaal || null,
-          aantal_aftakken: m.aantalAftakken,
-          aftak_doorsnede: m.aftakDoorsnede,
-          ringklem_artikel_nummer: m.ringklemArtikelNummer,
-          ringklem_handmatig: m.ringklemHandmatig,
-          aantal: m.aantal,
-          kan_zwaaien: m.kanZwaaien,
-          kabel_lengte_meters: m.kabelLengteMeters,
-          overzettingen: 0,
-        }));
-        const { error } = await supabase.from("case_ls_moffen").insert(rows);
+      const { error: delLsErr } = await supabase.from("case_ls_moffen").delete().eq("case_id", caseId);
+      if (delLsErr) throw delLsErr;
+      if (lsMofRows.length > 0) {
+        const { error } = await supabase.from("case_ls_moffen").insert(lsMofRows);
         if (error) throw error;
       }
     },
@@ -465,6 +508,12 @@ export function MaterialenConfigurator({
           exportPending={exportPending}
           exportSignal={exportSignal}
           configSnapshot={config as unknown as Record<string, unknown>}
+          initieleAanpassingen={initialAanpassingen ?? null}
+          onAanpassingenChange={(a) => {
+            aanpassingenRef.current = a;
+            // Correcties zijn wijzigingen die opgeslagen moeten worden
+            onDirtyChange?.(true);
+          }}
         />
       </div>
     </div>

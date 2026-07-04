@@ -245,6 +245,56 @@ export type Database = {
         }
         Relationships: []
       }
+      case_exporten: {
+        Row: {
+          aantal_artikelen: number
+          bestand_naam: string
+          case_id: string
+          case_nummer: string | null
+          created_at: string
+          id: string
+          inactief: Json
+          items: Json
+          matched: number
+          station_naam: string | null
+          unmatched: Json
+        }
+        Insert: {
+          aantal_artikelen?: number
+          bestand_naam: string
+          case_id: string
+          case_nummer?: string | null
+          created_at?: string
+          id?: string
+          inactief?: Json
+          items?: Json
+          matched?: number
+          station_naam?: string | null
+          unmatched?: Json
+        }
+        Update: {
+          aantal_artikelen?: number
+          bestand_naam?: string
+          case_id?: string
+          case_nummer?: string | null
+          created_at?: string
+          id?: string
+          inactief?: Json
+          items?: Json
+          matched?: number
+          station_naam?: string | null
+          unmatched?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_exporten_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       case_ls_moffen: {
         Row: {
           aantal: number
@@ -1360,7 +1410,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      sla_case_op: {
+        Args: {
+          p_case_id: string
+          p_sub_type: string | null
+          p_config_json: Json
+          p_materialen?: Json
+          p_ms_moffen?: Json
+          p_ls_moffen?: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

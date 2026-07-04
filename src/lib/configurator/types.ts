@@ -382,6 +382,34 @@ export interface PreviewBijdrage {
   bronId?: string;
 }
 
+/** Handmatig via de winkelwagen-zoeker toegevoegd artikel (geen berekende bron). */
+export interface ToegevoegdArtikel {
+  artikel_id: string;
+  artikel_nummer: string;
+  korte_omschrijving: string;
+  eenheid: string;
+  hoeveelheid: number;
+}
+
+/**
+ * Handmatige aanpassingen van de engineer bovenop de berekende preview.
+ * Wordt opgeslagen in cases.config_json onder de sleutel "winkelwagen"
+ * zodat correcties een herlaad of latere sessie overleven.
+ */
+export interface WinkelwagenAanpassingen {
+  /** artikel_nummer → overschreven hoeveelheid */
+  overrides: Record<string, number>;
+  /** artikel_nummers die uit de berekende lijst zijn verwijderd */
+  verwijderd: string[];
+  toegevoegd: ToegevoegdArtikel[];
+}
+
+export const legeWinkelwagenAanpassingen = (): WinkelwagenAanpassingen => ({
+  overrides: {},
+  verwijderd: [],
+  toegevoegd: [],
+});
+
 export interface PreviewItem {
   artikel_id: string;
   artikel_nummer: string;

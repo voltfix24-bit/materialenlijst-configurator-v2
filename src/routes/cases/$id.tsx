@@ -7,8 +7,15 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { MaterialenConfigurator } from "@/components/configurator/MaterialenConfigurator";
 import { exporteerNaarTemplate, downloadBlob } from "@/lib/assortiment/excel";
-import { emptyConfig, type MaterialenConfig, type PreviewItem, type RmuConfig } from "@/lib/configurator/types";
+import {
+  emptyConfig,
+  type MaterialenConfig,
+  type PreviewItem,
+  type RmuConfig,
+  type WinkelwagenAanpassingen,
+} from "@/lib/configurator/types";
 import { setGlobalDirty } from "@/lib/dirty-state";
+import { ExportHistoriePopover } from "@/components/cases/ExportHistoriePopover";
 
 export const Route = createFileRoute("/cases/$id")({
   component: CaseDetailPage,
@@ -114,7 +121,7 @@ function CaseDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("case_materialen")
-        .select("gewenste_hoeveelheid, artikelen:artikel_id(artikel_nummer)")
+        .select("gewenste_hoeveelheid, niet_bestellen, artikelen:artikel_id(artikel_nummer)")
         .eq("case_id", id);
       if (error) throw error;
       return data ?? [];
@@ -124,8 +131,11 @@ function CaseDetailPage() {
   const exporteer = useMutation({
     mutationFn: async () => {
       const winkel = winkelwagenItemsRef.current;
+      // Artikelen gemarkeerd als "niet bestellen" horen níet in de export —
+      // de Excel gaat direct als bestelling naar Liander.
       const items = winkel.length > 0
         ? winkel
+            .filter((p) => !p.niet_bestellen)
             .map((p) => ({
               artikel_nummer: p.artikel_nummer,
               hoeveelheid: Number(p.hoeveelheid) || 0,
@@ -134,6 +144,7 @@ function CaseDetailPage() {
             }))
             .filter((i) => i.artikel_nummer && i.hoeveelheid > 0)
         : (opgeslagen ?? [])
+            .filter((r) => !r.niet_bestellen)
             .map((r) => ({
               artikel_nummer: (r.artikelen as { artikel_nummer?: string } | null)?.artikel_nummer ?? "",
               hoeveelheid: Number(r.gewenste_hoeveelheid) || 0,
@@ -141,9 +152,40 @@ function CaseDetailPage() {
             .filter((i) => i.artikel_nummer && i.hoeveelheid > 0);
       const res = await exporteerNaarTemplate(items, caseRow?.case_nummer ?? null, caseRow?.station_naam ?? null);
       downloadBlob(res.blob, res.filename);
-      return res;
+
+      // Bevroren momentopname van deze bestelling. Mag de export zelf nooit
+      // blokkeren — bij een fout waarschuwen we alleen.
+      let snapshotOk = true;
+      try {
+        const { error: snapErr } = await supabase.from("case_exporten").insert({
+          case_id: id,
+          bestand_naam: res.filename,
+          case_nummer: caseRow?.case_nummer ?? null,
+          station_naam: caseRow?.station_naam ?? null,
+          aantal_artikelen: items.length,
+          matched: res.matched,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          unmatched: res.unmatched as any,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          inactief: res.inactief as any,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          items: items as any,
+        });
+        if (snapErr) throw snapErr;
+        qc.invalidateQueries({ queryKey: ["case-exporten", id] });
+      } catch (snapE) {
+        snapshotOk = false;
+        console.warn("[export] Snapshot kon niet worden opgeslagen:", snapE);
+      }
+      return { ...res, snapshotOk };
     },
     onSuccess: (res) => {
+      if (!res.snapshotOk) {
+        toast.warning(
+          "Export gelukt, maar de bestelling kon niet in de exporthistorie worden vastgelegd. " +
+            "Controleer of de laatste database-migratie (case_exporten) is uitgevoerd.",
+        );
+      }
       const stukken: string[] = [`${res.matched} gematcht`];
       if (res.unmatched.length) stukken.push(`${res.unmatched.length} zonder Liander-nummer`);
       if (res.inactief.length) stukken.push(`${res.inactief.length} inactief`);
@@ -178,6 +220,9 @@ function CaseDetailPage() {
     if (!raw || typeof raw !== "object") return null;
     if (!rmuConfigs) return undefined;
     const base: MaterialenConfig = { ...emptyConfig(), ...raw } as MaterialenConfig;
+    // winkelwagen-aanpassingen zitten in dezelfde JSON maar horen niet in de
+    // config-state — die gaan apart via initialAanpassingen naar de winkelwagen.
+    delete (base as unknown as { winkelwagen?: unknown }).winkelwagen;
     const oversteekDefaults = { heeftOversteek: false, aantalOversteken: 1, oversteekMeters: 0 };
     base.msKabelTraces = ((raw.msKabelTraces ?? []) as unknown as Record<string, unknown>[]).map(
       (t) => ({ ...oversteekDefaults, ...t }) as MaterialenConfig["msKabelTraces"][number],
@@ -201,6 +246,12 @@ function CaseDetailPage() {
       : null;
     return base;
   }, [caseRow, rmuConfigs]);
+
+  // Eerder opgeslagen winkelwagen-correcties (overrides/verwijderd/toegevoegd)
+  const initialAanpassingen = useMemo<WinkelwagenAanpassingen | null>(() => {
+    const raw = caseRow?.config_json as { winkelwagen?: WinkelwagenAanpassingen } | null;
+    return raw?.winkelwagen ?? null;
+  }, [caseRow]);
 
   const heeftMateriaal = previewCount > 0 || (opgeslagen?.length ?? 0) > 0;
 
@@ -314,6 +365,7 @@ function CaseDetailPage() {
             {exporteer.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             <span className="hidden sm:inline">Export</span>
           </button>
+          <ExportHistoriePopover caseId={id} />
         </div>
       </div>
 
@@ -353,6 +405,7 @@ function CaseDetailPage() {
               caseId={id}
               caseType={caseRow.case_type}
               initialConfig={initialConfig}
+              initialAanpassingen={initialAanpassingen}
               onDirtyChange={setIsDirty}
               onProgressChange={(c, t) => { setCompleted(c); setTotal(t); }}
               onSavingChange={setSaving}
