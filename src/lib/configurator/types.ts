@@ -289,7 +289,7 @@ export const PREVIEW_SECTIE_DEFS: PreviewSectieDef[] = [
     uitleg:
       "Vulkabel-artikelen (kabelschoenen, krimpkousen) per trafo + LS-rek combinatie. Komt uit trafo-vult-kabel-regels.",
     beheerGroep: "automations",
-    beheerTab: "trafo_regels",
+    beheerTab: "trafo_vult_kabel",
   },
   {
     key: "lsRek",
