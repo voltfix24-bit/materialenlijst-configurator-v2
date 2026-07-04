@@ -1413,11 +1413,11 @@ export type Database = {
       sla_case_op: {
         Args: {
           p_case_id: string
-          p_sub_type: string | null
           p_config_json: Json
+          p_ls_moffen?: Json
           p_materialen?: Json
           p_ms_moffen?: Json
-          p_ls_moffen?: Json
+          p_sub_type: string
         }
         Returns: undefined
       }
