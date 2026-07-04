@@ -45,9 +45,9 @@ export const ARTIKEL_REFS: ArtikelRef[] = [
   { tabel: "rmu_configuraties", kolom: "rmu_artikel_id", beheerGroep: "hardware", beheerTab: "rmu" },
   { tabel: "rmu_configuraties", kolom: "frame_artikel_id", beheerGroep: "hardware", beheerTab: "rmu" },
   { tabel: "rmu_configuraties", kolom: "bodemplaat_artikel_id", beheerGroep: "hardware", beheerTab: "rmu" },
-  { tabel: "trafo_vult_kabel", kolom: "kabel_artikel_id", beheerGroep: "automations", beheerTab: "trafo_regels" },
-  { tabel: "trafo_vult_kabel", kolom: "perskabelschoen_artikel_id", beheerGroep: "automations", beheerTab: "trafo_regels" },
-  { tabel: "trafo_vult_kabel", kolom: "muurbeugel_artikel_id", beheerGroep: "automations", beheerTab: "trafo_regels" },
+  { tabel: "trafo_vult_kabel", kolom: "kabel_artikel_id", beheerGroep: "automations", beheerTab: "trafo_vult_kabel" },
+  { tabel: "trafo_vult_kabel", kolom: "perskabelschoen_artikel_id", beheerGroep: "automations", beheerTab: "trafo_vult_kabel" },
+  { tabel: "trafo_vult_kabel", kolom: "muurbeugel_artikel_id", beheerGroep: "automations", beheerTab: "trafo_vult_kabel" },
   // Opgeslagen cases — geen beheer-tab; alleen ter info.
   { tabel: "case_materialen", kolom: "artikel_id" },
 ];

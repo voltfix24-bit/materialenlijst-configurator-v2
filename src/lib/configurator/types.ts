@@ -289,7 +289,7 @@ export const PREVIEW_SECTIE_DEFS: PreviewSectieDef[] = [
     uitleg:
       "Vulkabel-artikelen (kabelschoenen, krimpkousen) per trafo + LS-rek combinatie. Komt uit trafo-vult-kabel-regels.",
     beheerGroep: "automations",
-    beheerTab: "trafo_regels",
+    beheerTab: "trafo_vult_kabel",
   },
   {
     key: "lsRek",
@@ -362,7 +362,7 @@ export const BRON_TABEL_DEFS: Record<BronTabel, BronTabelDef> = {
   rmu_zekeringen:                 { beheerGroep: "hardware",  beheerTab: "rmu", label: "RMU zekeringen" },
   rmu_veld_regels:                { beheerGroep: "automations", beheerTab: "rmu_veld_regels", label: "RMU veld regels" },
   trafo_regels:                   { beheerGroep: "automations", beheerTab: "trafo_regels", label: "Trafo regels" },
-  trafo_vult_kabel:               { beheerGroep: "automations", beheerTab: "trafo_regels", label: "Trafo vult-kabel" },
+  trafo_vult_kabel:               { beheerGroep: "automations", beheerTab: "trafo_vult_kabel", label: "Trafo vult-kabel" },
   ms_mof_types:                   { beheerGroep: "hardware",  beheerTab: "ms_mof", label: "MS mof types" },
   ms_mof_materialen:              { beheerGroep: "hardware",  beheerTab: "ms_mof", label: "MS mof materialen" },
   ms_kabel_regels:                { beheerGroep: "automations", beheerTab: "ms_kabel_regels", label: "MS kabel regels" },
