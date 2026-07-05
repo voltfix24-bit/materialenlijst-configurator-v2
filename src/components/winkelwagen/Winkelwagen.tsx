@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { VolledigeMaterialenlijst } from "./VolledigeMaterialenlijst";
 import type { PreviewItem, WinkelwagenAanpassingen } from "@/lib/configurator/types";
 import type { ArtikelStam } from "@/lib/configurator/artikelTypes";
@@ -14,6 +14,7 @@ import { WinkelwagenFooter } from "./WinkelwagenFooter";
 import { useWinkelwagenAnimaties } from "./useWinkelwagenAnimaties";
 import { useWinkelwagenSecties } from "./useWinkelwagenSecties";
 import { useWinkelwagenCorrecties } from "./useWinkelwagenCorrecties";
+import { useHandmatigZoeker } from "./useHandmatigZoeker";
 
 interface Props {
   items: PreviewItem[]; // berekende items vanuit configurator
@@ -59,25 +60,14 @@ export function Winkelwagen({
   initieleAanpassingen,
   onAanpassingenChange,
 }: Props) {
-  const {
-    effectief,
-    overrides,
-    setOverrides,
-    verwijderd,
-    setVerwijderd,
-    toegevoegd,
-    setToegevoegd,
-  } = useWinkelwagenAanpassingen({
-    caseId,
-    items,
-    initieleAanpassingen,
-    onItemsChange,
-    onAanpassingenChange,
-  });
-  const [showZoeker, setShowZoeker] = useState(false);
-  const [zoek, setZoek] = useState("");
-  const [zoekHoeveelheid, setZoekHoeveelheid] = useState(1);
-  const [gekozenArtikel, setGekozenArtikel] = useState<ArtikelStam | null>(null);
+  const { effectief, overrides, setOverrides, setVerwijderd, toegevoegd, setToegevoegd } =
+    useWinkelwagenAanpassingen({
+      caseId,
+      items,
+      initieleAanpassingen,
+      onItemsChange,
+      onAanpassingenChange,
+    });
   const [exportConfirmOpen, setExportConfirmOpen] = useState(false);
   const [volledigOpen, setVolledigOpen] = useState(false);
 
@@ -99,48 +89,21 @@ export function Winkelwagen({
     toegevoegd,
     nieuwNrs,
   });
-  const {
-    dialoogData,
-    bevestigDialoog,
-    annuleerDialoog,
-    wijzigHoeveelheid,
-    verwijderItem,
-    voegHandmatigToe,
-  } = useWinkelwagenCorrecties({
-    caseId,
-    caseType,
-    subType,
-    configSnapshot,
-    items,
-    toegevoegd,
-    overrides,
-    setOverrides,
-    setVerwijderd,
-    setToegevoegd,
-  });
+  const { dialoogData, bevestigDialoog, annuleerDialoog, wijzigHoeveelheid, verwijderItem, voegHandmatigToe } =
+    useWinkelwagenCorrecties({
+      caseId,
+      caseType,
+      subType,
+      configSnapshot,
+      items,
+      toegevoegd,
+      overrides,
+      setOverrides,
+      setVerwijderd,
+      setToegevoegd,
+    });
 
-  const voegArtikelToe = () => {
-    if (!gekozenArtikel || zoekHoeveelheid <= 0) return;
-    voegHandmatigToe(gekozenArtikel, zoekHoeveelheid);
-    setShowZoeker(false);
-    setZoek("");
-    setGekozenArtikel(null);
-    setZoekHoeveelheid(1);
-  };
-
-  const suggesties = useMemo(() => {
-    const q = zoek.trim().toLowerCase();
-    if (q.length < 2) return [];
-    const al = new Set(effectief.map((e) => e.artikel_nummer));
-    return artikelen
-      .filter(
-        (a) =>
-          !al.has(a.artikel_nummer) &&
-          (a.artikel_nummer.toLowerCase().includes(q) ||
-            a.korte_omschrijving.toLowerCase().includes(q)),
-      )
-      .slice(0, 8);
-  }, [zoek, artikelen, effectief]);
+  const zoeker = useHandmatigZoeker({ artikelen, effectief, voegHandmatigToe });
 
   const teBestellen = effectief.filter((p) => !p.niet_bestellen).length;
   const totaal = effectief.length;
@@ -174,7 +137,7 @@ export function Winkelwagen({
         filter={filter}
         onFilterChange={setFilter}
         onOpenVolledig={() => setVolledigOpen(true)}
-        onOpenZoeker={() => setShowZoeker(true)}
+        onOpenZoeker={zoeker.openZoeker}
       />
 
       <WinkelwagenSecties
@@ -207,23 +170,16 @@ export function Winkelwagen({
         onExport={handleExportClick}
       >
         <HandmatigToevoegen
-          open={showZoeker}
-          zoek={zoek}
-          zoekHoeveelheid={zoekHoeveelheid}
-          gekozenArtikel={gekozenArtikel}
-          suggesties={suggesties}
-          onZoekChange={(value) => {
-            setZoek(value);
-            setGekozenArtikel(null);
-          }}
-          onZoekHoeveelheidChange={setZoekHoeveelheid}
-          onKiesArtikel={setGekozenArtikel}
-          onSluiten={() => {
-            setShowZoeker(false);
-            setZoek("");
-            setGekozenArtikel(null);
-          }}
-          onToevoegen={voegArtikelToe}
+          open={zoeker.open}
+          zoek={zoeker.zoek}
+          zoekHoeveelheid={zoeker.hoeveelheid}
+          gekozenArtikel={zoeker.gekozenArtikel}
+          suggesties={zoeker.suggesties}
+          onZoekChange={zoeker.wijzigZoek}
+          onZoekHoeveelheidChange={zoeker.setHoeveelheid}
+          onKiesArtikel={zoeker.kiesArtikel}
+          onSluiten={zoeker.sluiten}
+          onToevoegen={zoeker.bevestig}
         />
       </WinkelwagenFooter>
 
