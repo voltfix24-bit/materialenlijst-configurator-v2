@@ -1,7 +1,11 @@
 import type { RefObject } from "react";
 import { ChevronDown, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { PreviewItem, PreviewSectie, ToegevoegdArtikel } from "@/lib/configurator/types";
+import type {
+  PreviewItem,
+  PreviewSectie,
+  ToegevoegdArtikel,
+} from "@/lib/configurator/types";
 import { WinkelwagenRij } from "./WinkelwagenRij";
 
 interface SectieGroep {
@@ -77,7 +81,12 @@ export function WinkelwagenSecties({
                 <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-label="nieuwe artikelen" />
               )}
               <span className="text-[9px] text-muted-foreground/70 font-mono">{sec.items.length} art.</span>
-              <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+              <ChevronDown
+                className={cn(
+                  "w-3 h-3 text-muted-foreground transition-transform",
+                  isOpen && "rotate-180",
+                )}
+              />
             </button>
             {isOpen && (
               <div className="space-y-0.5">
@@ -126,7 +135,12 @@ export function WinkelwagenSecties({
               <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-label="nieuwe artikelen" />
             )}
             <span className="text-[9px] text-muted-foreground/70 font-mono">{zichtbareToegevoegd.length} art.</span>
-            <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform", openSecties.has("__handmatig") && "rotate-180")} />
+            <ChevronDown
+              className={cn(
+                "w-3 h-3 text-muted-foreground transition-transform",
+                openSecties.has("__handmatig") && "rotate-180",
+              )}
+            />
           </button>
           {openSecties.has("__handmatig") && (
             <div className="space-y-0.5">
@@ -141,7 +155,13 @@ export function WinkelwagenSecties({
                   niet_bestellen: false,
                   herkomst: ["Handmatig toegevoegd"],
                   sectie: "standaard",
-                  bijdragen: [{ herkomst: "Handmatig toegevoegd", sectie: "standaard", hoeveelheid: t.hoeveelheid }],
+                  bijdragen: [
+                    {
+                      herkomst: "Handmatig toegevoegd",
+                      sectie: "standaard",
+                      hoeveelheid: t.hoeveelheid,
+                    },
+                  ],
                 };
                 return (
                   <WinkelwagenRij
