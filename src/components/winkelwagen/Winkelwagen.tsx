@@ -89,19 +89,25 @@ export function Winkelwagen({
     toegevoegd,
     nieuwNrs,
   });
-  const { dialoogData, bevestigDialoog, annuleerDialoog, wijzigHoeveelheid, verwijderItem, voegHandmatigToe } =
-    useWinkelwagenCorrecties({
-      caseId,
-      caseType,
-      subType,
-      configSnapshot,
-      items,
-      toegevoegd,
-      overrides,
-      setOverrides,
-      setVerwijderd,
-      setToegevoegd,
-    });
+  const {
+    dialoogData,
+    bevestigDialoog,
+    annuleerDialoog,
+    wijzigHoeveelheid,
+    verwijderItem,
+    voegHandmatigToe,
+  } = useWinkelwagenCorrecties({
+    caseId,
+    caseType,
+    subType,
+    configSnapshot,
+    items,
+    toegevoegd,
+    overrides,
+    setOverrides,
+    setVerwijderd,
+    setToegevoegd,
+  });
 
   const zoeker = useHandmatigZoeker({ artikelen, effectief, voegHandmatigToe });
 
