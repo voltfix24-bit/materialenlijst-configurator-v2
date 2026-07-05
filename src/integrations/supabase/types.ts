@@ -567,6 +567,36 @@ export type Database = {
           },
         ]
       }
+      inet_default_artikelen: {
+        Row: {
+          actief: boolean
+          artikel_nummer: string
+          created_at: string
+          hoeveelheid: number
+          id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actief?: boolean
+          artikel_nummer: string
+          created_at?: string
+          hoeveelheid?: number
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actief?: boolean
+          artikel_nummer?: string
+          created_at?: string
+          hoeveelheid?: number
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ls_beveiliging_opties: {
         Row: {
           actief: boolean
@@ -916,6 +946,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ringklem_specs: {
+        Row: {
+          actief: boolean
+          aftakkabel_doorsnede_max: number
+          aftakkabel_doorsnede_min: number
+          artikel_nummer: string
+          created_at: string
+          hoofdkabel_doorsnede_max: number
+          hoofdkabel_doorsnede_min: number
+          hoofdkabel_materiaal: string
+          id: string
+          omschrijving: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actief?: boolean
+          aftakkabel_doorsnede_max: number
+          aftakkabel_doorsnede_min: number
+          artikel_nummer: string
+          created_at?: string
+          hoofdkabel_doorsnede_max: number
+          hoofdkabel_doorsnede_min: number
+          hoofdkabel_materiaal: string
+          id?: string
+          omschrijving: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actief?: boolean
+          aftakkabel_doorsnede_max?: number
+          aftakkabel_doorsnede_min?: number
+          artikel_nummer?: string
+          created_at?: string
+          hoofdkabel_doorsnede_max?: number
+          hoofdkabel_doorsnede_min?: number
+          hoofdkabel_materiaal?: string
+          id?: string
+          omschrijving?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       rmu_configuraties: {
         Row: {
