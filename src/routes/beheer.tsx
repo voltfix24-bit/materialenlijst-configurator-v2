@@ -95,7 +95,10 @@ const GROEPEN: Groep[] = [
     label: "Datakwaliteit",
     icon: ShieldCheck,
     beschrijving: "Controle op ontbrekende artikelen en referentiële fouten.",
-    tabs: [{ key: "datakwaliteit", label: "Datakwaliteit", render: () => <DataKwaliteitTab /> }],
+    tabs: [
+      { key: "datakwaliteit", label: "Datakwaliteit", render: () => <DataKwaliteitTab /> },
+      { key: "automation_audit", label: "Automations audit", render: () => <AutomationAuditTab /> },
+    ],
   },
   {
     key: "historie",
