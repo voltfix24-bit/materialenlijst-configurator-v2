@@ -1,5 +1,5 @@
 export interface ArtikelStam {
-  id?: string;
+  id: string;
   artikel_nummer: string;
   korte_omschrijving: string;
   eenheid: string;
