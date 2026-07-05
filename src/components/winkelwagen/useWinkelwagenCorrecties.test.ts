@@ -34,7 +34,7 @@ describe("bepaalBron", () => {
           herkomst: "prov_regel",
           sectie: "provisorium",
           hoeveelheid: 1,
-          bronTabel: "provisorium_regels",
+          bronTabel: "prov_regels",
           bronId: "abc-123",
         },
       ]),
