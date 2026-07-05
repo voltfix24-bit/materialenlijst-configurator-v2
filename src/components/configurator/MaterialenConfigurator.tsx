@@ -46,6 +46,8 @@ interface Props {
   initialConfig?: MaterialenConfig | null;
   /** Opgeslagen winkelwagen-aanpassingen (uit config_json.winkelwagen). */
   initialAanpassingen?: WinkelwagenAanpassingen | null;
+  /** Datum van de laatste export (= geplaatste bestelling), of null. */
+  besteldOp?: string | null;
   onDirtyChange?: (isDirty: boolean) => void;
   onProgressChange?: (completed: number, total: number) => void;
   onSavingChange?: (saving: boolean) => void;
@@ -84,6 +86,7 @@ export function MaterialenConfigurator({
   caseType,
   initialConfig,
   initialAanpassingen,
+  besteldOp,
   onDirtyChange,
   onProgressChange,
   onSavingChange,
@@ -526,6 +529,7 @@ export function MaterialenConfigurator({
           exportPending={exportPending}
           exportSignal={exportSignal}
           configSnapshot={config as unknown as Record<string, unknown>}
+          besteldOp={besteldOp ?? null}
           initieleAanpassingen={initialAanpassingen ?? null}
           onAanpassingenChange={(a) => {
             aanpassingenRef.current = a;

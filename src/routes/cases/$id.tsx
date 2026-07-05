@@ -123,6 +123,24 @@ function CaseDetailPage() {
     },
   });
 
+  // Laatste export = laatst geplaatste bestelling. Wijzigingen daarna wijken
+  // af van een bestelling — de correctiedialoog waarschuwt daar dan voor.
+  const { data: laatsteExport } = useQuery({
+    queryKey: ["case-exporten", id, "laatste"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("case_exporten")
+        .select("id, created_at, bestand_naam")
+        .eq("case_id", id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    retry: false,
+  });
+
   const exporteer = useMutation({
     mutationFn: async () => {
       const winkel = winkelwagenItemsRef.current;
@@ -401,6 +419,7 @@ function CaseDetailPage() {
               caseType={caseRow.case_type}
               initialConfig={initialConfig}
               initialAanpassingen={initialAanpassingen}
+              besteldOp={laatsteExport?.created_at ?? null}
               onDirtyChange={setIsDirty}
               onProgressChange={(c, t) => { setCompleted(c); setTotal(t); }}
               onSavingChange={setSaving}

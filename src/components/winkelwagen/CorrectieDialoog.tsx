@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, PackageCheck } from "lucide-react";
+import { format } from "date-fns";
+import { nl } from "date-fns/locale";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +14,8 @@ import type { CorrectieDialoogData, CorrectieScope } from "@/lib/leersysteem/typ
 
 interface Props {
   data: CorrectieDialoogData;
+  /** Datum van de laatste export (= geplaatste bestelling), of null. */
+  besteldOp?: string | null;
   onBevestig: (reden: string, scope: CorrectieScope) => void;
   onAnnuleer: () => void;
 }
@@ -48,7 +52,7 @@ const SCOPES: ScopeOpt[] = [
   },
 ];
 
-export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
+export function CorrectieDialoog({ data, besteldOp, onBevestig, onAnnuleer }: Props) {
   const [reden, setReden] = useState("");
   const [scope, setScope] = useState<CorrectieScope>("eenmalig");
   const [bezig, setBezig] = useState(false);
@@ -83,6 +87,19 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
             <span className="font-mono">{data.artikel_nummer}</span> · {data.korte_omschrijving}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Wijziging ná een geplaatste bestelling — extra context vóór de vraag */}
+        {besteldOp && (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 flex items-start gap-2 text-xs text-amber-800">
+            <PackageCheck className="w-4 h-4 mt-px flex-shrink-0" />
+            <span>
+              Deze case is al besteld op{" "}
+              <strong>{format(new Date(besteldOp), "d MMMM yyyy HH:mm", { locale: nl })}</strong>.
+              Deze wijziging wijkt af van een geplaatste bestelling — geef hieronder aan of dit een
+              eenmalige afwijking is, of dat dit voortaan standaard zo moet bij dit type case.
+            </span>
+          </div>
+        )}
 
         {/* Oud → Nieuw — visueel prominent */}
         <div className="rounded-md border border-border bg-muted/30 px-3 py-2 flex items-center justify-center gap-3 text-sm">

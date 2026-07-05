@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useNotificaties, useVerwerkNotificatie } from "@/lib/leersysteem/hooks";
-import { berekenVoorstel } from "@/lib/leersysteem/api";
+import { berekenVoorstel, haalVoorstelDetails } from "@/lib/leersysteem/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, ChevronDown, ChevronUp, Loader2, Bell, AlertTriangle, ExternalLink, Wand2, Hand } from "lucide-react";
@@ -94,42 +94,153 @@ function NotificatiesPage() {
         ))}
       </div>
 
-      <Dialog open={!!bevestigen} onOpenChange={(o) => !o && setBevestigen(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Wijziging doorvoeren?</DialogTitle>
-            <DialogDescription>
-              Weet je zeker dat je deze aanpassing wil doorvoeren in de standaard materialen voor{" "}
-              <span className="font-semibold text-foreground">
-                {bevestigen ? CASE_TYPE_LABELS[bevestigen.case_type] ?? bevestigen.case_type : ""}
-              </span>
-              ? Dit beïnvloedt alle toekomstige cases van dit type.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setBevestigen(null)}
-              className="px-3 py-1.5 rounded-lg border border-border text-sm hover:bg-muted"
-            >
-              Annuleer
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (bevestigen) {
-                  verwerk.mutate({ notificatie: bevestigen, status: "goedgekeurd" });
-                  setBevestigen(null);
-                }
-              }}
-              className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
-            >
-              Doorvoeren
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {bevestigen && (
+        <DoorvoerenDialog
+          notificatie={bevestigen}
+          onClose={() => setBevestigen(null)}
+          onDoorvoeren={(nieuweHoeveelheid) => {
+            verwerk.mutate({ notificatie: bevestigen, status: "goedgekeurd", nieuweHoeveelheid });
+            setBevestigen(null);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+/**
+ * Before/after-preview vóór het automatisch doorvoeren: toont exact welke
+ * regel of template gaat veranderen (huidige waarde uit de database → nieuwe
+ * waarde, aanpasbaar), en blokkeert wanneer doorvoeren niet veilig kan
+ * (bronregel weg, hoeveelheid via formule, artikel niet in catalogus).
+ */
+function DoorvoerenDialog({
+  notificatie,
+  onClose,
+  onDoorvoeren,
+}: {
+  notificatie: BeheerNotificatie;
+  onClose: () => void;
+  onDoorvoeren: (nieuweHoeveelheid?: number) => void;
+}) {
+  const { data: details, isLoading } = useQuery({
+    queryKey: ["voorstel-details", notificatie.id],
+    queryFn: () => haalVoorstelDetails(notificatie),
+    staleTime: 0,
+  });
+  const [hoeveelheid, setHoeveelheid] = useState<number | null>(null);
+
+  const v = details?.voorstel;
+  const isHoeveelheid = v?.kind === "auto_hoeveelheid" || v?.kind === "auto_toevoegen_standaard";
+  const effectieveHoeveelheid = hoeveelheid ?? v?.nieuwe_hoeveelheid ?? 1;
+  const geblokkeerd = !!details?.blokkade;
+  const tabelDef = v?.tabel ? BRON_TABEL_DEFS[v.tabel as BronTabel] : null;
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Wijziging doorvoeren?</DialogTitle>
+          <DialogDescription className="text-xs">
+            <span className="font-mono">{notificatie.artikel_nummer}</span> ·{" "}
+            {notificatie.korte_omschrijving ?? ""} —{" "}
+            {CASE_TYPE_LABELS[notificatie.case_type] ?? notificatie.case_type}. Dit beïnvloedt alle
+            toekomstige cases van dit type; de wijziging komt in het beheer-log.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+            <Loader2 className="w-4 h-4 animate-spin" /> Huidige regel ophalen…
+          </div>
+        )}
+
+        {details && geblokkeerd && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2.5 flex items-start gap-2 text-sm text-destructive">
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{details.blokkade}</span>
+          </div>
+        )}
+
+        {details && !geblokkeerd && v && (
+          <div className="space-y-3">
+            <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5 text-sm space-y-2">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Wat gaat er veranderen
+              </div>
+              {v.kind === "auto_verwijderen" && (
+                <p>
+                  De regel in <strong>{tabelDef?.label ?? v.tabel}</strong> die dit artikel
+                  toevoegt wordt <span className="text-destructive font-semibold">verwijderd</span>.
+                  Het artikel komt daarna niet meer automatisch in nieuwe cases van dit type.
+                </p>
+              )}
+              {v.kind === "auto_hoeveelheid" && (
+                <p>
+                  Hoeveelheid in <strong>{tabelDef?.label ?? v.tabel}</strong>:
+                </p>
+              )}
+              {v.kind === "auto_toevoegen_standaard" && (
+                <p>
+                  {details.huidigeHoeveelheid != null ? (
+                    <>
+                      Bestaande regel in <strong>Standaard materialen</strong> (
+                      {CASE_TYPE_LABELS[notificatie.case_type] ?? notificatie.case_type}) wordt
+                      bijgewerkt:
+                    </>
+                  ) : (
+                    <>
+                      Artikel wordt <span className="text-success font-semibold">toegevoegd</span>{" "}
+                      aan <strong>Standaard materialen</strong> (
+                      {CASE_TYPE_LABELS[notificatie.case_type] ?? notificatie.case_type}):
+                    </>
+                  )}
+                </p>
+              )}
+              {isHoeveelheid && (
+                <div className="flex items-center justify-center gap-3 py-1">
+                  <span className="font-mono text-muted-foreground tabular-nums text-base">
+                    {details.huidigeHoeveelheid ?? "—"}
+                  </span>
+                  <span className="text-muted-foreground">→</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={effectieveHoeveelheid}
+                    onChange={(e) => setHoeveelheid(Number(e.target.value))}
+                    className="w-20 h-9 rounded-md border border-primary/50 bg-background px-2 text-center font-mono font-semibold text-base focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+              )}
+              {isHoeveelheid && (
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Voorstel op basis van {notificatie.aantal_correcties} correctie
+                  {notificatie.aantal_correcties === 1 ? "" : "s"} — pas het getal aan indien nodig.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <DialogFooter className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 rounded-lg border border-border text-sm hover:bg-muted"
+          >
+            Annuleer
+          </button>
+          <button
+            type="button"
+            disabled={isLoading || geblokkeerd || (isHoeveelheid && effectieveHoeveelheid < 0)}
+            onClick={() => onDoorvoeren(isHoeveelheid ? effectieveHoeveelheid : undefined)}
+            className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-50"
+          >
+            Doorvoeren
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

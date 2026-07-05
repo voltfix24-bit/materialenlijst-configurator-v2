@@ -31,21 +31,25 @@ export function useVerwerkNotificatie() {
     mutationFn: async ({
       notificatie,
       status,
+      nieuweHoeveelheid,
     }: {
       notificatie: BeheerNotificatie
       status: 'goedgekeurd' | 'afgewezen'
+      /** Door de beheerder in de preview aangepaste hoeveelheid (optioneel). */
+      nieuweHoeveelheid?: number
     }) => {
       if (status === 'goedgekeurd') {
         // Eerst proberen door te voeren; als bron onveilig is breekt dit af
         // zónder de notificatie te sluiten.
-        await voerGoedgekeurdeWijzigingDoor(notificatie)
+        await voerGoedgekeurdeWijzigingDoor(notificatie, { nieuweHoeveelheid })
       }
       await verwerkNotificatie(notificatie.id, status)
     },
     onSuccess: (_, { status }) => {
-      qc.invalidateQueries({ queryKey: ['beheer_notificaties'] })
-      qc.invalidateQueries({ queryKey: ['notificatie_count'] })
-      qc.invalidateQueries({ queryKey: ['standaard_materialen_templates'] })
+      // Een goedgekeurde wijziging raakt regel-/templatetabellen die overal in
+      // de app gecachet zijn (configurator-stamdata, beheer-tabs, simulator).
+      // Alles invalideren is hier de veilige keuze.
+      qc.invalidateQueries()
       toast.success(
         status === 'goedgekeurd' ? 'Wijziging doorgevoerd' : 'Notificatie afgewezen'
       )

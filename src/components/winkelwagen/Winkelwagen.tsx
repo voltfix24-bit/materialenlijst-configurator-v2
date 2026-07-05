@@ -35,6 +35,8 @@ interface Props {
   exportSignal?: number;
   /** Volledige case-configuratie — wordt als snapshot bij elke correctie opgeslagen. */
   configSnapshot?: Record<string, unknown> | null;
+  /** Datum van de laatste export (= geplaatste bestelling), of null. */
+  besteldOp?: string | null;
   /** Eerder opgeslagen aanpassingen (uit config_json.winkelwagen) — hersteld bij openen. */
   initieleAanpassingen?: WinkelwagenAanpassingen | null;
   /** Meldt elke wijziging in overrides/verwijderd/toegevoegd zodat de parent ze kan opslaan. */
@@ -57,6 +59,7 @@ export function Winkelwagen({
   exportPending,
   exportSignal,
   configSnapshot,
+  besteldOp,
   initieleAanpassingen,
   onAanpassingenChange,
 }: Props) {
@@ -192,6 +195,7 @@ export function Winkelwagen({
       {dialoogData && (
         <CorrectieDialoog
           data={dialoogData}
+          besteldOp={besteldOp ?? null}
           onBevestig={bevestigDialoog}
           onAnnuleer={annuleerDialoog}
         />
