@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAlternatiefKeuzes, splitAlternatieven } from "@/lib/assortiment/alternatief";
+import type { AlternatiefKeuze } from "@/lib/assortiment/alternatief";
 import type { PreviewItem } from "@/lib/configurator/types";
 import type { ExportProbleemArtikel } from "./ExportBevestigingDialoog";
 
@@ -13,11 +14,12 @@ interface ArtikelStam {
   alternatief_artikel_nummer?: string | null;
 }
 
-export interface AlternatiefKeuzeVoorExport {
-  nieuw_artikel_nummer: string;
-  created_at: string;
-  totaal_geupdate: number;
-}
+export type AlternatiefKeuzeVoorExport = Pick<
+  AlternatiefKeuze,
+  "nieuw_artikel_nummer" | "created_at" | "totaal_geupdate"
+>;
+
+const EMPTY_KEUZES = new Map<string, AlternatiefKeuzeVoorExport>();
 
 export function bouwExportProblemen(
   effectief: PreviewItem[],
@@ -31,6 +33,8 @@ export function bouwExportProblemen(
     const stam = artByNr.get(it.artikel_nummer);
     const status = (stam?.status ?? "").trim();
     const statusLower = status.toLowerCase();
+    // Status wint bewust mee: bij data-inconsistentie (`actief=true` maar
+    // status Uitgelopen/Verwijderd/Geblokkeerd) moet export alsnog waarschuwen.
     const isInactief =
       !!it.inactief ||
       stam?.actief === false ||
@@ -78,7 +82,7 @@ export function useExportProblemen(effectief: PreviewItem[], artikelen: ArtikelS
   });
 
   return useMemo(
-    () => bouwExportProblemen(effectief, artikelen, alternatiefKeuzes ?? new Map()),
+    () => bouwExportProblemen(effectief, artikelen, alternatiefKeuzes ?? EMPTY_KEUZES),
     [effectief, artikelen, alternatiefKeuzes],
   );
 }
