@@ -10,6 +10,7 @@ import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
 import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab, TrafoVultKabelTab } from "@/components/beheer/OverigeTabs";
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
+import { AutomationAuditTab } from "@/components/beheer/AutomationAuditTab";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
 import { RegelsSamenvattingTab } from "@/components/beheer/RegelsSamenvattingTab";
 import { WijzigingenTab } from "@/components/beheer/WijzigingenTab";
