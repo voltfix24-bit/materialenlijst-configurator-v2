@@ -105,6 +105,11 @@ describe("bouwExportProblemen", () => {
         totaal_geupdate: 3,
       },
     });
+    expect(Object.keys(problemen[0].eerdere_keuze ?? {}).sort()).toEqual([
+      "created_at",
+      "nieuw_artikel_nummer",
+      "totaal_geupdate",
+    ]);
   });
 
   it("slaat niet-bestellen regels over", () => {
@@ -131,6 +136,26 @@ describe("bouwExportProblemen", () => {
 
     expect(problemen[0]).toMatchObject({
       alternatief_raw: "GEEN OPVOLGER",
+      alternatieven: [],
+      geen_opvolger: true,
+      handmatig_beoordelen: false,
+    });
+  });
+
+  it.each(["-", ""])("herkent %s als geen-opvolger marker", (marker) => {
+    const problemen = bouwExportProblemen(
+      [item()],
+      [{
+        artikel_nummer: "20000001",
+        korte_omschrijving: "Geen opvolger",
+        eenheid: "ST",
+        actief: false,
+        status: "Verwijderd",
+        alternatief_artikel_nummer: marker,
+      }],
+    );
+
+    expect(problemen[0]).toMatchObject({
       alternatieven: [],
       geen_opvolger: true,
       handmatig_beoordelen: false,
