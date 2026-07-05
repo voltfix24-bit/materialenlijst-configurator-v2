@@ -10,6 +10,25 @@ import {
   type CorrectieScope,
 } from "@/lib/leersysteem/types";
 
+export function bepaalBron(it: PreviewItem): {
+  tabel: string | null;
+  id: string | null;
+  herkomst: string | null;
+  meerdere: boolean;
+} {
+  const aantal = it.bijdragen?.length ?? 0;
+  if (aantal !== 1) {
+    return { tabel: null, id: null, herkomst: null, meerdere: aantal > 1 };
+  }
+  const b = it.bijdragen[0];
+  return {
+    tabel: b.bronTabel ?? null,
+    id: b.bronId ?? null,
+    herkomst: b.herkomst ?? null,
+    meerdere: false,
+  };
+}
+
 interface UseWinkelwagenCorrectiesArgs {
   caseId: string;
   caseType: string;
