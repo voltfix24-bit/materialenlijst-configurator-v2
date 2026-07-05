@@ -40,7 +40,7 @@ describe("bepaalBron", () => {
       ]),
     );
     expect(b).toEqual({
-      tabel: "provisorium_regels",
+      tabel: "prov_regels",
       id: "abc-123",
       herkomst: "prov_regel",
       meerdere: false,
