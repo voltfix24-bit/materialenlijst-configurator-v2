@@ -7,6 +7,7 @@ import { getGlobalDirty, onGlobalDirtyChange } from "@/lib/dirty-state";
 import { useNotificatieBadge } from "@/lib/leersysteem/hooks";
 
 import terrevoltIcon from "@/assets/terrevolt-icon.png.asset.json";
+import terrevoltHorizontal from "@/assets/terrevolt-horizontal-white.svg.asset.json";
 
 const items = [
   { to: "/cases", label: "Cases", icon: LayoutGrid },
@@ -14,11 +15,15 @@ const items = [
   { to: "/notificaties", label: "Notificaties", icon: Bell },
 ];
 
-function TerreVoltLogo({ className }: { className?: string }) {
-  return (
-    <img src={terrevoltIcon.url} alt="TerreVolt" className={className} />
-  );
+function TerreVoltLogo({ dark, className }: { dark: boolean; className?: string }) {
+  // In donker thema tonen we het horizontale witte woordmerk; in licht thema
+  // blijft het compacte icoon staan omdat de horizontale variant alleen wit is.
+  if (dark) {
+    return <img src={terrevoltHorizontal.url} alt="TerreVolt" className={className} />;
+  }
+  return <img src={terrevoltIcon.url} alt="TerreVolt" className={className} />;
 }
+
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
