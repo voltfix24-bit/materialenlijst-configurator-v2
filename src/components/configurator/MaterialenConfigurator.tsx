@@ -36,6 +36,7 @@ import {
 } from "@/lib/configurator/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useInetDefaultArtikelen, useRingklemSpecs } from "@/lib/configurator/extraStamdata";
+import { vragenVoorCaseType, type MaatwerkVraag } from "@/lib/configurator/berekenen/maatwerk";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Winkelwagen } from "@/components/winkelwagen/Winkelwagen";
@@ -75,6 +76,7 @@ const SECTIONS = [
   { key: "trafo",       label: "Trafo & Vult kabel",  color: "var(--color-section-trafo)",       icon: Box },
   { key: "ls",          label: "LS — Laagspanning",   color: "var(--color-section-ls)",          icon: Plug },
   { key: "overig",      label: "Overig",              color: "var(--color-section-overig)",      icon: Package },
+  { key: "maatwerk",    label: "Eigen vragen",        color: "#B0578D",                          icon: ClipboardList },
 ] as const;
 
 type SectionKey = (typeof SECTIONS)[number]["key"];
@@ -120,8 +122,8 @@ export function MaterialenConfigurator({
   const isNewCase = !initialConfig;
   const [open, setOpen] = useState<Record<SectionKey, boolean>>(() =>
     isNewCase
-      ? { project: true, provisorium: false, ms: false, trafo: false, ls: false, overig: false }
-      : { project: true, provisorium: true, ms: true, trafo: true, ls: true, overig: true },
+      ? { project: true, provisorium: false, ms: false, trafo: false, ls: false, overig: false, maatwerk: false }
+      : { project: true, provisorium: true, ms: true, trafo: true, ls: true, overig: true, maatwerk: true },
   );
   // Welke configurator sectie is als laatst door de engineer geopend → winkelwagen synchroniseert mee
   const [activeSectie, setActiveSectie] = useState<SectionKey | null>("project");
@@ -176,6 +178,7 @@ export function MaterialenConfigurator({
       sd.msKabelRegels.data,
       sd.rmuVeldRegels.data,
       sd.trafoVultKabelSpecs.data,
+      sd.maatwerkVragen.data,
     ],
   );
   // Effectieve winkelwagen-items (na overrides / verwijderingen / handmatig toegevoegde)
@@ -214,6 +217,12 @@ export function MaterialenConfigurator({
     (config.lsMoffen.length > 0 &&
       config.lsMoffen.every((m) => !!m.type && !!m.bestaandType));
 
+  // Eigen (via Beheer aangemaakte) vragen die voor dit case type gelden.
+  const maatwerkVragen = vragenVoorCaseType(sd, caseType);
+  const maatwerkOk = maatwerkVragen.every(
+    (v) => (config.maatwerkAntwoorden?.[v.vraag_key] ?? "").trim() !== "",
+  );
+
   const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
     provisorium:
@@ -227,10 +236,12 @@ export function MaterialenConfigurator({
     ls: lsRekOk && lsMoffenOk,
     // Overig (GGI + standaard) — informatief, altijd compleet
     overig: true,
+    maatwerk: maatwerkOk,
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
     if (k === "provisorium") return isProvisorum && (!isCompact || isCompactProv);
     if (k === "trafo") return showTrafo || showVultKabel;
+    if (k === "maatwerk") return maatwerkVragen.length > 0;
     if (k === "overig") return true;
     return true;
   });
@@ -445,6 +456,7 @@ export function MaterialenConfigurator({
         {SECTIONS.map((sec, idx) => {
           if (sec.key === "provisorium" && (!isProvisorum || (isCompact && !isCompactProv))) return null;
           if (sec.key === "trafo" && !(showTrafo || showVultKabel)) return null;
+          if (sec.key === "maatwerk" && maatwerkVragen.length === 0) return null;
           return (
             <div
               key={sec.key}
@@ -501,6 +513,9 @@ export function MaterialenConfigurator({
                       Worden automatisch toegevoegd op basis van case type en sub type. Zichtbaar in de winkelwagen rechts.
                     </div>
                   </div>
+                )}
+                {sec.key === "maatwerk" && (
+                  <MaatwerkSection vragen={maatwerkVragen} config={config} update={update} />
                 )}
               </SectionCard>
             </div>
@@ -607,12 +622,69 @@ function sectionSummary(key: SectionKey, c: MaterialenConfig, _sd: ReturnType<ty
     }
     case "overig":
       return c.ggiVervangen ? "GGI wordt vervangen" : "Standaard materialen";
+    case "maatwerk": {
+      const n = Object.values(c.maatwerkAntwoorden ?? {}).filter((v) => `${v}`.trim() !== "").length;
+      return n > 0 ? `${n} vra${n === 1 ? "ag" : "gen"} beantwoord` : "Nog in te vullen";
+    }
   }
 }
 
 const subTypeLabel = (s: SubType) => SUB_TYPE_LABELS[s];
 
 // ---------- Sections ----------
+
+/**
+ * Eigen (via Beheer → Automations → Eigen vragen aangemaakte) vragen.
+ * Antwoorden landen in config.maatwerkAntwoorden onder de vraag_key en de
+ * gekoppelde artikelen komen via berekenMaatwerk in de winkelwagen.
+ */
+function MaatwerkSection({
+  vragen,
+  config,
+  update,
+}: {
+  vragen: MaatwerkVraag[];
+  config: MaterialenConfig;
+  update: (p: Partial<MaterialenConfig>) => void;
+}) {
+  const zetAntwoord = (key: string, waarde: string) =>
+    update({ maatwerkAntwoorden: { ...(config.maatwerkAntwoorden ?? {}), [key]: waarde } });
+
+  return (
+    <div className="space-y-4">
+      {vragen.map((v) => {
+        const antwoord = config.maatwerkAntwoorden?.[v.vraag_key] ?? "";
+        return (
+          <Field key={v.vraag_key} label={v.label}>
+            {v.type === "ja_nee" && (
+              <PillGroup
+                value={antwoord}
+                onChange={(w) => zetAntwoord(v.vraag_key, w)}
+                options={[{ value: "ja", label: "Ja" }, { value: "nee", label: "Nee" }]}
+              />
+            )}
+            {v.type === "keuze" && (
+              <PillGroup
+                value={antwoord}
+                onChange={(w) => zetAntwoord(v.vraag_key, w)}
+                options={(v.opties ?? []).map((o) => ({ value: o, label: o }))}
+              />
+            )}
+            {v.type === "aantal" && (
+              <Stepper
+                value={Number(antwoord) || 0}
+                onChange={(w) => zetAntwoord(v.vraag_key, String(w))}
+                min={0}
+                max={999}
+              />
+            )}
+            {v.uitleg && <p className="text-xs text-muted-foreground mt-1">{v.uitleg}</p>}
+          </Field>
+        );
+      })}
+    </div>
+  );
+}
 
 /**
  * Type opdracht wordt niet meer gevraagd: er bestaan precies 4 type cases en

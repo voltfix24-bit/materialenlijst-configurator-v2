@@ -13,6 +13,7 @@ export const CONFIG_SECTIE_NAAR_WINKELWAGEN: Record<string, PreviewSectie[]> = {
   trafo: ["trafo", "vultKabel"],
   ls: ["lsVerbindingen", "lsRek"],
   overig: ["ggi", "standaard"],
+  maatwerk: ["maatwerk"],
 };
 
 export interface SectieGroep {

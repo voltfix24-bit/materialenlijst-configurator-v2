@@ -7,6 +7,7 @@ import { Field, InfoBox } from "@/components/ui-prim/Field";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { useStamdata } from "@/lib/configurator/queries";
 import { berekenPreview } from "@/lib/configurator/berekenen";
+import { vragenVoorCaseType } from "@/lib/configurator/berekenen/maatwerk";
 import { useInetDefaultArtikelen } from "@/lib/configurator/extraStamdata";
 import {
   BRON_TABEL_DEFS,
@@ -88,7 +89,9 @@ const HIGHLIGHT_MS = 2500;
 export function ProefcaseTab() {
   const [caseType, setCaseType] = useState("NSA");
   const [a, setA] = useState<Antwoorden>(LEEG);
+  const [maatwerk, setMaatwerk] = useState<Record<string, string>>({});
   const sd = useStamdata(caseType);
+  const maatwerkVragen = vragenVoorCaseType(sd, caseType);
   const inetDefaults = useInetDefaultArtikelen();
   const [sectieFilter, setSectieFilter] = useState<string>("alle");
 
@@ -152,8 +155,9 @@ export function ProefcaseTab() {
               },
             ]
           : [],
+      maatwerkAntwoorden: maatwerk,
     };
-  }, [a, subType, isCompact, rmuConfig, provRmuConfig, inetDefaults]);
+  }, [a, maatwerk, subType, isCompact, rmuConfig, provRmuConfig, inetDefaults]);
 
   const preview = useMemo<PreviewItem[]>(
     () => (sd.isLoading ? [] : berekenPreview(config, sd, caseType)),
@@ -179,6 +183,7 @@ export function ProefcaseTab() {
       sd.msKabelRegels.data,
       sd.rmuVeldRegels.data,
       sd.trafoVultKabelSpecs.data,
+      sd.maatwerkVragen.data,
     ],
   );
 
@@ -244,6 +249,7 @@ export function ProefcaseTab() {
               onChange={(v) => {
                 setCaseType(v);
                 setA(LEEG);
+                setMaatwerk({});
               }}
               options={CASE_TYPES}
             />
@@ -497,6 +503,44 @@ export function ProefcaseTab() {
                 />
                 GGI vervangen
               </label>
+            </div>
+          )}
+
+          {maatwerkVragen.length > 0 && (
+            <div className="border-t border-border pt-3 space-y-3">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                Eigen vragen
+              </p>
+              {maatwerkVragen.map((v) => {
+                const antwoord = maatwerk[v.vraag_key] ?? "";
+                const zetM = (w: string) => setMaatwerk((p) => ({ ...p, [v.vraag_key]: w }));
+                return (
+                  <Field key={v.vraag_key} label={v.label}>
+                    {v.type === "ja_nee" && (
+                      <PillGroup
+                        value={antwoord}
+                        onChange={zetM}
+                        options={[{ value: "ja", label: "Ja" }, { value: "nee", label: "Nee" }]}
+                      />
+                    )}
+                    {v.type === "keuze" && (
+                      <PillGroup
+                        value={antwoord}
+                        onChange={zetM}
+                        options={(v.opties ?? []).map((o) => ({ value: o, label: o }))}
+                      />
+                    )}
+                    {v.type === "aantal" && (
+                      <Stepper
+                        value={Number(antwoord) || 0}
+                        onChange={(w) => zetM(String(w))}
+                        min={0}
+                        max={999}
+                      />
+                    )}
+                  </Field>
+                );
+              })}
             </div>
           )}
         </div>

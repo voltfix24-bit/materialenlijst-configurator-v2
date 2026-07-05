@@ -275,6 +275,11 @@ export interface MaterialenConfig {
   provZekeringKva: TrafoKva;
   provInbMsKabels: number;
   provInbLsKabels: number;
+  /**
+   * Antwoorden op eigen (via Beheer aangemaakte) vragen, keyed op vraag_key.
+   * ja_nee: "ja"/"nee" · keuze: de gekozen optie · aantal: het getal als string.
+   */
+  maatwerkAntwoorden: Record<string, string>;
 }
 
 export type PreviewSectie =
@@ -286,7 +291,8 @@ export type PreviewSectie =
   | "lsRek"
   | "msVerbindingen"
   | "lsVerbindingen"
-  | "ggi";
+  | "ggi"
+  | "maatwerk";
 
 export interface PreviewSectieDef {
   key: PreviewSectie;
@@ -381,6 +387,15 @@ export const PREVIEW_SECTIE_DEFS: PreviewSectieDef[] = [
     beheerGroep: "standaard",
     beheerTab: "ggi",
   },
+  {
+    key: "maatwerk",
+    label: "Eigen vragen",
+    color: "#B0578D",
+    uitleg:
+      "Artikelen uit zelf toegevoegde vragen (Beheer → Automations → Eigen vragen). Per antwoord bepaal je zelf welke artikelen meekomen.",
+    beheerGroep: "automations",
+    beheerTab: "eigen_vragen",
+  },
 ];
 
 export type BronTabel =
@@ -399,7 +414,8 @@ export type BronTabel =
   | "ls_mof_types"
   | "ls_mof_materialen"
   | "ls_rek_regels"
-  | "prov_regels";
+  | "prov_regels"
+  | "maatwerk_vraag_regels";
 
 export interface BronTabelDef {
   beheerGroep: string;
@@ -424,6 +440,7 @@ export const BRON_TABEL_DEFS: Record<BronTabel, BronTabelDef> = {
   ls_mof_materialen:              { beheerGroep: "hardware",  beheerTab: "ls_mof", label: "LS mof materialen" },
   ls_rek_regels:                  { beheerGroep: "automations", beheerTab: "lsrek_regels", label: "LS-rek regels" },
   prov_regels:                    { beheerGroep: "automations", beheerTab: "prov_regels", label: "Provisorium regels" },
+  maatwerk_vraag_regels:          { beheerGroep: "automations", beheerTab: "eigen_vragen", label: "Eigen vragen" },
 };
 
 export interface PreviewBijdrage {
@@ -553,4 +570,5 @@ export const emptyConfig = (): MaterialenConfig => ({
   provZekeringKva: "",
   provInbMsKabels: 0,
   provInbLsKabels: 0,
+  maatwerkAntwoorden: {},
 });

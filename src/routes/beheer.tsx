@@ -11,6 +11,7 @@ import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab, Traf
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 import { ProefcaseTab } from "@/components/beheer/ProefcaseTab";
+import { EigenVragenTab } from "@/components/beheer/EigenVragenTab";
 import { RingklemmenTab, InetArtikelenTab } from "@/components/beheer/RingklemInetTabs";
 import { AutomationAuditTab } from "@/components/beheer/AutomationAuditTab";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
@@ -82,6 +83,7 @@ const GROEPEN: Groep[] = [
       { key: "lsrek_regels", label: "LS-rek regels", render: () => <LsRekRegelsTab /> },
       { key: "prov_regels", label: "Provisorium regels", render: () => <ProvRegelsTab /> },
       { key: "ms_kabel_regels", label: "MS kabel regels", render: () => <MsKabelRegelsTab /> },
+      { key: "eigen_vragen", label: "Eigen vragen", render: () => <EigenVragenTab /> },
     ],
   },
   {

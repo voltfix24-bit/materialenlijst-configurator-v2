@@ -43,6 +43,7 @@ export interface StamdataOverrides {
   provRegels?: unknown[];
   msKabelRegels?: unknown[];
   rmuVeldRegels?: unknown[];
+  maatwerkVragen?: unknown[];
   trafoVultKabelSpecs?: unknown[];
 }
 
@@ -286,6 +287,7 @@ export function makeStamdata(o: StamdataOverrides = {}): Stamdata {
     msKabelRegels: wrap(o.msKabelRegels ?? DEFAULT_MS_KABEL_REGELS),
     rmuVeldRegels: wrap(o.rmuVeldRegels ?? DEFAULT_RMU_VELD_REGELS),
     trafoVultKabelSpecs: wrap(o.trafoVultKabelSpecs ?? DEFAULT_VULT_KABEL_SPECS),
+    maatwerkVragen: wrap(o.maatwerkVragen ?? []),
     isLoading: false,
   } as unknown as Stamdata;
 }

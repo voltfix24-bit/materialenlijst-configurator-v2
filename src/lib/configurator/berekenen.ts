@@ -13,6 +13,7 @@ export { vultKabelSpecsFromStamdata, type VultKabelSpec } from "./berekenen/vult
 import { berekenLsRek } from "./berekenen/lsRek";
 import { berekenProvisorium } from "./berekenen/provisorium";
 import { berekenGgi } from "./berekenen/ggi";
+import { berekenMaatwerk } from "./berekenen/maatwerk";
 
 
 export function berekenPreview(
@@ -41,6 +42,7 @@ export function berekenPreview(
   berekenLsRek(map, config, sd, ctx);              // 7 (DB-driven)
   berekenProvisorium(map, config, sd, ctx);        // 8 (DB-driven)
   berekenGgi(map, config, sd, ctx);                // 9 (DB-driven)
+  berekenMaatwerk(map, config, sd, caseType);      // 10 eigen vragen (DB-driven)
 
   const items = Array.from(map.values()).sort(
     (a, b) =>

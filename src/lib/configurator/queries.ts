@@ -195,6 +195,23 @@ export function useStamdata(caseType: string | undefined) {
     },
   });
 
+  // Eigen (via Beheer aangemaakte) vragen incl. hun regels + artikelen.
+  const maatwerkVragen = useQuery({
+    queryKey: ["maatwerk_vragen"],
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maatwerk_vragen")
+        .select("*, regels:maatwerk_vraag_regels(*, artikel:artikel_id(*))")
+        .eq("actief", true)
+        .order("sort_order");
+      // Tabel bestaat pas na de eigen-vragen-migratie — tot die tijd gewoon
+      // geen eigen vragen (feature verschijnt vanzelf na de migratie).
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+
   const lsBeveiligingOpties = useQuery({
     queryKey: ["ls_beveiliging_opties"],
     queryFn: async () => {
@@ -241,6 +258,7 @@ export function useStamdata(caseType: string | undefined) {
     rmuVeldRegels,
     trafoVultKabelSpecs,
     lsBeveiligingOpties,
+    maatwerkVragen,
     isLoading:
       artikelen.isLoading ||
       rmuConfigs.isLoading ||
@@ -258,7 +276,8 @@ export function useStamdata(caseType: string | undefined) {
       msKabelRegels.isLoading ||
       rmuVeldRegels.isLoading ||
       trafoVultKabelSpecs.isLoading ||
-      lsBeveiligingOpties.isLoading,
+      lsBeveiligingOpties.isLoading ||
+      maatwerkVragen.isLoading,
   };
 }
 
