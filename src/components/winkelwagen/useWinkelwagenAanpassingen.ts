@@ -65,7 +65,9 @@ export function useWinkelwagenAanpassingen({
       niet_bestellen: false,
       herkomst: ["Handmatig toegevoegd"],
       sectie: "standaard" as PreviewSectie,
-      bijdragen: [{ herkomst: "Handmatig toegevoegd", sectie: "standaard", hoeveelheid: t.hoeveelheid }],
+      bijdragen: [
+        { herkomst: "Handmatig toegevoegd", sectie: "standaard", hoeveelheid: t.hoeveelheid },
+      ],
     }));
     return [...base, ...extra];
   }, [items, overrides, verwijderd, toegevoegd]);

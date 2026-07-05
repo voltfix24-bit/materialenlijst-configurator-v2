@@ -3,10 +3,7 @@ import { ChevronDown, Download, Loader2, Plus, Search, Trash2, X } from "lucide-
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Stepper } from "@/components/ui-prim/Stepper";
 import { cn } from "@/lib/utils";
-import {
-  PREVIEW_SECTIE_DEFS,
-  type PreviewItem,
-} from "@/lib/configurator/types";
+import { PREVIEW_SECTIE_DEFS, type PreviewItem } from "@/lib/configurator/types";
 import type { ExportProbleemArtikel } from "./ExportBevestigingDialoog";
 import { BronOverzichtPopover } from "./BronOverzichtPopover";
 
@@ -109,7 +106,11 @@ export function VolledigeMaterialenlijst({
     const q = zoek.trim().toLowerCase();
     const map = new Map<string, PreviewItem[]>();
     for (const it of effectief) {
-      if (q && !it.artikel_nummer.toLowerCase().includes(q) && !it.korte_omschrijving.toLowerCase().includes(q)) {
+      if (
+        q &&
+        !it.artikel_nummer.toLowerCase().includes(q) &&
+        !it.korte_omschrijving.toLowerCase().includes(q)
+      ) {
         continue;
       }
       // Status filter
@@ -196,7 +197,8 @@ export function VolledigeMaterialenlijst({
             </div>
             <div className="flex items-baseline gap-4">
               <div className="text-2xl font-bold text-[color:var(--navy)] leading-none">
-                {totaal} <span className="text-base font-semibold text-muted-foreground">artikelen</span>
+                {totaal}{" "}
+                <span className="text-base font-semibold text-muted-foreground">artikelen</span>
               </div>
               <div className="text-xs text-muted-foreground">
                 {teBestellen} te bestellen
@@ -221,7 +223,11 @@ export function VolledigeMaterialenlijst({
               disabled={exportDisabled || exportPending}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-[color:var(--primary-hover)] disabled:opacity-40"
             >
-              {exportPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {exportPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
               Export naar Liander
               {probleemCount > 0 && (
                 <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold">
@@ -257,7 +263,9 @@ export function VolledigeMaterialenlijst({
           >
             <option value="alle">Alle disciplines</option>
             {PREVIEW_SECTIE_DEFS.map((d) => (
-              <option key={d.key} value={d.key}>{d.label}</option>
+              <option key={d.key} value={d.key}>
+                {d.label}
+              </option>
             ))}
             <option value={HANDMATIG_SECTIE_KEY}>Handmatig toegevoegd</option>
           </select>
@@ -280,7 +288,10 @@ export function VolledigeMaterialenlijst({
           <div className="relative flex-1 min-w-[280px]">
             <input
               value={zoekToev}
-              onChange={(e) => { setZoekToev(e.target.value); setGekozen(null); }}
+              onChange={(e) => {
+                setZoekToev(e.target.value);
+                setGekozen(null);
+              }}
               placeholder="Artikel zoeken om toe te voegen…"
               className="w-full px-3 py-1.5 text-sm rounded-md bg-card border border-border focus:outline-none focus:border-primary/40"
             />
@@ -290,10 +301,15 @@ export function VolledigeMaterialenlijst({
                   <li key={a.id}>
                     <button
                       type="button"
-                      onClick={() => { setGekozen(a); setZoekToev(`${a.artikel_nummer} — ${a.korte_omschrijving}`); }}
+                      onClick={() => {
+                        setGekozen(a);
+                        setZoekToev(`${a.artikel_nummer} — ${a.korte_omschrijving}`);
+                      }}
                       className="w-full px-3 py-1.5 text-sm text-left hover:bg-accent flex items-center gap-2"
                     >
-                      <span className="font-mono text-xs text-muted-foreground w-20 shrink-0">{a.artikel_nummer}</span>
+                      <span className="font-mono text-xs text-muted-foreground w-20 shrink-0">
+                        {a.artikel_nummer}
+                      </span>
                       <span className="flex-1 truncate">{a.korte_omschrijving}</span>
                     </button>
                   </li>
@@ -322,9 +338,15 @@ export function VolledigeMaterialenlijst({
           <div className="space-y-3">
             {groepen.map((g) => {
               const isCollapsed = collapsed.has(g.key);
-              const subtotaal = g.items.reduce((s, i) => s + (i.niet_bestellen ? 0 : i.hoeveelheid), 0);
+              const subtotaal = g.items.reduce(
+                (s, i) => s + (i.niet_bestellen ? 0 : i.hoeveelheid),
+                0,
+              );
               return (
-                <div key={g.key} className="border border-border rounded-lg bg-card overflow-hidden">
+                <div
+                  key={g.key}
+                  className="border border-border rounded-lg bg-card overflow-hidden"
+                >
                   <button
                     type="button"
                     onClick={() => toggleGroep(g.key)}
@@ -335,7 +357,12 @@ export function VolledigeMaterialenlijst({
                     <span className="text-[11px] font-mono text-muted-foreground">
                       {g.items.length} art. · subtotaal {subtotaal}
                     </span>
-                    <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", !isCollapsed && "rotate-180")} />
+                    <ChevronDown
+                      className={cn(
+                        "w-4 h-4 text-muted-foreground transition-transform",
+                        !isCollapsed && "rotate-180",
+                      )}
+                    />
                   </button>
                   {!isCollapsed && (
                     <table className="w-full text-sm">
@@ -343,8 +370,12 @@ export function VolledigeMaterialenlijst({
                         <tr>
                           <th className="text-left px-3 py-1.5 font-semibold w-[100px]">Artikel</th>
                           <th className="text-left px-2 py-1.5 font-semibold">Omschrijving</th>
-                          <th className="text-left px-2 py-1.5 font-semibold w-[180px]">Herkomst</th>
-                          <th className="text-center px-2 py-1.5 font-semibold w-[140px]">Aantal</th>
+                          <th className="text-left px-2 py-1.5 font-semibold w-[180px]">
+                            Herkomst
+                          </th>
+                          <th className="text-center px-2 py-1.5 font-semibold w-[140px]">
+                            Aantal
+                          </th>
                           <th className="text-left px-2 py-1.5 font-semibold w-[60px]">Eenh.</th>
                           <th className="text-left px-2 py-1.5 font-semibold w-[110px]">Status</th>
                           <th className="px-2 py-1.5 w-[40px]"></th>
@@ -356,12 +387,17 @@ export function VolledigeMaterialenlijst({
                           const isHand = handmatigeNrs.has(it.artikel_nummer);
                           const isOver = overrideNrs.has(it.artikel_nummer);
                           return (
-                            <tr key={it.artikel_nummer} className={cn(
-                              "hover:bg-muted/20",
-                              status.tone === "warn" && "bg-amber-500/5",
-                              it.niet_bestellen && "opacity-60",
-                            )}>
-                              <td className="px-3 py-1.5 font-mono text-xs text-primary align-top">{it.artikel_nummer}</td>
+                            <tr
+                              key={it.artikel_nummer}
+                              className={cn(
+                                "hover:bg-muted/20",
+                                status.tone === "warn" && "bg-amber-500/5",
+                                it.niet_bestellen && "opacity-60",
+                              )}
+                            >
+                              <td className="px-3 py-1.5 font-mono text-xs text-primary align-top">
+                                {it.artikel_nummer}
+                              </td>
                               <td className="px-2 py-1.5 align-top">
                                 <div className="text-sm leading-snug break-words max-w-[420px]">
                                   {it.korte_omschrijving}
@@ -389,7 +425,10 @@ export function VolledigeMaterialenlijst({
                                   <div className="flex-1 min-w-0 break-words leading-snug">
                                     {it.herkomst.slice(0, 2).join(" · ")}
                                     {it.herkomst.length > 2 && (
-                                      <span className="text-muted-foreground/70"> +{it.herkomst.length - 2}</span>
+                                      <span className="text-muted-foreground/70">
+                                        {" "}
+                                        +{it.herkomst.length - 2}
+                                      </span>
                                     )}
                                   </div>
                                   <BronOverzichtPopover item={it} trigger="tekst" side="left" />
@@ -397,17 +436,26 @@ export function VolledigeMaterialenlijst({
                               </td>
                               <td className="px-2 py-1.5 text-center">
                                 <div className="inline-flex">
-                                  <Stepper value={it.hoeveelheid} onChange={(v) => onChangeQty(it, v)} min={0} max={99999} />
+                                  <Stepper
+                                    value={it.hoeveelheid}
+                                    onChange={(v) => onChangeQty(it, v)}
+                                    min={0}
+                                    max={99999}
+                                  />
                                 </div>
                               </td>
-                              <td className="px-2 py-1.5 text-xs text-muted-foreground uppercase">{it.eenheid}</td>
+                              <td className="px-2 py-1.5 text-xs text-muted-foreground uppercase">
+                                {it.eenheid}
+                              </td>
                               <td className="px-2 py-1.5">
-                                <span className={cn(
-                                  "text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider",
-                                  status.tone === "ok" && "bg-success/10 text-success",
-                                  status.tone === "warn" && "bg-amber-500/15 text-amber-700",
-                                  status.tone === "muted" && "bg-muted text-muted-foreground",
-                                )}>
+                                <span
+                                  className={cn(
+                                    "text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider",
+                                    status.tone === "ok" && "bg-success/10 text-success",
+                                    status.tone === "warn" && "bg-amber-500/15 text-amber-700",
+                                    status.tone === "muted" && "bg-muted text-muted-foreground",
+                                  )}
+                                >
                                   {status.label}
                                 </span>
                               </td>
@@ -439,8 +487,8 @@ export function VolledigeMaterialenlijst({
             <div className="bg-card rounded-lg shadow-xl border border-border max-w-md w-full p-5 space-y-3">
               <h3 className="text-base font-semibold">Artikel bestaat al</h3>
               <p className="text-sm text-muted-foreground">
-                <span className="font-mono">{bevestigDubbel.stam.artikel_nummer}</span> staat al in de lijst
-                met hoeveelheid {bevestigDubbel.bestaande.hoeveelheid}. Wat wil je doen?
+                <span className="font-mono">{bevestigDubbel.stam.artikel_nummer}</span> staat al in
+                de lijst met hoeveelheid {bevestigDubbel.bestaande.hoeveelheid}. Wat wil je doen?
               </p>
               <div className="flex flex-wrap gap-2 justify-end pt-2">
                 <button
@@ -451,9 +499,14 @@ export function VolledigeMaterialenlijst({
                 </button>
                 <button
                   onClick={() => {
-                    onChangeQty(bevestigDubbel.bestaande, bevestigDubbel.bestaande.hoeveelheid + bevestigDubbel.nieuw);
+                    onChangeQty(
+                      bevestigDubbel.bestaande,
+                      bevestigDubbel.bestaande.hoeveelheid + bevestigDubbel.nieuw,
+                    );
                     setBevestigDubbel(null);
-                    setGekozen(null); setZoekToev(""); setAantalToev(1);
+                    setGekozen(null);
+                    setZoekToev("");
+                    setAantalToev(1);
                   }}
                   className="px-3 py-1.5 text-sm rounded bg-primary text-primary-foreground font-semibold"
                 >

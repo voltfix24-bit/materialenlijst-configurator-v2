@@ -34,9 +34,14 @@ export function WinkelwagenRij({
         isNieuw && !isVerwijderd && "bg-success/10 ring-1 ring-success/30",
         isOverride && !isVerwijderd && !isNieuw && "bg-primary/5 ring-1 ring-primary/30",
         isInactief && !isVerwijderd && "bg-amber-500/10 ring-1 ring-amber-500/40",
-        isVerwijderd && "bg-destructive/10 ring-1 ring-destructive/30 line-through opacity-70 animate-fade-out",
+        isVerwijderd &&
+          "bg-destructive/10 ring-1 ring-destructive/30 line-through opacity-70 animate-fade-out",
       )}
-      title={isInactief ? "Inactief artikel — komt niet meer voor in de huidige Liander-template" : undefined}
+      title={
+        isInactief
+          ? "Inactief artikel — komt niet meer voor in de huidige Liander-template"
+          : undefined
+      }
     >
       <div className="w-0.5 h-4 rounded-full flex-shrink-0" style={{ background: color }} />
 

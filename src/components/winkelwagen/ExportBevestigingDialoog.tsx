@@ -125,9 +125,7 @@ export function ExportBevestigingDialoog({
                         </div>
                       ) : p.handmatig_beoordelen ? (
                         <div className="text-[11px]">
-                          <span className="font-mono text-foreground">
-                            {p.alternatief_raw}
-                          </span>
+                          <span className="font-mono text-foreground">{p.alternatief_raw}</span>
                           <div className="text-amber-700 font-medium mt-0.5">
                             Onduidelijk veld — handmatig beoordelen
                           </div>
@@ -165,7 +163,8 @@ export function ExportBevestigingDialoog({
                             {p.eerdere_keuze.nieuw_artikel_nummer}
                           </span>
                           <span className="text-emerald-700/70">
-                            ({new Date(p.eerdere_keuze.created_at).toLocaleDateString("nl-NL")}, {p.eerdere_keuze.totaal_geupdate} ref)
+                            ({new Date(p.eerdere_keuze.created_at).toLocaleDateString("nl-NL")},{" "}
+                            {p.eerdere_keuze.totaal_geupdate} ref)
                           </span>
                         </div>
                       )}
