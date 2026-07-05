@@ -10,6 +10,7 @@ import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
 import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab, TrafoVultKabelTab } from "@/components/beheer/OverigeTabs";
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
+import { AutomationAuditTab } from "@/components/beheer/AutomationAuditTab";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
 import { RegelsSamenvattingTab } from "@/components/beheer/RegelsSamenvattingTab";
 import { WijzigingenTab } from "@/components/beheer/WijzigingenTab";
@@ -94,7 +95,10 @@ const GROEPEN: Groep[] = [
     label: "Datakwaliteit",
     icon: ShieldCheck,
     beschrijving: "Controle op ontbrekende artikelen en referentiële fouten.",
-    tabs: [{ key: "datakwaliteit", label: "Datakwaliteit", render: () => <DataKwaliteitTab /> }],
+    tabs: [
+      { key: "datakwaliteit", label: "Datakwaliteit", render: () => <DataKwaliteitTab /> },
+      { key: "automation_audit", label: "Automations audit", render: () => <AutomationAuditTab /> },
+    ],
   },
   {
     key: "historie",
