@@ -1,0 +1,142 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  PREVIEW_SECTIE_DEFS,
+  type PreviewItem,
+  type PreviewSectie,
+  type ToegevoegdArtikel,
+} from "@/lib/configurator/types";
+
+const CONFIG_SECTIE_NAAR_WINKELWAGEN: Record<string, PreviewSectie[]> = {
+  project: ["standaard"],
+  provisorium: ["provisorium"],
+  ms: ["rmu", "msVerbindingen"],
+  trafo: ["trafo", "vultKabel"],
+  ls: ["lsVerbindingen", "lsRek"],
+  overig: ["ggi", "standaard"],
+};
+
+interface UseWinkelwagenSectiesArgs {
+  activeSectie?: string;
+  caseId: string;
+  effectief: PreviewItem[];
+  verwijderdAnim: PreviewItem[];
+  toegevoegd: ToegevoegdArtikel[];
+  nieuwNrs: Set<string>;
+}
+
+export function useWinkelwagenSecties({
+  activeSectie,
+  caseId,
+  effectief,
+  verwijderdAnim,
+  toegevoegd,
+  nieuwNrs,
+}: UseWinkelwagenSectiesArgs) {
+  const [openSecties, setOpenSecties] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState("");
+  const lijstRef = useRef<HTMLDivElement | null>(null);
+
+  const eersteSyncRef = useRef(true);
+  useEffect(() => {
+    if (!activeSectie) return;
+    const mapped = CONFIG_SECTIE_NAAR_WINKELWAGEN[activeSectie];
+    if (!mapped || mapped.length === 0) return;
+    setOpenSecties((prev) => {
+      const s = new Set(prev);
+      for (const k of mapped) s.add(k);
+      return s;
+    });
+    if (eersteSyncRef.current) {
+      eersteSyncRef.current = false;
+      return;
+    }
+    requestAnimationFrame(() => {
+      const root = lijstRef.current;
+      if (!root) return;
+      for (const k of mapped) {
+        const el = root.querySelector<HTMLElement>(`[data-sectie="${k}"]`);
+        if (el) {
+          // Alleen de winkelwagenlijst zelf scrollen, niet de hoofdpagina.
+          root.scrollTo({ top: el.offsetTop - root.offsetTop, behavior: "smooth" });
+          break;
+        }
+      }
+    });
+  }, [activeSectie]);
+
+  const eersteCaseResetRef = useRef(true);
+  useEffect(() => {
+    if (eersteCaseResetRef.current) {
+      eersteCaseResetRef.current = false;
+      return;
+    }
+    setOpenSecties(new Set());
+    eersteSyncRef.current = true;
+  }, [caseId]);
+
+  const sectieGroepen = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    const matches = (p: PreviewItem) =>
+      !q || p.artikel_nummer.toLowerCase().includes(q) || p.korte_omschrijving.toLowerCase().includes(q);
+    const map = new Map<PreviewSectie, PreviewItem[]>();
+    for (const p of effectief) {
+      if (toegevoegd.some((t) => t.artikel_nummer === p.artikel_nummer)) continue;
+      if (!matches(p)) continue;
+      const arr = map.get(p.sectie) ?? [];
+      arr.push(p);
+      map.set(p.sectie, arr);
+    }
+    const verwijderdPerSectie = new Map<PreviewSectie, PreviewItem[]>();
+    for (const v of verwijderdAnim) {
+      if (!matches(v)) continue;
+      const arr = verwijderdPerSectie.get(v.sectie) ?? [];
+      arr.push(v);
+      verwijderdPerSectie.set(v.sectie, arr);
+    }
+    return PREVIEW_SECTIE_DEFS.map((def) => ({
+      key: def.key,
+      label: def.label,
+      color: def.color,
+      items: map.get(def.key) ?? [],
+      verwijderdeItems: verwijderdPerSectie.get(def.key) ?? [],
+    })).filter((g) => g.items.length > 0 || g.verwijderdeItems.length > 0);
+  }, [effectief, verwijderdAnim, toegevoegd, filter]);
+
+  const zichtbareToegevoegd = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return toegevoegd;
+    return toegevoegd.filter(
+      (t) => t.artikel_nummer.toLowerCase().includes(q) || t.korte_omschrijving.toLowerCase().includes(q),
+    );
+  }, [toegevoegd, filter]);
+
+  const toggleSectie = (key: string) => {
+    setOpenSecties((prev) => {
+      const s = new Set(prev);
+      if (s.has(key)) s.delete(key);
+      else s.add(key);
+      return s;
+    });
+  };
+
+  const sectiesMetNieuw = useMemo(() => {
+    const s = new Set<string>();
+    if (nieuwNrs.size === 0) return s;
+    for (const sec of sectieGroepen) {
+      if (sec.items.some((it) => nieuwNrs.has(it.artikel_nummer))) s.add(sec.key);
+    }
+    if (toegevoegd.some((t) => nieuwNrs.has(t.artikel_nummer))) s.add("__handmatig");
+    return s;
+  }, [nieuwNrs, sectieGroepen, toegevoegd]);
+
+  return {
+    filter,
+    setFilter,
+    lijstRef,
+    openSecties,
+    sectieGroepen,
+    zichtbareToegevoegd,
+    sectiesMetNieuw,
+    toggleSectie,
+  };
+}
