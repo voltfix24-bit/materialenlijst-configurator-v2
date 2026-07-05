@@ -9,9 +9,13 @@ import { useStamdata } from "@/lib/configurator/queries";
 import { berekenPreview, vultKabelSpecsFromStamdata } from "@/lib/configurator/berekenen";
 import {
   buildRmuVelden,
+  CASE_TYPE_BESCHRIJVINGEN,
   emptyConfig,
   emptyMofConfig,
+  isCompactCaseType,
   legeWinkelwagenAanpassingen,
+  SUB_TYPE_LABELS,
+  subTypeVoorCaseType,
   newLsMof,
   newLsKabelTrace,
   newRichting,
@@ -93,23 +97,24 @@ export function MaterialenConfigurator({
   exportSignal,
 }: Props) {
   const qc = useQueryClient();
-  const isCompact = caseType === "compact" || caseType === "compact_prov";
+  const isCompact = isCompactCaseType(caseType);
   const isCompactProv = caseType === "compact_prov";
   const initial = useMemo(() => {
     const base = initialConfig ?? emptyConfig();
-    if (isCompactProv) {
-      return { ...base, isCompactStation: true, subType: "cs_met_prov" as SubType };
-    }
-    if (isCompact) {
-      return { ...base, isCompactStation: true, subType: "cs_zonder_prov" as SubType };
-    }
-    return { ...base, isCompactStation: false };
-  }, [initialConfig, isCompact, isCompactProv]);
+    // Type opdracht (subType) wordt niet meer gevraagd maar volgt 1-op-1 uit
+    // het case type — ook voor bestaande cases geforceerd, zodat een oude
+    // afwijkende keuze nooit meer tot een inconsistente combinatie leidt.
+    return {
+      ...base,
+      isCompactStation: isCompact,
+      subType: subTypeVoorCaseType(caseType),
+    };
+  }, [initialConfig, isCompact, caseType]);
   const [config, setConfig] = useState<MaterialenConfig>(initial);
 
   // Nieuwe lege case → alleen eerste sectie open. Bestaande config → alles open.
   // Secties openen/sluiten daarna alleen nog door expliciet op de header te klikken.
-  const isNewCase = !initialConfig || !initialConfig.subType;
+  const isNewCase = !initialConfig;
   const [open, setOpen] = useState<Record<SectionKey, boolean>>(() =>
     isNewCase
       ? { project: true, provisorium: false, ms: false, trafo: false, ls: false, overig: false }
@@ -457,7 +462,7 @@ export function MaterialenConfigurator({
                   if (willOpen) setActiveSectie(sec.key);
                 }}
               >
-                {sec.key === "project" && <ProjectSection config={config} update={update} isCompact={isCompact} isCompactProv={isCompactProv} />}
+                {sec.key === "project" && <ProjectSection caseType={caseType} subType={config.subType} />}
                 {sec.key === "provisorium" && <ProvisoriumSection config={config} update={update} sd={sd} />}
                 {sec.key === "ms" && (
                   <div className="space-y-6">
@@ -601,59 +606,30 @@ function sectionSummary(key: SectionKey, c: MaterialenConfig, _sd: ReturnType<ty
   }
 }
 
-const subTypeLabel = (s: SubType) => ({
-  cs_zonder_prov: "CS direct",
-  cs_met_prov: "CS via provisorium",
-  renovatie_prov: "Renovatie prov.",
-  renovatie_nsa: "Renovatie NSA",
-  "": "",
-}[s]);
+const subTypeLabel = (s: SubType) => SUB_TYPE_LABELS[s];
 
 // ---------- Sections ----------
 
-function ProjectSection({ config, update, isCompact, isCompactProv }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; isCompact: boolean; isCompactProv?: boolean }) {
-  if (isCompact) {
-    const lockedSub: SubType = isCompactProv ? "cs_met_prov" : "cs_zonder_prov";
-    const lockedLabel = isCompactProv ? "CS via provisorium" : "CS direct";
-    return (
-      <div className="space-y-3">
-        <InfoBox type="info">
-          {isCompactProv
-            ? "Compact station via provisorium — prefab compact kist met tijdelijke provisorium-verbinding."
-            : "Compact station — prefab. RMU, trafo, telcon, vult kabel en LS-rek zijn aanwezig."}
-        </InfoBox>
-        <Field label="Sub-type">
-          <PillGroup
-            value={config.subType}
-            onChange={() => { /* vergrendeld */ }}
-            options={[{ value: lockedSub, label: lockedLabel }]}
-          />
-        </Field>
-      </div>
-    );
-  }
+/**
+ * Type opdracht wordt niet meer gevraagd: er bestaan precies 4 type cases en
+ * het opdrachttype volgt 1-op-1 uit het case type dat bij het aanmaken is
+ * gekozen. Deze sectie toont alleen wat er vastligt.
+ */
+function ProjectSection({ caseType, subType }: { caseType: string; subType: SubType }) {
   return (
-    <Field label="Sub-type">
-      <PillGroup
-        value={config.subType}
-        onChange={(v) => {
-          const next = v as SubType;
-          const isProv = next === "cs_met_prov" || next === "renovatie_prov";
-          update({
-            subType: next,
-            msRichtingen: isProv
-              ? config.msRichtingen
-              : config.msRichtingen.map((r) => ({ ...r, kanZwaaien: null, mofDefinitief: null })),
-          });
-        }}
-        options={[
-          { value: "cs_zonder_prov", label: "CS direct" },
-          { value: "cs_met_prov", label: "CS via provisorium" },
-          { value: "renovatie_prov", label: "Renovatie prov." },
-          { value: "renovatie_nsa", label: "Renovatie NSA" },
-        ]}
-      />
-    </Field>
+    <div className="space-y-3">
+      <Field label="Type opdracht (volgt uit het case type)">
+        <PillGroup
+          value={subType}
+          onChange={() => { /* vergrendeld — bepaald door case type */ }}
+          options={[{ value: subType, label: SUB_TYPE_LABELS[subType] || "—" }]}
+        />
+      </Field>
+      <InfoBox type="info">
+        {CASE_TYPE_BESCHRIJVINGEN[caseType] ?? "Onbekend case type."}
+        {" "}Wil je een ander type opdracht, maak dan een nieuwe case aan met het juiste case type.
+      </InfoBox>
+    </div>
   );
 }
 

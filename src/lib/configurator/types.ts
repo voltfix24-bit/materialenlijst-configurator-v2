@@ -2,6 +2,49 @@
 
 export type SubType = "cs_zonder_prov" | "cs_met_prov" | "renovatie_prov" | "renovatie_nsa" | "";
 export type CaseType = "NSA" | "provisorium" | "compact" | "compact_prov";
+
+/**
+ * Er bestaan precies 4 type cases; case type en type opdracht (subType) zijn
+ * één-op-één gekoppeld (bevestigd domeinmodel + bestaande data). De vraag
+ * "Type opdracht" wordt daarom nergens meer gesteld maar altijd afgeleid
+ * uit het case type dat bij het aanmaken van de case is gekozen.
+ * CS = compact station; een CS-opdracht is dus altijd een compactstation.
+ */
+export const CASE_TYPE_NAAR_SUBTYPE: Record<CaseType, Exclude<SubType, "">> = {
+  compact: "cs_zonder_prov",
+  compact_prov: "cs_met_prov",
+  NSA: "renovatie_nsa",
+  provisorium: "renovatie_prov",
+};
+
+export const subTypeVoorCaseType = (caseType: string | undefined | null): SubType =>
+  CASE_TYPE_NAAR_SUBTYPE[caseType as CaseType] ?? "";
+
+export const isCompactCaseType = (caseType: string | undefined | null): boolean =>
+  caseType === "compact" || caseType === "compact_prov";
+
+/** Labels in opdracht-terminologie — dé namen van de 4 type cases. */
+export const CASE_TYPE_LABELS: Record<string, string> = {
+  compact: "CS direct",
+  compact_prov: "CS via Prov",
+  NSA: "Renovatie NSA",
+  provisorium: "Renovatie Prov",
+};
+
+export const CASE_TYPE_BESCHRIJVINGEN: Record<string, string> = {
+  compact: "Compact station, direct aangesloten — prefab; RMU, trafo, vult kabel en LS-rek zijn aanwezig.",
+  compact_prov: "Compact station via provisorium — prefab kist met tijdelijke provisorium-verbinding.",
+  NSA: "Renovatie van een bestaand station zonder provisorium (NSA).",
+  provisorium: "Renovatie van een bestaand station via een tijdelijk provisorium.",
+};
+
+export const SUB_TYPE_LABELS: Record<SubType, string> = {
+  cs_zonder_prov: "CS direct",
+  cs_met_prov: "CS via provisorium",
+  renovatie_prov: "Renovatie Prov",
+  renovatie_nsa: "Renovatie NSA",
+  "": "",
+};
 export type RmuMerk = "ABB" | "Siemens" | "Magnefix" | "";
 export type TrafoActie = "nieuw" | "blijft" | "draaien" | "";
 export type TrafoKva = "250" | "400" | "630" | "1000" | "";

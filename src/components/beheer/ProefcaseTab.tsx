@@ -11,13 +11,16 @@ import { useInetDefaultArtikelen } from "@/lib/configurator/extraStamdata";
 import {
   BRON_TABEL_DEFS,
   buildRmuVelden,
+  CASE_TYPE_LABELS,
   emptyConfig,
+  isCompactCaseType,
   PREVIEW_SECTIE_DEFS,
+  SUB_TYPE_LABELS,
+  subTypeVoorCaseType,
   type MaterialenConfig,
   type MsKabelType,
   type PreviewItem,
   type RmuConfig,
-  type SubType,
 } from "@/lib/configurator/types";
 
 /**
@@ -28,22 +31,13 @@ import {
  * vultkabel, kabelschoenen) direct zichtbaar is.
  */
 
-const CASE_TYPES = [
-  { value: "NSA", label: "NSA" },
-  { value: "provisorium", label: "Provisorium" },
-  { value: "compact", label: "Compact" },
-  { value: "compact_prov", label: "Compact met Prov" },
-];
-
-const SUB_TYPES: { value: SubType; label: string }[] = [
-  { value: "cs_zonder_prov", label: "CS direct" },
-  { value: "cs_met_prov", label: "CS via provisorium" },
-  { value: "renovatie_prov", label: "Renovatie prov." },
-  { value: "renovatie_nsa", label: "Renovatie NSA" },
-];
+// De 4 type cases — het type opdracht (subType) volgt hier 1-op-1 uit.
+const CASE_TYPES = ["NSA", "provisorium", "compact", "compact_prov"].map((v) => ({
+  value: v,
+  label: CASE_TYPE_LABELS[v] ?? v,
+}));
 
 interface Antwoorden {
-  subType: SubType;
   rmuMerk: string;
   rmuInet: "ja" | "nee" | "";
   rmuConfigId: string;
@@ -67,7 +61,6 @@ interface Antwoorden {
 }
 
 const LEEG: Antwoorden = {
-  subType: "",
   rmuMerk: "",
   rmuInet: "",
   rmuConfigId: "",
@@ -99,9 +92,8 @@ export function ProefcaseTab() {
   const inetDefaults = useInetDefaultArtikelen();
   const [sectieFilter, setSectieFilter] = useState<string>("alle");
 
-  const isCompact = caseType === "compact" || caseType === "compact_prov";
-  const isCompactProv = caseType === "compact_prov";
-  const subType: SubType = isCompactProv ? "cs_met_prov" : isCompact ? "cs_zonder_prov" : a.subType;
+  const isCompact = isCompactCaseType(caseType);
+  const subType = subTypeVoorCaseType(caseType);
   const isRenovatie = subType === "renovatie_prov" || subType === "renovatie_nsa";
   const isProv = subType === "cs_met_prov" || subType === "renovatie_prov";
 
@@ -256,21 +248,10 @@ export function ProefcaseTab() {
               options={CASE_TYPES}
             />
           </Field>
-          {!isCompact && (
-            <Field label="Type opdracht">
-              <PillGroup
-                value={a.subType}
-                onChange={(v) => zet({ subType: v as SubType })}
-                options={SUB_TYPES}
-              />
-            </Field>
-          )}
-          {isCompact && (
-            <InfoBox type="info">
-              Compactstation — subtype ligt vast op{" "}
-              {isCompactProv ? "CS via provisorium" : "CS direct"}.
-            </InfoBox>
-          )}
+          <InfoBox type="info">
+            Type opdracht volgt uit het case type: <strong>{SUB_TYPE_LABELS[subType]}</strong>
+            {isCompact && " (compactstation)"}.
+          </InfoBox>
 
           <div className="border-t border-border pt-3 space-y-3">
             <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">

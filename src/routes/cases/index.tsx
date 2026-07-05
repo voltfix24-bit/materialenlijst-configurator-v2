@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PillGroup } from "@/components/ui-prim/PillGroup";
 import { Field, FieldRow } from "@/components/ui-prim/Field";
+// Kanonieke labels/beschrijvingen van de 4 type cases (opdracht-terminologie)
+import { CASE_TYPE_LABELS, CASE_TYPE_BESCHRIJVINGEN } from "@/lib/configurator/types";
 
 export const Route = createFileRoute("/cases/")({
   component: CasesPage,
@@ -26,12 +28,6 @@ const STATUS_COLORS: Record<string, string> = {
   gepland: "bg-info/10 text-info",
   in_uitvoering: "bg-warning/15 text-[color:var(--warning)]",
   afgerond: "bg-success/10 text-success",
-};
-const CASE_TYPE_LABELS: Record<string, string> = {
-  NSA: "NSA",
-  provisorium: "Provisorium",
-  compact: "Compact",
-  compact_prov: "Compact met Prov",
 };
 const CASE_TYPE_COLORS: Record<string, string> = {
   NSA: "bg-[color:var(--navy)] text-white",
@@ -143,19 +139,17 @@ function CasesPage() {
                 className="bg-input rounded-md px-3 py-1.5 text-sm border border-border focus:outline-none focus:border-primary w-64"
               />
             </Field>
-            <Field label="Case type">
+            <Field label="Type opdracht">
               <PillGroup
                 value={form.case_type}
                 onChange={(v) => setForm({ ...form, case_type: v })}
-                options={[
-                  { value: "NSA", label: "NSA" },
-                  { value: "provisorium", label: "Provisorium" },
-                  { value: "compact", label: "Compact" },
-                  { value: "compact_prov", label: "Compact met Prov" },
-                ]}
+                options={Object.entries(CASE_TYPE_LABELS).map(([value, label]) => ({ value, label }))}
               />
             </Field>
           </FieldRow>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {CASE_TYPE_BESCHRIJVINGEN[form.case_type]}
+          </p>
           <div className="mt-4 flex gap-2">
             <button
               onClick={() => createCase.mutate()}

@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MaterialenConfigurator } from "@/components/configurator/MaterialenConfigurator";
 import { exporteerNaarTemplate, downloadBlob } from "@/lib/assortiment/excel";
 import {
+  CASE_TYPE_LABELS,
   emptyConfig,
   type MaterialenConfig,
   type PreviewItem,
@@ -29,12 +30,6 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const STATUS_OPTIONS = ["concept", "gepland", "in_uitvoering", "afgerond"] as const;
 
-const CASE_TYPE_LABELS: Record<string, string> = {
-  NSA: "NSA",
-  provisorium: "Provisorium",
-  compact: "Compact",
-  compact_prov: "Compact met Prov",
-};
 
 function CaseDetailPage() {
   const { id } = Route.useParams();
