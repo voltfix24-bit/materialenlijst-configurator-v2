@@ -24,7 +24,7 @@ const EMPTY_KEUZES = new Map<string, AlternatiefKeuzeVoorExport>();
 export function bouwExportProblemen(
   effectief: PreviewItem[],
   artikelen: ArtikelStam[],
-  alternatiefKeuzes: Map<string, AlternatiefKeuzeVoorExport> = new Map(),
+  alternatiefKeuzes: Map<string, AlternatiefKeuzeVoorExport> = EMPTY_KEUZES,
 ): ExportProbleemArtikel[] {
   const artByNr = new Map(artikelen.map((a) => [a.artikel_nummer, a]));
   const out: ExportProbleemArtikel[] = [];
@@ -63,13 +63,7 @@ export function bouwExportProblemen(
       alternatieven,
       geen_opvolger: geenOpvolger,
       handmatig_beoordelen: handmatigBeoordelen,
-      eerdere_keuze: k
-        ? {
-            nieuw_artikel_nummer: k.nieuw_artikel_nummer,
-            created_at: k.created_at,
-            totaal_geupdate: k.totaal_geupdate,
-          }
-        : null,
+      eerdere_keuze: k ?? null,
     });
   }
   return out;
