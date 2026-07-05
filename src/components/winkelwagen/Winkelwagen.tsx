@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VolledigeMaterialenlijst } from "./VolledigeMaterialenlijst";
-import type { PreviewItem, ToegevoegdArtikel, WinkelwagenAanpassingen } from "@/lib/configurator/types";
+import type { PreviewItem, WinkelwagenAanpassingen } from "@/lib/configurator/types";
 import type { ArtikelStam } from "@/lib/configurator/artikelTypes";
 
 import { CorrectieDialoog } from "./CorrectieDialoog";
