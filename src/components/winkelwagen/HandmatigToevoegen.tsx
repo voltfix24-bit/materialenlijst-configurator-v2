@@ -46,7 +46,9 @@ export function HandmatigToevoegen({
       </div>
       {gekozenArtikel ? (
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-mono text-xs text-muted-foreground">{gekozenArtikel.artikel_nummer}</span>
+          <span className="font-mono text-xs text-muted-foreground">
+            {gekozenArtikel.artikel_nummer}
+          </span>
           <span className="flex-1 truncate">{gekozenArtikel.korte_omschrijving}</span>
           <Stepper value={zoekHoeveelheid} onChange={onZoekHoeveelheidChange} min={1} max={9999} />
           <button

@@ -77,7 +77,9 @@ export function useWinkelwagenSecties({
   const sectieGroepen = useMemo(() => {
     const q = filter.trim().toLowerCase();
     const matches = (p: PreviewItem) =>
-      !q || p.artikel_nummer.toLowerCase().includes(q) || p.korte_omschrijving.toLowerCase().includes(q);
+      !q ||
+      p.artikel_nummer.toLowerCase().includes(q) ||
+      p.korte_omschrijving.toLowerCase().includes(q);
     const map = new Map<PreviewSectie, PreviewItem[]>();
     for (const p of effectief) {
       if (toegevoegd.some((t) => t.artikel_nummer === p.artikel_nummer)) continue;
@@ -106,7 +108,9 @@ export function useWinkelwagenSecties({
     const q = filter.trim().toLowerCase();
     if (!q) return toegevoegd;
     return toegevoegd.filter(
-      (t) => t.artikel_nummer.toLowerCase().includes(q) || t.korte_omschrijving.toLowerCase().includes(q),
+      (t) =>
+        t.artikel_nummer.toLowerCase().includes(q) ||
+        t.korte_omschrijving.toLowerCase().includes(q),
     );
   }, [toegevoegd, filter]);
 

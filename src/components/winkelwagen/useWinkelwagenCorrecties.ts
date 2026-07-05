@@ -4,7 +4,11 @@ import type { PreviewItem, ToegevoegdArtikel } from "@/lib/configurator/types";
 import type { ArtikelStam } from "@/lib/configurator/artikelTypes";
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
 import { bouwCorrectieContext } from "@/lib/leersysteem/context";
-import { bouwContextKey, type CorrectieDialoogData, type CorrectieScope } from "@/lib/leersysteem/types";
+import {
+  bouwContextKey,
+  type CorrectieDialoogData,
+  type CorrectieScope,
+} from "@/lib/leersysteem/types";
 
 interface UseWinkelwagenCorrectiesArgs {
   caseId: string;
@@ -56,7 +60,9 @@ export function useWinkelwagenCorrecties({
     const bronTabel = dialoogData.bron_tabel ?? null;
     const bronId = dialoogData.bron_id ?? null;
     const meerdere = dialoogData.meerdere_bronnen ?? false;
-    const bijdragen = Array.isArray(dialoogData.bijdragen) ? (dialoogData.bijdragen as unknown[]) : null;
+    const bijdragen = Array.isArray(dialoogData.bijdragen)
+      ? (dialoogData.bijdragen as unknown[])
+      : null;
     const configContext = bouwCorrectieContext({
       caseType,
       subType,
@@ -186,7 +192,9 @@ export function useWinkelwagenCorrecties({
         },
         () => {
           setToegevoegd((prev) =>
-            prev.some((t) => t.artikel_nummer === snapshot.artikel_nummer) ? prev : [...prev, snapshot],
+            prev.some((t) => t.artikel_nummer === snapshot.artikel_nummer)
+              ? prev
+              : [...prev, snapshot],
           );
         },
       );
@@ -227,7 +235,10 @@ export function useWinkelwagenCorrecties({
       eenheid: stam.eenheid || "st",
       hoeveelheid: qty,
     };
-    setToegevoegd((prev) => [...prev.filter((t) => t.artikel_nummer !== nieuw.artikel_nummer), nieuw]);
+    setToegevoegd((prev) => [
+      ...prev.filter((t) => t.artikel_nummer !== nieuw.artikel_nummer),
+      nieuw,
+    ]);
     openDialoog(
       {
         artikel_nummer: nieuw.artikel_nummer,

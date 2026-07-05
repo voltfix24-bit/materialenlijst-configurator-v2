@@ -136,7 +136,8 @@ export function Winkelwagen({
       .filter(
         (a) =>
           !al.has(a.artikel_nummer) &&
-          (a.artikel_nummer.toLowerCase().includes(q) || a.korte_omschrijving.toLowerCase().includes(q)),
+          (a.artikel_nummer.toLowerCase().includes(q) ||
+            a.korte_omschrijving.toLowerCase().includes(q)),
       )
       .slice(0, 8);
   }, [zoek, artikelen, effectief]);
@@ -227,7 +228,11 @@ export function Winkelwagen({
       </WinkelwagenFooter>
 
       {dialoogData && (
-        <CorrectieDialoog data={dialoogData} onBevestig={bevestigDialoog} onAnnuleer={annuleerDialoog} />
+        <CorrectieDialoog
+          data={dialoogData}
+          onBevestig={bevestigDialoog}
+          onAnnuleer={annuleerDialoog}
+        />
       )}
 
       {exportConfirmOpen && (
