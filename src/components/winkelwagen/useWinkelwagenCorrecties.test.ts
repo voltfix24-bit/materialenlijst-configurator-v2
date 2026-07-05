@@ -58,9 +58,7 @@ describe("bepaalBron", () => {
   });
 
   it("gebruikt null voor optionele bronvelden bij een enkele bijdrage zonder tabel/id", () => {
-    const b = bepaalBron(
-      itemMet([{ herkomst: "standaard", sectie: "standaard", hoeveelheid: 1 }]),
-    );
+    const b = bepaalBron(itemMet([{ herkomst: "standaard", sectie: "standaard", hoeveelheid: 1 }]));
     expect(b).toEqual({
       tabel: null,
       id: null,

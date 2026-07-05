@@ -142,7 +142,6 @@ export function useWinkelwagenCorrecties({
   };
 
   const wijzigHoeveelheid = (it: PreviewItem, nieuw: number) => {
-
     const oudOriginal =
       items.find((x) => x.artikel_nummer === it.artikel_nummer)?.hoeveelheid ?? it.hoeveelheid;
     const huidig = overrides.get(it.artikel_nummer) ?? oudOriginal;

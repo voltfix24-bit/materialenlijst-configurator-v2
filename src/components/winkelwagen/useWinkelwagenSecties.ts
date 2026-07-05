@@ -25,7 +25,9 @@ export interface SectieGroep {
 
 function matchtFilter(p: Pick<PreviewItem, "artikel_nummer" | "korte_omschrijving">, q: string) {
   return (
-    !q || p.artikel_nummer.toLowerCase().includes(q) || p.korte_omschrijving.toLowerCase().includes(q)
+    !q ||
+    p.artikel_nummer.toLowerCase().includes(q) ||
+    p.korte_omschrijving.toLowerCase().includes(q)
   );
 }
 
@@ -83,7 +85,6 @@ export function bouwSectiesMetNieuw(
   if (toegevoegd.some((t) => nieuwNrs.has(t.artikel_nummer))) s.add("__handmatig");
   return s;
 }
-
 
 interface UseWinkelwagenSectiesArgs {
   activeSectie?: string;
@@ -167,7 +168,6 @@ export function useWinkelwagenSecties({
     () => bouwSectiesMetNieuw(nieuwNrs, sectieGroepen, toegevoegd),
     [nieuwNrs, sectieGroepen, toegevoegd],
   );
-
 
   return {
     filter,

@@ -77,12 +77,7 @@ describe("bouwSectieGroepen", () => {
   });
 
   it("voegt verwijderde animatie-items per sectie toe", () => {
-    const groepen = bouwSectieGroepen(
-      [],
-      [item({ sectie: "trafo" })],
-      [],
-      "",
-    );
+    const groepen = bouwSectieGroepen([], [item({ sectie: "trafo" })], [], "");
     expect(groepen).toHaveLength(1);
     expect(groepen[0].key).toBe("trafo");
     expect(groepen[0].verwijderdeItems).toHaveLength(1);

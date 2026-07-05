@@ -44,12 +44,11 @@ export function useWinkelwagenAnimaties(effectief: PreviewItem[], items: Preview
   useEffect(() => {
     const eerste = eersteRunRef.current;
     eersteRunRef.current = false;
-    const { huidig, nieuwNrs: nN, verwijderdItems: verw } = berekenAnimatieDelta(
-      vorigeRef.current,
-      effectief,
-      items,
-      eerste,
-    );
+    const {
+      huidig,
+      nieuwNrs: nN,
+      verwijderdItems: verw,
+    } = berekenAnimatieDelta(vorigeRef.current, effectief, items, eerste);
     vorigeRef.current = huidig;
     setNieuwNrs(nN);
     if (verw.length > 0) setVerwijderdAnim(verw);
