@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Loader2, Maximize2, Plus, Search, X } from "lucide-react";
 import { VolledigeMaterialenlijst } from "./VolledigeMaterialenlijst";
-import { Stepper } from "@/components/ui-prim/Stepper";
 import {
   PREVIEW_SECTIE_DEFS,
   type PreviewItem,
@@ -18,6 +16,9 @@ import { ExportBevestigingDialoog } from "./ExportBevestigingDialoog";
 import { useWinkelwagenAanpassingen } from "./useWinkelwagenAanpassingen";
 import { useExportProblemen } from "./useExportProblemen";
 import { WinkelwagenSecties } from "./WinkelwagenSecties";
+import { WinkelwagenHeader } from "./WinkelwagenHeader";
+import { HandmatigToevoegen } from "./HandmatigToevoegen";
+import { WinkelwagenFooter } from "./WinkelwagenFooter";
 
 interface ArtikelStam {
   id: string;
@@ -28,7 +29,6 @@ interface ArtikelStam {
   status?: string | null;
   alternatief_artikel_nummer?: string | null;
 }
-
 
 interface Props {
   items: PreviewItem[]; // berekende items vanuit configurator
@@ -115,9 +115,6 @@ export function Winkelwagen({
   const lijstRef = useRef<HTMLDivElement | null>(null);
   const [exportConfirmOpen, setExportConfirmOpen] = useState(false);
   const [volledigOpen, setVolledigOpen] = useState(false);
-
-
-
 
   const slaCorrectieOp = useSlaCorrectieOp();
 
@@ -221,9 +218,7 @@ export function Winkelwagen({
     const bronTabel = dialoogData.bron_tabel ?? null;
     const bronId = dialoogData.bron_id ?? null;
     const meerdere = dialoogData.meerdere_bronnen ?? false;
-    const bijdragen = Array.isArray(dialoogData.bijdragen)
-      ? (dialoogData.bijdragen as unknown[])
-      : null;
+    const bijdragen = Array.isArray(dialoogData.bijdragen) ? (dialoogData.bijdragen as unknown[]) : null;
     const configContext = bouwCorrectieContext({
       caseType,
       subType,
@@ -301,7 +296,8 @@ export function Winkelwagen({
   };
 
   const wijzigHoeveelheid = (it: PreviewItem, nieuw: number) => {
-    const oudOriginal = items.find((x) => x.artikel_nummer === it.artikel_nummer)?.hoeveelheid ?? it.hoeveelheid;
+    const oudOriginal =
+      items.find((x) => x.artikel_nummer === it.artikel_nummer)?.hoeveelheid ?? it.hoeveelheid;
     const huidig = overrides.get(it.artikel_nummer) ?? oudOriginal;
     if (nieuw === huidig) return;
     setOverrides((prev) => {
@@ -421,7 +417,6 @@ export function Winkelwagen({
     setZoekHoeveelheid(1);
   };
 
-
   // ---- zoek suggesties ----
   const suggesties = useMemo(() => {
     const q = zoek.trim().toLowerCase();
@@ -471,9 +466,7 @@ export function Winkelwagen({
     const q = filter.trim().toLowerCase();
     if (!q) return toegevoegd;
     return toegevoegd.filter(
-      (t) =>
-        t.artikel_nummer.toLowerCase().includes(q) ||
-        t.korte_omschrijving.toLowerCase().includes(q),
+      (t) => t.artikel_nummer.toLowerCase().includes(q) || t.korte_omschrijving.toLowerCase().includes(q),
     );
   }, [toegevoegd, filter]);
 
@@ -522,66 +515,16 @@ export function Winkelwagen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exportSignal]);
 
-
-
   return (
     <div className="bg-card flex flex-col h-full max-h-screen">
-      {/* Header */}
-      <div className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0 space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">
-              Winkelwagen
-            </div>
-            <div className="text-2xl font-bold text-[color:var(--navy)] leading-none">
-              {totaal} <span className="text-base font-semibold text-muted-foreground">artikel{totaal === 1 ? "" : "en"}</span>
-            </div>
-            {totaal > 0 && (
-              <div className="text-[11px] text-muted-foreground mt-1">{teBestellen} te bestellen</div>
-            )}
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => setVolledigOpen(true)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-semibold px-1.5 py-1 rounded hover:bg-muted"
-              title="Volledige materialenlijst openen"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-              Volledig
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowZoeker(true)}
-              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-semibold px-1.5 py-1"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Toevoegen
-            </button>
-          </div>
-        </div>
-
-
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-          <input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder="Materialen zoeken…"
-            className="w-full pl-9 pr-8 py-2 text-sm rounded-lg bg-muted border border-transparent focus:outline-none focus:border-primary/40 focus:bg-card transition-colors"
-          />
-          {filter && (
-            <button
-              type="button"
-              onClick={() => setFilter("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted-foreground/10"
-              aria-label="Filter wissen"
-            >
-              <X className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
-          )}
-        </div>
-      </div>
+      <WinkelwagenHeader
+        totaal={totaal}
+        teBestellen={teBestellen}
+        filter={filter}
+        onFilterChange={setFilter}
+        onOpenVolledig={() => setVolledigOpen(true)}
+        onOpenZoeker={() => setShowZoeker(true)}
+      />
 
       <WinkelwagenSecties
         lijstRef={lijstRef}
@@ -603,99 +546,35 @@ export function Winkelwagen({
         }
       />
 
-      <div className="border-t border-border px-6 py-4 space-y-3 bg-card flex-shrink-0">
-        {showZoeker ? (
-          <div className="space-y-2 rounded-md border border-border p-2 bg-background">
-            <div className="flex items-center gap-2">
-              <Search className="w-3.5 h-3.5 text-muted-foreground" />
-              <input
-                autoFocus
-                value={zoek}
-                onChange={(e) => {
-                  setZoek(e.target.value);
-                  setGekozenArtikel(null);
-                }}
-                placeholder="Artikelnr of omschrijving…"
-                className="flex-1 bg-transparent text-sm focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setShowZoeker(false);
-                  setZoek("");
-                  setGekozenArtikel(null);
-                }}
-                className="p-1 rounded hover:bg-accent"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            {gekozenArtikel ? (
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-mono text-xs text-muted-foreground">{gekozenArtikel.artikel_nummer}</span>
-                <span className="flex-1 truncate">{gekozenArtikel.korte_omschrijving}</span>
-                <Stepper value={zoekHoeveelheid} onChange={setZoekHoeveelheid} min={1} max={9999} />
-                <button
-                  type="button"
-                  onClick={voegArtikelToe}
-                  className="px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-medium"
-                >
-                  Toevoegen
-                </button>
-              </div>
-            ) : suggesties.length > 0 ? (
-              <ul className="max-h-48 overflow-y-auto rounded border border-border divide-y divide-border">
-                {suggesties.map((a) => (
-                  <li key={a.id}>
-                    <button
-                      type="button"
-                      onClick={() => setGekozenArtikel(a)}
-                      className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-left hover:bg-accent"
-                    >
-                      <span className="font-mono text-xs text-muted-foreground w-20 shrink-0 truncate">
-                        {a.artikel_nummer}
-                      </span>
-                      <span className="flex-1 truncate">{a.korte_omschrijving}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : zoek.length >= 2 ? (
-              <p className="text-xs text-muted-foreground px-1">Geen resultaten</p>
-            ) : (
-              <p className="text-xs text-muted-foreground px-1">Typ minimaal 2 tekens…</p>
-            )}
-          </div>
-        ) : null}
-
-        <div className="flex items-center justify-between text-sm pt-1">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Te bestellen</span>
-          <span className="font-mono font-semibold text-foreground">{teBestellen}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            disabled={saving}
-            onClick={onSave}
-            className="flex-shrink-0 px-3 py-2.5 rounded-lg border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-50"
-          >
-            {saving ? "…" : "Opslaan"}
-          </button>
-          <button
-            type="button"
-            onClick={handleExportClick}
-            disabled={exportDisabled || exportPending || !onExport}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground font-semibold py-2.5 text-sm hover:bg-[color:var(--primary-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-          >
-            {exportPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            Export naar Liander
-            {exportProblemen.length > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold">
-                {exportProblemen.length}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
+      <WinkelwagenFooter
+        teBestellen={teBestellen}
+        saving={saving}
+        exportPending={exportPending}
+        exportDisabled={exportDisabled || exportPending || !onExport}
+        exportProblemenAantal={exportProblemen.length}
+        onSave={onSave}
+        onExport={handleExportClick}
+      >
+        <HandmatigToevoegen
+          open={showZoeker}
+          zoek={zoek}
+          zoekHoeveelheid={zoekHoeveelheid}
+          gekozenArtikel={gekozenArtikel}
+          suggesties={suggesties}
+          onZoekChange={(value) => {
+            setZoek(value);
+            setGekozenArtikel(null);
+          }}
+          onZoekHoeveelheidChange={setZoekHoeveelheid}
+          onKiesArtikel={setGekozenArtikel}
+          onSluiten={() => {
+            setShowZoeker(false);
+            setZoek("");
+            setGekozenArtikel(null);
+          }}
+          onToevoegen={voegArtikelToe}
+        />
+      </WinkelwagenFooter>
 
       {dialoogData && (
         <CorrectieDialoog data={dialoogData} onBevestig={bevestigDialoog} onAnnuleer={annuleerDialoog} />
@@ -729,8 +608,6 @@ export function Winkelwagen({
         exportPending={exportPending}
         exportDisabled={exportDisabled || !onExport}
       />
-
     </div>
-
   );
 }
