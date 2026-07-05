@@ -83,7 +83,12 @@ export interface FileRouteTypes {
     | '/cases/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/beheer' | '/notificaties' | '/cases/$id' | '/cases/tabel' | '/cases'
+    | '/'
+    | '/beheer'
+    | '/notificaties'
+    | '/cases/$id'
+    | '/cases/tabel'
+    | '/cases'
   id:
     | '__root__'
     | '/'
