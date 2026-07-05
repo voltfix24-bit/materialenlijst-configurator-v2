@@ -144,45 +144,15 @@ export function useWinkelwagenSecties({
     eersteSyncRef.current = true;
   }, [caseId]);
 
-  const sectieGroepen = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    const matches = (p: PreviewItem) =>
-      !q ||
-      p.artikel_nummer.toLowerCase().includes(q) ||
-      p.korte_omschrijving.toLowerCase().includes(q);
-    const map = new Map<PreviewSectie, PreviewItem[]>();
-    for (const p of effectief) {
-      if (toegevoegd.some((t) => t.artikel_nummer === p.artikel_nummer)) continue;
-      if (!matches(p)) continue;
-      const arr = map.get(p.sectie) ?? [];
-      arr.push(p);
-      map.set(p.sectie, arr);
-    }
-    const verwijderdPerSectie = new Map<PreviewSectie, PreviewItem[]>();
-    for (const v of verwijderdAnim) {
-      if (!matches(v)) continue;
-      const arr = verwijderdPerSectie.get(v.sectie) ?? [];
-      arr.push(v);
-      verwijderdPerSectie.set(v.sectie, arr);
-    }
-    return PREVIEW_SECTIE_DEFS.map((def) => ({
-      key: def.key,
-      label: def.label,
-      color: def.color,
-      items: map.get(def.key) ?? [],
-      verwijderdeItems: verwijderdPerSectie.get(def.key) ?? [],
-    })).filter((g) => g.items.length > 0 || g.verwijderdeItems.length > 0);
-  }, [effectief, verwijderdAnim, toegevoegd, filter]);
+  const sectieGroepen = useMemo(
+    () => bouwSectieGroepen(effectief, verwijderdAnim, toegevoegd, filter),
+    [effectief, verwijderdAnim, toegevoegd, filter],
+  );
 
-  const zichtbareToegevoegd = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return toegevoegd;
-    return toegevoegd.filter(
-      (t) =>
-        t.artikel_nummer.toLowerCase().includes(q) ||
-        t.korte_omschrijving.toLowerCase().includes(q),
-    );
-  }, [toegevoegd, filter]);
+  const zichtbareToegevoegd = useMemo(
+    () => bouwZichtbareToegevoegd(toegevoegd, filter),
+    [toegevoegd, filter],
+  );
 
   const toggleSectie = (key: string) => {
     setOpenSecties((prev) => {
@@ -193,15 +163,11 @@ export function useWinkelwagenSecties({
     });
   };
 
-  const sectiesMetNieuw = useMemo(() => {
-    const s = new Set<string>();
-    if (nieuwNrs.size === 0) return s;
-    for (const sec of sectieGroepen) {
-      if (sec.items.some((it) => nieuwNrs.has(it.artikel_nummer))) s.add(sec.key);
-    }
-    if (toegevoegd.some((t) => nieuwNrs.has(t.artikel_nummer))) s.add("__handmatig");
-    return s;
-  }, [nieuwNrs, sectieGroepen, toegevoegd]);
+  const sectiesMetNieuw = useMemo(
+    () => bouwSectiesMetNieuw(nieuwNrs, sectieGroepen, toegevoegd),
+    [nieuwNrs, sectieGroepen, toegevoegd],
+  );
+
 
   return {
     filter,
