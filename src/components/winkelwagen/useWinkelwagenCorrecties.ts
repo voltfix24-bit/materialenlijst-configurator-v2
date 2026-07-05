@@ -122,21 +122,8 @@ export function useWinkelwagenCorrecties({
     setPendingRevert(null);
   };
 
-  const bepaalBron = (it: PreviewItem) => {
-    const aantal = it.bijdragen?.length ?? 0;
-    if (aantal !== 1) {
-      return { tabel: null, id: null, herkomst: null, meerdere: aantal > 1 };
-    }
-    const b = it.bijdragen[0];
-    return {
-      tabel: b.bronTabel ?? null,
-      id: b.bronId ?? null,
-      herkomst: b.herkomst ?? null,
-      meerdere: false,
-    };
-  };
-
   const wijzigHoeveelheid = (it: PreviewItem, nieuw: number) => {
+
     const oudOriginal =
       items.find((x) => x.artikel_nummer === it.artikel_nummer)?.hoeveelheid ?? it.hoeveelheid;
     const huidig = overrides.get(it.artikel_nummer) ?? oudOriginal;
