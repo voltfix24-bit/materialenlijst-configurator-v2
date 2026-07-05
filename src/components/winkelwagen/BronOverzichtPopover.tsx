@@ -1,10 +1,6 @@
 import { Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  BRON_TABEL_DEFS,
-  PREVIEW_SECTIE_DEFS,
-  type PreviewItem,
-} from "@/lib/configurator/types";
+import { BRON_TABEL_DEFS, PREVIEW_SECTIE_DEFS, type PreviewItem } from "@/lib/configurator/types";
 
 interface Props {
   item: PreviewItem;
@@ -23,12 +19,7 @@ interface Props {
  * Gebruikt dezelfde data (`item.bijdragen`) als de compacte winkelwagen,
  * dus geen aparte logica of staat — single source of truth.
  */
-export function BronOverzichtPopover({
-  item,
-  trigger = "icon",
-  side = "left",
-  className,
-}: Props) {
+export function BronOverzichtPopover({ item, trigger = "icon", side = "left", className }: Props) {
   if (item.bijdragen.length === 0) return null;
 
   const triggerEl =
@@ -58,9 +49,7 @@ export function BronOverzichtPopover({
         }
       >
         <Info className="w-3 h-3" />
-        {item.bijdragen.length > 1
-          ? `${item.bijdragen.length} bronnen`
-          : "Bron tonen"}
+        {item.bijdragen.length > 1 ? `${item.bijdragen.length} bronnen` : "Bron tonen"}
       </button>
     );
 
@@ -111,9 +100,7 @@ export function BronOverzichtPopover({
                     )}
                   </div>
                   {def?.uitleg && (
-                    <p className="text-[11px] text-muted-foreground leading-snug">
-                      {def.uitleg}
-                    </p>
+                    <p className="text-[11px] text-muted-foreground leading-snug">{def.uitleg}</p>
                   )}
                   {(groep || tab) && (
                     <a
@@ -133,8 +120,8 @@ export function BronOverzichtPopover({
         {uniekeBronnen.size > 1 && (
           <div className="mt-3 pt-2 border-t border-border text-[10px] text-muted-foreground leading-snug">
             <strong className="text-foreground">Let op:</strong> dit artikel komt uit{" "}
-            {uniekeBronnen.size} verschillende regels — controleer of dat klopt of dat er
-            sprake is van dubbeltelling.
+            {uniekeBronnen.size} verschillende regels — controleer of dat klopt of dat er sprake is
+            van dubbeltelling.
           </div>
         )}
       </PopoverContent>

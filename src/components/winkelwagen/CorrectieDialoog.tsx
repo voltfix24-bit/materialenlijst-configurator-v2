@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import type { CorrectieDialoogData, CorrectieScope } from "@/lib/leersysteem/types";
 
@@ -59,7 +65,12 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
   };
 
   return (
-    <Dialog open onOpenChange={() => { /* sluiten alleen via Annuleer/Bevestigen */ }}>
+    <Dialog
+      open
+      onOpenChange={() => {
+        /* sluiten alleen via Annuleer/Bevestigen */
+      }}
+    >
       <DialogContent
         className="sm:max-w-md [&>button.absolute]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
@@ -124,15 +135,13 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
-              {scopeDef.uitleg}
-            </p>
+            <p className="text-[11px] text-muted-foreground mt-2 leading-snug">{scopeDef.uitleg}</p>
             {scope === "altijd" && (
               <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 flex items-start gap-2 text-[11px] text-amber-800">
                 <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0" />
                 <span>
-                  Er wordt direct een beheer-voorstel aangemaakt. Stamdata wijzigt pas
-                  nadat beheer dit voorstel goedkeurt in Notificaties.
+                  Er wordt direct een beheer-voorstel aangemaakt. Stamdata wijzigt pas nadat beheer
+                  dit voorstel goedkeurt in Notificaties.
                 </span>
               </div>
             )}
@@ -140,9 +149,8 @@ export function CorrectieDialoog({ data, onBevestig, onAnnuleer }: Props) {
               <div className="mt-2 rounded-md border border-orange-500/40 bg-orange-500/10 px-2.5 py-1.5 flex items-start gap-2 text-[11px] text-orange-800">
                 <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0" />
                 <span>
-                  Dit artikel komt uit meerdere regels. Het voorstel wordt
-                  gemarkeerd als <strong>handmatig beoordelen</strong> — beheer
-                  kiest welke regel aangepast wordt.
+                  Dit artikel komt uit meerdere regels. Het voorstel wordt gemarkeerd als{" "}
+                  <strong>handmatig beoordelen</strong> — beheer kiest welke regel aangepast wordt.
                 </span>
               </div>
             )}

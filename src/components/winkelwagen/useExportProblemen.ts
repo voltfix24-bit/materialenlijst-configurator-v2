@@ -43,14 +43,9 @@ export function bouwExportProblemen(
 
     const altRaw = (stam?.alternatief_artikel_nummer ?? "").trim();
     const alternatieven = splitAlternatieven(altRaw);
-    const geenOpvolger =
-      !altRaw ||
-      altRaw === "-" ||
-      /geen\s*opvolger/i.test(altRaw);
+    const geenOpvolger = !altRaw || altRaw === "-" || /geen\s*opvolger/i.test(altRaw);
     const handmatigBeoordelen =
-      !geenOpvolger &&
-      alternatieven.length >= 1 &&
-      /[a-zA-Z]/.test(altRaw);
+      !geenOpvolger && alternatieven.length >= 1 && /[a-zA-Z]/.test(altRaw);
 
     const k = alternatiefKeuzes.get(it.artikel_nummer);
     out.push({

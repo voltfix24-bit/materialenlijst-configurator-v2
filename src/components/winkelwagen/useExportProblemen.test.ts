@@ -22,13 +22,15 @@ describe("bouwExportProblemen", () => {
   it("neemt actieve bestelbare artikelen niet op", () => {
     const problemen = bouwExportProblemen(
       [item()],
-      [{
-        artikel_nummer: "20000001",
-        korte_omschrijving: "Test artikel",
-        eenheid: "ST",
-        actief: true,
-        status: "Actief",
-      }],
+      [
+        {
+          artikel_nummer: "20000001",
+          korte_omschrijving: "Test artikel",
+          eenheid: "ST",
+          actief: true,
+          status: "Actief",
+        },
+      ],
     );
 
     expect(problemen).toHaveLength(0);
@@ -76,23 +78,28 @@ describe("bouwExportProblemen", () => {
 
   it("herkent tekst-met-nummer als handmatige beoordeling en voegt eerdere keuze toe", () => {
     const keuzes = new Map<string, AlternatiefKeuzeVoorExport>([
-      ["20000001", {
-        nieuw_artikel_nummer: "20000009",
-        created_at: "2026-07-05T10:00:00.000Z",
-        totaal_geupdate: 3,
-      }],
+      [
+        "20000001",
+        {
+          nieuw_artikel_nummer: "20000009",
+          created_at: "2026-07-05T10:00:00.000Z",
+          totaal_geupdate: 3,
+        },
+      ],
     ]);
 
     const problemen = bouwExportProblemen(
       [item()],
-      [{
-        artikel_nummer: "20000001",
-        korte_omschrijving: "Geblokkeerd",
-        eenheid: "ST",
-        actief: false,
-        status: "Geblokkeerd",
-        alternatief_artikel_nummer: "GEBR 20000009",
-      }],
+      [
+        {
+          artikel_nummer: "20000001",
+          korte_omschrijving: "Geblokkeerd",
+          eenheid: "ST",
+          actief: false,
+          status: "Geblokkeerd",
+          alternatief_artikel_nummer: "GEBR 20000009",
+        },
+      ],
       keuzes,
     );
 
@@ -113,10 +120,7 @@ describe("bouwExportProblemen", () => {
   });
 
   it("slaat niet-bestellen regels over", () => {
-    const problemen = bouwExportProblemen(
-      [item({ niet_bestellen: true, inactief: true })],
-      [],
-    );
+    const problemen = bouwExportProblemen([item({ niet_bestellen: true, inactief: true })], []);
 
     expect(problemen).toHaveLength(0);
   });
@@ -124,14 +128,16 @@ describe("bouwExportProblemen", () => {
   it("herkent expliciete geen-opvolger markers", () => {
     const problemen = bouwExportProblemen(
       [item()],
-      [{
-        artikel_nummer: "20000001",
-        korte_omschrijving: "Geen opvolger",
-        eenheid: "ST",
-        actief: false,
-        status: "Verwijderd",
-        alternatief_artikel_nummer: "GEEN OPVOLGER",
-      }],
+      [
+        {
+          artikel_nummer: "20000001",
+          korte_omschrijving: "Geen opvolger",
+          eenheid: "ST",
+          actief: false,
+          status: "Verwijderd",
+          alternatief_artikel_nummer: "GEEN OPVOLGER",
+        },
+      ],
     );
 
     expect(problemen[0]).toMatchObject({
@@ -145,14 +151,16 @@ describe("bouwExportProblemen", () => {
   it.each(["-", ""])("herkent %s als geen-opvolger marker", (marker) => {
     const problemen = bouwExportProblemen(
       [item()],
-      [{
-        artikel_nummer: "20000001",
-        korte_omschrijving: "Geen opvolger",
-        eenheid: "ST",
-        actief: false,
-        status: "Verwijderd",
-        alternatief_artikel_nummer: marker,
-      }],
+      [
+        {
+          artikel_nummer: "20000001",
+          korte_omschrijving: "Geen opvolger",
+          eenheid: "ST",
+          actief: false,
+          status: "Verwijderd",
+          alternatief_artikel_nummer: marker,
+        },
+      ],
     );
 
     expect(problemen[0]).toMatchObject({
@@ -165,14 +173,16 @@ describe("bouwExportProblemen", () => {
   it("laat meerdere alternatiefnummers als meerdere kandidaten staan", () => {
     const problemen = bouwExportProblemen(
       [item()],
-      [{
-        artikel_nummer: "20000001",
-        korte_omschrijving: "Meerdere alternatieven",
-        eenheid: "ST",
-        actief: false,
-        status: "Uitgelopen",
-        alternatief_artikel_nummer: "20000009 20000010",
-      }],
+      [
+        {
+          artikel_nummer: "20000001",
+          korte_omschrijving: "Meerdere alternatieven",
+          eenheid: "ST",
+          actief: false,
+          status: "Uitgelopen",
+          alternatief_artikel_nummer: "20000009 20000010",
+        },
+      ],
     );
 
     expect(problemen[0]).toMatchObject({
@@ -185,14 +195,16 @@ describe("bouwExportProblemen", () => {
   it("trimt alternatiefvelden en detecteert status casing/whitespace", () => {
     const problemen = bouwExportProblemen(
       [item()],
-      [{
-        artikel_nummer: "20000001",
-        korte_omschrijving: "Casing",
-        eenheid: "ST",
-        actief: true,
-        status: " UITGELOPEN ",
-        alternatief_artikel_nummer: " 20000009 ",
-      }],
+      [
+        {
+          artikel_nummer: "20000001",
+          korte_omschrijving: "Casing",
+          eenheid: "ST",
+          actief: true,
+          status: " UITGELOPEN ",
+          alternatief_artikel_nummer: " 20000009 ",
+        },
+      ],
     );
 
     expect(problemen[0]).toMatchObject({
@@ -205,13 +217,15 @@ describe("bouwExportProblemen", () => {
   it("markeert stamdata actief=false ook zonder preview-vlag of status", () => {
     const problemen = bouwExportProblemen(
       [item({ inactief: false })],
-      [{
-        artikel_nummer: "20000001",
-        korte_omschrijving: "Inactief stam",
-        eenheid: "ST",
-        actief: false,
-        status: "",
-      }],
+      [
+        {
+          artikel_nummer: "20000001",
+          korte_omschrijving: "Inactief stam",
+          eenheid: "ST",
+          actief: false,
+          status: "",
+        },
+      ],
     );
 
     expect(problemen).toHaveLength(1);
@@ -219,10 +233,7 @@ describe("bouwExportProblemen", () => {
   });
 
   it("slaat artikelen zonder stamdata over", () => {
-    const problemen = bouwExportProblemen(
-      [item({ inactief: false })],
-      [],
-    );
+    const problemen = bouwExportProblemen([item({ inactief: false })], []);
 
     expect(problemen).toHaveLength(0);
   });

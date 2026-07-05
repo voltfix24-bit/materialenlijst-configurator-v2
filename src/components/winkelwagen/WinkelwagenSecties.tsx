@@ -1,11 +1,7 @@
 import type { RefObject } from "react";
 import { ChevronDown, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type {
-  PreviewItem,
-  PreviewSectie,
-  ToegevoegdArtikel,
-} from "@/lib/configurator/types";
+import type { PreviewItem, PreviewSectie, ToegevoegdArtikel } from "@/lib/configurator/types";
 import { WinkelwagenRij } from "./WinkelwagenRij";
 
 interface SectieGroep {
@@ -73,14 +69,22 @@ export function WinkelwagenSecties({
               onClick={() => onToggleSectie(sec.key)}
               className="w-full flex items-center gap-1.5 mb-1 pb-1 border-b border-border/30 hover:bg-muted/30 rounded-sm px-1 transition-colors"
             >
-              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: sec.color }} />
+              <div
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ background: sec.color }}
+              />
               <span className="text-[10px] font-mono font-semibold uppercase tracking-widest text-muted-foreground flex-1 text-left">
                 {sec.label}
               </span>
               {heeftPuls && (
-                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-label="nieuwe artikelen" />
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"
+                  aria-label="nieuwe artikelen"
+                />
               )}
-              <span className="text-[9px] text-muted-foreground/70 font-mono">{sec.items.length} art.</span>
+              <span className="text-[9px] text-muted-foreground/70 font-mono">
+                {sec.items.length} art.
+              </span>
               <ChevronDown
                 className={cn(
                   "w-3 h-3 text-muted-foreground transition-transform",
@@ -132,9 +136,14 @@ export function WinkelwagenSecties({
               Handmatig toegevoegd
             </span>
             {!openSecties.has("__handmatig") && sectiesMetNieuw.has("__handmatig") && (
-              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" aria-label="nieuwe artikelen" />
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"
+                aria-label="nieuwe artikelen"
+              />
             )}
-            <span className="text-[9px] text-muted-foreground/70 font-mono">{zichtbareToegevoegd.length} art.</span>
+            <span className="text-[9px] text-muted-foreground/70 font-mono">
+              {zichtbareToegevoegd.length} art.
+            </span>
             <ChevronDown
               className={cn(
                 "w-3 h-3 text-muted-foreground transition-transform",
