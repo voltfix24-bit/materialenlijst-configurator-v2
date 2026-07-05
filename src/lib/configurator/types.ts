@@ -92,6 +92,11 @@ export interface RingklemSpec {
   aftakkabel_doorsnede_max: number;
 }
 
+/**
+ * FALLBACK — de actuele lijst staat in de DB-tabel `ringklem_specs`
+ * (Beheer → Hardware → Ringklemmen) en wordt geladen via useRingklemSpecs().
+ * Deze constante wordt alleen gebruikt zolang die migratie niet is uitgevoerd.
+ */
 export const RINGKLEM_SPECS: RingklemSpec[] = [
   { artikel_nummer: "20041574", omschrijving: "Ringklem 4x25Cu / 4x6Cu-50Al",            hoofdkabel_doorsnede_min: 25,  hoofdkabel_doorsnede_max: 25,  hoofdkabel_materiaal: "Cu",    aftakkabel_doorsnede_min: 6,  aftakkabel_doorsnede_max: 50 },
   { artikel_nummer: "20000996", omschrijving: "Ringklem 3x35+1x25Cu / 4x6Cu-50Al",       hoofdkabel_doorsnede_min: 35,  hoofdkabel_doorsnede_max: 35,  hoofdkabel_materiaal: "Cu",    aftakkabel_doorsnede_min: 6,  aftakkabel_doorsnede_max: 50 },
@@ -105,11 +110,12 @@ export const RINGKLEM_SPECS: RingklemSpec[] = [
 ];
 
 export function zoekRingklem(
+  specs: RingklemSpec[],
   hoofdDoorsnede: number,
   hoofdMateriaal: "Al" | "Cu",
   aftakDoorsnede: number,
 ): RingklemSpec[] {
-  return RINGKLEM_SPECS.filter(
+  return specs.filter(
     (r) =>
       hoofdDoorsnede >= r.hoofdkabel_doorsnede_min &&
       hoofdDoorsnede <= r.hoofdkabel_doorsnede_max &&
@@ -160,6 +166,11 @@ export interface INetArtikel {
   hoeveelheid: number;
 }
 
+/**
+ * FALLBACK — de actuele set staat in de DB-tabel `inet_default_artikelen`
+ * (Beheer → Hardware → I-Net artikelen), geladen via useInetDefaultArtikelen().
+ * Alleen gebruikt zolang die migratie niet is uitgevoerd.
+ */
 export const DEFAULT_INET_ARTIKELEN: INetArtikel[] = [
   { artikel_nummer: "20042523", hoeveelheid: 2 },
   { artikel_nummer: "20016067", hoeveelheid: 2 },

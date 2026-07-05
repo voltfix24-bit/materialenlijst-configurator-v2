@@ -9,7 +9,6 @@ import { useStamdata } from "@/lib/configurator/queries";
 import { berekenPreview, vultKabelSpecsFromStamdata } from "@/lib/configurator/berekenen";
 import {
   buildRmuVelden,
-  DEFAULT_INET_ARTIKELEN,
   emptyConfig,
   emptyMofConfig,
   legeWinkelwagenAanpassingen,
@@ -17,7 +16,6 @@ import {
   newLsKabelTrace,
   newRichting,
   PREVIEW_SECTIE_DEFS,
-  RINGKLEM_SPECS,
   zoekRingklem,
   type LsKabelType,
   type LsKabelTrace,
@@ -33,6 +31,7 @@ import {
   type WinkelwagenAanpassingen,
 } from "@/lib/configurator/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInetDefaultArtikelen, useRingklemSpecs } from "@/lib/configurator/extraStamdata";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Winkelwagen } from "@/components/winkelwagen/Winkelwagen";
@@ -659,6 +658,7 @@ function ProjectSection({ config, update, isCompact, isCompactProv }: { config: 
 }
 
 function RmuSection({ config, update, sd, isCompact }: { config: MaterialenConfig; update: (p: Partial<MaterialenConfig>) => void; sd: ReturnType<typeof useStamdata>; isCompact: boolean }) {
+  const inetDefaults = useInetDefaultArtikelen();
   const merken = isCompact ? ["ABB", "Siemens"] : ["ABB", "Siemens", "Magnefix"];
   // Bij compact: i-Net altijd "nee"
   const effectiveInet = isCompact ? "nee" : config.rmuInet;
@@ -675,7 +675,7 @@ function RmuSection({ config, update, sd, isCompact }: { config: MaterialenConfi
       rmuVelden: buildRmuVelden(c),
       iNetArtikelen:
         c.is_inet && config.iNetArtikelen.length === 0
-          ? DEFAULT_INET_ARTIKELEN.map((x) => ({ ...x }))
+          ? inetDefaults.map((x) => ({ ...x }))
           : config.iNetArtikelen,
     });
   };
@@ -719,7 +719,7 @@ function RmuSection({ config, update, sd, isCompact }: { config: MaterialenConfi
                 rmuVelden: [],
                 iNetArtikelen:
                   next === "ja" && config.iNetArtikelen.length === 0
-                    ? DEFAULT_INET_ARTIKELEN.map((x) => ({ ...x }))
+                    ? inetDefaults.map((x) => ({ ...x }))
                     : config.iNetArtikelen,
               });
             }}
@@ -1935,10 +1935,11 @@ function LsMofKaart({
   onChange: (patch: Partial<LsMof>) => void;
   onRemove: () => void;
 }) {
+  const ringklemSpecs = useRingklemSpecs();
   const gevondenRingklemmen = useMemo(() => {
     if (!mof.hoofdkabelDoorsnede || !mof.hoofdkabelMateriaal || !mof.aftakDoorsnede) return [];
-    return zoekRingklem(mof.hoofdkabelDoorsnede, mof.hoofdkabelMateriaal, mof.aftakDoorsnede);
-  }, [mof.hoofdkabelDoorsnede, mof.hoofdkabelMateriaal, mof.aftakDoorsnede]);
+    return zoekRingklem(ringklemSpecs, mof.hoofdkabelDoorsnede, mof.hoofdkabelMateriaal, mof.aftakDoorsnede);
+  }, [ringklemSpecs, mof.hoofdkabelDoorsnede, mof.hoofdkabelMateriaal, mof.aftakDoorsnede]);
 
   // auto-select als er exact 1 match is
   useEffect(() => {
@@ -2093,7 +2094,7 @@ function LsMofKaart({
                     }
                   >
                     <option value="">Kies ringklem...</option>
-                    {RINGKLEM_SPECS.map((r) => (
+                    {ringklemSpecs.map((r) => (
                       <option key={r.artikel_nummer} value={r.artikel_nummer}>
                         {r.omschrijving}
                       </option>

@@ -10,6 +10,8 @@ import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
 import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab } from "@/components/beheer/OverigeTabs";
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
+import { ProefcaseTab } from "@/components/beheer/ProefcaseTab";
+import { RingklemmenTab, InetArtikelenTab } from "@/components/beheer/RingklemInetTabs";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
 import { RegelsSamenvattingTab } from "@/components/beheer/RegelsSamenvattingTab";
 import { WijzigingenTab } from "@/components/beheer/WijzigingenTab";
@@ -39,6 +41,7 @@ const GROEPEN: Groep[] = [
     tabs: [
       { key: "overzicht", label: "Zoek & vervang", render: () => <OverzichtTab /> },
       { key: "leesbaar", label: "Leesbaar overzicht", render: () => <RegelsSamenvattingTab /> },
+      { key: "proefcase", label: "Proefcase (simulator)", render: () => <ProefcaseTab /> },
     ],
   },
   {
@@ -61,6 +64,8 @@ const GROEPEN: Groep[] = [
       { key: "ms_mof", label: "MS mof types", render: () => <MsMofTab /> },
       { key: "ls_mof", label: "LS mof types", render: () => <LsMofTab /> },
       { key: "ls_beveiliging", label: "LS beveiligingsopties", render: () => <LsBeveiligingOptiesTab /> },
+      { key: "ringklemmen", label: "Ringklemmen", render: () => <RingklemmenTab /> },
+      { key: "inet", label: "I-Net artikelen", render: () => <InetArtikelenTab /> },
     ],
   },
   {
