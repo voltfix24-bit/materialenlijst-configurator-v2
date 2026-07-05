@@ -17,12 +17,9 @@ import { bouwContextKey, type CorrectieDialoogData, type CorrectieScope } from "
 import { bouwCorrectieContext } from "@/lib/leersysteem/context";
 
 import { CorrectieDialoog } from "./CorrectieDialoog";
-import {
-  ExportBevestigingDialoog,
-  type ExportProbleemArtikel,
-} from "./ExportBevestigingDialoog";
-import { splitAlternatieven, getAlternatiefKeuzes } from "@/lib/assortiment/alternatief";
-import { useQuery } from "@tanstack/react-query";
+import { ExportBevestigingDialoog } from "./ExportBevestigingDialoog";
+import { useWinkelwagenAanpassingen } from "./useWinkelwagenAanpassingen";
+import { useExportProblemen } from "./useExportProblemen";
 
 interface ArtikelStam {
   id: string;
@@ -92,21 +89,21 @@ export function Winkelwagen({
   initieleAanpassingen,
   onAanpassingenChange,
 }: Props) {
-  // Lokale state — geïnitialiseerd vanuit de opgeslagen aanpassingen zodat
-  // eerdere correcties na een herlaad terugkomen in plaats van te verdwijnen.
-  const initieleAanpassingenRef = useRef(initieleAanpassingen);
-  initieleAanpassingenRef.current = initieleAanpassingen;
-  // True zolang de eerstvolgende aanpassingen-report hydratie is (geen gebruikersactie).
-  const eersteAanpassingenRunRef = useRef(true);
-  const [overrides, setOverrides] = useState<Map<string, number>>(
-    () => new Map(Object.entries(initieleAanpassingen?.overrides ?? {})),
-  );
-  const [verwijderd, setVerwijderd] = useState<Set<string>>(
-    () => new Set(initieleAanpassingen?.verwijderd ?? []),
-  );
-  const [toegevoegd, setToegevoegd] = useState<ToegevoegdArtikel[]>(
-    () => initieleAanpassingen?.toegevoegd ?? [],
-  );
+  const {
+    effectief,
+    overrides,
+    setOverrides,
+    verwijderd,
+    setVerwijderd,
+    toegevoegd,
+    setToegevoegd,
+  } = useWinkelwagenAanpassingen({
+    caseId,
+    items,
+    initieleAanpassingen,
+    onItemsChange,
+    onAanpassingenChange,
+  });
   const [dialoogData, setDialoogData] = useState<CorrectieDialoogData | null>(null);
   const [pendingRevert, setPendingRevert] = useState<(() => void) | null>(null);
   const [showZoeker, setShowZoeker] = useState(false);
@@ -125,27 +122,6 @@ export function Winkelwagen({
 
 
   const slaCorrectieOp = useSlaCorrectieOp();
-
-  // Reset bij wisselen case — terug naar de opgeslagen aanpassingen van dié
-  // case. Eerste mount overslaan: de state-initializers hebben dezelfde data
-  // al gezet en een extra setter-ronde zou de case direct dirty markeren.
-  const eersteResetRef = useRef(true);
-  useEffect(() => {
-    if (eersteResetRef.current) {
-      eersteResetRef.current = false;
-      return;
-    }
-    const init = initieleAanpassingenRef.current;
-    // Dit is hydratie, geen gebruikersactie — eerstvolgende report overslaan.
-    eersteAanpassingenRunRef.current = true;
-    setOverrides(new Map(Object.entries(init?.overrides ?? {})));
-    setVerwijderd(new Set(init?.verwijderd ?? []));
-    setToegevoegd(init?.toegevoegd ?? []);
-    setDialoogData(null);
-    setPendingRevert(null);
-    setOpenSecties(new Set());
-    eersteSyncRef.current = true;
-  }, [caseId]);
 
   // Sync: zodra de engineer een configurator-sectie opent, open de bijbehorende
   // winkelwagen secties (toevoegen aan reeds geopende) + scroll naar de eerste.
@@ -180,52 +156,19 @@ export function Winkelwagen({
     });
   }, [activeSectie]);
 
-  // Effectieve lijst = items - verwijderd, met overrides toegepast, + handmatig toegevoegd
-  const effectief = useMemo<PreviewItem[]>(() => {
-    const base = items
-      .filter((it) => !verwijderd.has(it.artikel_nummer))
-      .map((it) => {
-        const ov = overrides.get(it.artikel_nummer);
-        return ov !== undefined ? { ...it, hoeveelheid: ov } : it;
-      });
-    const extra: PreviewItem[] = toegevoegd.map((t) => ({
-      artikel_id: t.artikel_id,
-      artikel_nummer: t.artikel_nummer,
-      korte_omschrijving: t.korte_omschrijving,
-      eenheid: t.eenheid,
-      categorie: "",
-      hoeveelheid: t.hoeveelheid,
-      niet_bestellen: false,
-      herkomst: ["Handmatig toegevoegd"],
-      sectie: "standaard" as PreviewSectie,
-      bijdragen: [{ herkomst: "Handmatig toegevoegd", sectie: "standaard", hoeveelheid: t.hoeveelheid }],
-    }));
-    return [...base, ...extra];
-  }, [items, overrides, verwijderd, toegevoegd]);
-
-  // Doorgeven aan parent
-  const onItemsChangeRef = useRef(onItemsChange);
-  onItemsChangeRef.current = onItemsChange;
+  // Reset UI-only state bij wisselen case. De opgeslagen winkelwagen-aanpassingen
+  // worden in useWinkelwagenAanpassingen opnieuw gehydrateerd.
+  const eersteCaseResetRef = useRef(true);
   useEffect(() => {
-    onItemsChangeRef.current(effectief);
-  }, [effectief]);
-
-  // Aanpassingen doorgeven aan parent zodat ze in config_json bewaard worden.
-  // De eerste run (hydratie vanuit opgeslagen state) slaan we over — anders
-  // wordt de case direct als "niet opgeslagen" gemarkeerd bij openen.
-  const onAanpassingenChangeRef = useRef(onAanpassingenChange);
-  onAanpassingenChangeRef.current = onAanpassingenChange;
-  useEffect(() => {
-    if (eersteAanpassingenRunRef.current) {
-      eersteAanpassingenRunRef.current = false;
+    if (eersteCaseResetRef.current) {
+      eersteCaseResetRef.current = false;
       return;
     }
-    onAanpassingenChangeRef.current?.({
-      overrides: Object.fromEntries(overrides),
-      verwijderd: [...verwijderd],
-      toegevoegd,
-    });
-  }, [overrides, verwijderd, toegevoegd]);
+    setDialoogData(null);
+    setPendingRevert(null);
+    setOpenSecties(new Set());
+    eersteSyncRef.current = true;
+  }, [caseId]);
 
   // Diff voor animaties (alleen op effectief)
   const vorigeRef = useRef<Map<string, number>>(new Map());
@@ -559,59 +502,7 @@ export function Winkelwagen({
     return s;
   }, [nieuwNrs, sectieGroepen, toegevoegd]);
 
-  // ───── Export-bevestiging: verzamel inactieve / uitgelopen / verwijderd / geblokkeerde artikelen ─────
-  const { data: alternatiefKeuzes } = useQuery({
-    queryKey: ["alternatief-keuzes"],
-    queryFn: getAlternatiefKeuzes,
-  });
-
-  const exportProblemen = useMemo<ExportProbleemArtikel[]>(() => {
-    const artByNr = new Map(artikelen.map((a) => [a.artikel_nummer, a]));
-    const keuzes = alternatiefKeuzes ?? new Map();
-    const out: ExportProbleemArtikel[] = [];
-    for (const it of effectief) {
-      if (it.niet_bestellen) continue;
-      const stam = artByNr.get(it.artikel_nummer);
-      const status = (stam?.status ?? "").trim();
-      const statusLower = status.toLowerCase();
-      const isInactief =
-        !!it.inactief || stam?.actief === false || ["uitgelopen", "verwijderd", "geblokkeerd"].includes(statusLower);
-      if (!isInactief) continue;
-
-      const altRaw = (stam?.alternatief_artikel_nummer ?? "").trim();
-      const alternatieven = splitAlternatieven(altRaw);
-      const geenOpvolger =
-        !altRaw ||
-        altRaw === "-" ||
-        /geen\s*opvolger/i.test(altRaw);
-      // Tekst-met-nummer ("GEBR 20036380"): bevat een nummer maar ook niet-numerieke tokens.
-      const handmatigBeoordelen =
-        !geenOpvolger &&
-        alternatieven.length >= 1 &&
-        /[a-zA-Z]/.test(altRaw);
-
-      const k = keuzes.get(it.artikel_nummer);
-      out.push({
-        artikel_nummer: it.artikel_nummer,
-        korte_omschrijving: it.korte_omschrijving,
-        hoeveelheid: it.hoeveelheid,
-        eenheid: it.eenheid,
-        status_label: status || "Inactief",
-        alternatief_raw: altRaw || null,
-        alternatieven,
-        geen_opvolger: geenOpvolger,
-        handmatig_beoordelen: handmatigBeoordelen,
-        eerdere_keuze: k
-          ? {
-              nieuw_artikel_nummer: k.nieuw_artikel_nummer,
-              created_at: k.created_at,
-              totaal_geupdate: k.totaal_geupdate,
-            }
-          : null,
-      });
-    }
-    return out;
-  }, [effectief, artikelen, alternatiefKeuzes]);
+  const exportProblemen = useExportProblemen(effectief, artikelen);
 
   const handleExportClick = () => {
     if (!onExport) return;
