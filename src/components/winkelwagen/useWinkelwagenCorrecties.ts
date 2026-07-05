@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { ArtikelStam, PreviewItem, ToegevoegdArtikel } from "@/lib/configurator/types";
+import type { PreviewItem, ToegevoegdArtikel } from "@/lib/configurator/types";
+import type { ArtikelStam } from "@/lib/configurator/artikelTypes";
 import { useSlaCorrectieOp } from "@/lib/leersysteem/hooks";
 import { bouwCorrectieContext } from "@/lib/leersysteem/context";
 import { bouwContextKey, type CorrectieDialoogData, type CorrectieScope } from "@/lib/leersysteem/types";
