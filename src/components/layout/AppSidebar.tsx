@@ -7,6 +7,7 @@ import { getGlobalDirty, onGlobalDirtyChange } from "@/lib/dirty-state";
 import { useNotificatieBadge } from "@/lib/leersysteem/hooks";
 
 import terrevoltIcon from "@/assets/terrevolt-icon.png.asset.json";
+import terrevoltHorizontal from "@/assets/terrevolt-horizontal-white.svg.asset.json";
 
 const items = [
   { to: "/cases", label: "Cases", icon: LayoutGrid },
@@ -14,11 +15,15 @@ const items = [
   { to: "/notificaties", label: "Notificaties", icon: Bell },
 ];
 
-function TerreVoltLogo({ className }: { className?: string }) {
-  return (
-    <img src={terrevoltIcon.url} alt="TerreVolt" className={className} />
-  );
+function TerreVoltLogo({ dark, className }: { dark: boolean; className?: string }) {
+  // In donker thema tonen we het horizontale witte woordmerk; in licht thema
+  // blijft het compacte icoon staan omdat de horizontale variant alleen wit is.
+  if (dark) {
+    return <img src={terrevoltHorizontal.url} alt="TerreVolt" className={className} />;
+  }
+  return <img src={terrevoltIcon.url} alt="TerreVolt" className={className} />;
 }
+
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -46,8 +51,15 @@ export function AppSidebar() {
       className="w-[72px] shrink-0 flex flex-col items-center py-4 gap-3 sticky top-0 h-screen z-40"
       style={{ background: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)" }}
     >
-      <Link to="/cases" title="TerreVolt" className="w-12 h-12 rounded-xl flex items-center justify-center mb-2">
-        <TerreVoltLogo className="w-7 h-8" />
+      <Link
+        to="/cases"
+        title="TerreVolt"
+        className={cn(
+          "flex items-center justify-center mb-2",
+          theme === "dark" ? "w-14 h-10" : "w-12 h-12 rounded-xl",
+        )}
+      >
+        <TerreVoltLogo dark={theme === "dark"} className={theme === "dark" ? "w-full h-auto" : "w-7 h-8"} />
       </Link>
 
       <div className="flex flex-col gap-2">

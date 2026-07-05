@@ -7,11 +7,12 @@ import { AssortimentTab } from "@/components/beheer/AssortimentTab";
 import { ArtikelenTab } from "@/components/beheer/ArtikelenTab";
 import { RmuTab } from "@/components/beheer/RmuTab";
 import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
-import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab } from "@/components/beheer/OverigeTabs";
+import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab, TrafoVultKabelTab } from "@/components/beheer/OverigeTabs";
 import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 import { ProefcaseTab } from "@/components/beheer/ProefcaseTab";
 import { RingklemmenTab, InetArtikelenTab } from "@/components/beheer/RingklemInetTabs";
+import { AutomationAuditTab } from "@/components/beheer/AutomationAuditTab";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
 import { RegelsSamenvattingTab } from "@/components/beheer/RegelsSamenvattingTab";
 import { WijzigingenTab } from "@/components/beheer/WijzigingenTab";
@@ -77,6 +78,7 @@ const GROEPEN: Groep[] = [
     tabs: [
       { key: "rmu_veld_regels", label: "RMU veld regels", render: () => <RmuVeldRegelsTab /> },
       { key: "trafo_regels", label: "Trafo regels", render: () => <TrafoRegelsTab /> },
+      { key: "trafo_vult_kabel", label: "Trafo vult-kabel", render: () => <TrafoVultKabelTab /> },
       { key: "lsrek_regels", label: "LS-rek regels", render: () => <LsRekRegelsTab /> },
       { key: "prov_regels", label: "Provisorium regels", render: () => <ProvRegelsTab /> },
       { key: "ms_kabel_regels", label: "MS kabel regels", render: () => <MsKabelRegelsTab /> },
@@ -98,7 +100,10 @@ const GROEPEN: Groep[] = [
     label: "Datakwaliteit",
     icon: ShieldCheck,
     beschrijving: "Controle op ontbrekende artikelen en referentiële fouten.",
-    tabs: [{ key: "datakwaliteit", label: "Datakwaliteit", render: () => <DataKwaliteitTab /> }],
+    tabs: [
+      { key: "datakwaliteit", label: "Datakwaliteit", render: () => <DataKwaliteitTab /> },
+      { key: "automation_audit", label: "Automations audit", render: () => <AutomationAuditTab /> },
+    ],
   },
   {
     key: "historie",
