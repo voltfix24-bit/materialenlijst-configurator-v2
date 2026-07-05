@@ -115,4 +115,90 @@ describe("bouwExportProblemen", () => {
 
     expect(problemen).toHaveLength(0);
   });
+
+  it("herkent expliciete geen-opvolger markers", () => {
+    const problemen = bouwExportProblemen(
+      [item()],
+      [{
+        artikel_nummer: "20000001",
+        korte_omschrijving: "Geen opvolger",
+        eenheid: "ST",
+        actief: false,
+        status: "Verwijderd",
+        alternatief_artikel_nummer: "GEEN OPVOLGER",
+      }],
+    );
+
+    expect(problemen[0]).toMatchObject({
+      alternatief_raw: "GEEN OPVOLGER",
+      alternatieven: [],
+      geen_opvolger: true,
+      handmatig_beoordelen: false,
+    });
+  });
+
+  it("laat meerdere alternatiefnummers als meerdere kandidaten staan", () => {
+    const problemen = bouwExportProblemen(
+      [item()],
+      [{
+        artikel_nummer: "20000001",
+        korte_omschrijving: "Meerdere alternatieven",
+        eenheid: "ST",
+        actief: false,
+        status: "Uitgelopen",
+        alternatief_artikel_nummer: "20000009 20000010",
+      }],
+    );
+
+    expect(problemen[0]).toMatchObject({
+      alternatieven: ["20000009", "20000010"],
+      geen_opvolger: false,
+      handmatig_beoordelen: false,
+    });
+  });
+
+  it("trimt alternatiefvelden en detecteert status casing/whitespace", () => {
+    const problemen = bouwExportProblemen(
+      [item()],
+      [{
+        artikel_nummer: "20000001",
+        korte_omschrijving: "Casing",
+        eenheid: "ST",
+        actief: true,
+        status: " UITGELOPEN ",
+        alternatief_artikel_nummer: " 20000009 ",
+      }],
+    );
+
+    expect(problemen[0]).toMatchObject({
+      status_label: "UITGELOPEN",
+      alternatief_raw: "20000009",
+      alternatieven: ["20000009"],
+    });
+  });
+
+  it("markeert stamdata actief=false ook zonder preview-vlag of status", () => {
+    const problemen = bouwExportProblemen(
+      [item({ inactief: false })],
+      [{
+        artikel_nummer: "20000001",
+        korte_omschrijving: "Inactief stam",
+        eenheid: "ST",
+        actief: false,
+        status: "",
+      }],
+    );
+
+    expect(problemen).toHaveLength(1);
+    expect(problemen[0].status_label).toBe("Inactief");
+  });
+
+  it("slaat artikelen zonder stamdata over", () => {
+    const problemen = bouwExportProblemen(
+      [item({ inactief: false })],
+      [],
+    );
+
+    expect(problemen).toHaveLength(0);
+  });
 });
