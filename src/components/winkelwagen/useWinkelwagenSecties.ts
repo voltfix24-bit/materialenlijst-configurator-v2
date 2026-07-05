@@ -6,7 +6,7 @@ import {
   type ToegevoegdArtikel,
 } from "@/lib/configurator/types";
 
-const CONFIG_SECTIE_NAAR_WINKELWAGEN: Record<string, PreviewSectie[]> = {
+export const CONFIG_SECTIE_NAAR_WINKELWAGEN: Record<string, PreviewSectie[]> = {
   project: ["standaard"],
   provisorium: ["provisorium"],
   ms: ["rmu", "msVerbindingen"],
@@ -14,6 +14,76 @@ const CONFIG_SECTIE_NAAR_WINKELWAGEN: Record<string, PreviewSectie[]> = {
   ls: ["lsVerbindingen", "lsRek"],
   overig: ["ggi", "standaard"],
 };
+
+export interface SectieGroep {
+  key: PreviewSectie;
+  label: string;
+  color: string;
+  items: PreviewItem[];
+  verwijderdeItems: PreviewItem[];
+}
+
+function matchtFilter(p: Pick<PreviewItem, "artikel_nummer" | "korte_omschrijving">, q: string) {
+  return (
+    !q || p.artikel_nummer.toLowerCase().includes(q) || p.korte_omschrijving.toLowerCase().includes(q)
+  );
+}
+
+export function bouwSectieGroepen(
+  effectief: PreviewItem[],
+  verwijderdAnim: PreviewItem[],
+  toegevoegd: ToegevoegdArtikel[],
+  filter: string,
+): SectieGroep[] {
+  const q = filter.trim().toLowerCase();
+  const handmatigeNrs = new Set(toegevoegd.map((t) => t.artikel_nummer));
+  const map = new Map<PreviewSectie, PreviewItem[]>();
+  for (const p of effectief) {
+    if (handmatigeNrs.has(p.artikel_nummer)) continue;
+    if (!matchtFilter(p, q)) continue;
+    const arr = map.get(p.sectie) ?? [];
+    arr.push(p);
+    map.set(p.sectie, arr);
+  }
+  const verwijderdPerSectie = new Map<PreviewSectie, PreviewItem[]>();
+  for (const v of verwijderdAnim) {
+    if (!matchtFilter(v, q)) continue;
+    const arr = verwijderdPerSectie.get(v.sectie) ?? [];
+    arr.push(v);
+    verwijderdPerSectie.set(v.sectie, arr);
+  }
+  return PREVIEW_SECTIE_DEFS.map((def) => ({
+    key: def.key,
+    label: def.label,
+    color: def.color,
+    items: map.get(def.key) ?? [],
+    verwijderdeItems: verwijderdPerSectie.get(def.key) ?? [],
+  })).filter((g) => g.items.length > 0 || g.verwijderdeItems.length > 0);
+}
+
+export function bouwZichtbareToegevoegd(
+  toegevoegd: ToegevoegdArtikel[],
+  filter: string,
+): ToegevoegdArtikel[] {
+  const q = filter.trim().toLowerCase();
+  if (!q) return toegevoegd;
+  return toegevoegd.filter((t) => matchtFilter(t, q));
+}
+
+export function bouwSectiesMetNieuw(
+  nieuwNrs: Set<string>,
+  sectieGroepen: SectieGroep[],
+  toegevoegd: ToegevoegdArtikel[],
+): Set<string> {
+  const s = new Set<string>();
+  if (nieuwNrs.size === 0) return s;
+  for (const sec of sectieGroepen) {
+    if (sec.items.some((it) => nieuwNrs.has(it.artikel_nummer))) s.add(sec.key);
+  }
+  if (toegevoegd.some((t) => nieuwNrs.has(t.artikel_nummer))) s.add("__handmatig");
+  return s;
+}
+
 
 interface UseWinkelwagenSectiesArgs {
   activeSectie?: string;
