@@ -56,10 +56,10 @@ export function AppSidebar() {
         title="TerreVolt"
         className={cn(
           "flex items-center justify-center mb-2",
-          theme === "dark" ? "w-14 h-10" : "w-12 h-12 rounded-xl",
+          theme === "dark" ? "w-12 h-12 rounded-xl" : "w-12 h-12 rounded-xl",
         )}
       >
-        <TerreVoltLogo dark={theme === "dark"} className={theme === "dark" ? "w-full h-auto" : "w-7 h-8"} />
+        <TerreVoltLogo dark={theme === "dark"} className={theme === "dark" ? "w-8 h-8" : "w-7 h-8"} />
       </Link>
 
       <div className="flex flex-col gap-2">
