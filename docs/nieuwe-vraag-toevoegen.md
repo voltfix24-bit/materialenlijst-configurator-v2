@@ -11,9 +11,16 @@ Er zijn twee routes, afhankelijk van hoe complex de vraag is.
    - **Ja / nee** — simpele toggle;
    - **Keuzelijst** — eigen opties, één per regel (bv. `klein` / `middel` / `groot`);
    - **Aantal** — een getal (bv. *"Aantal extra mantelbuizen"*).
-3. **Geldt voor case types**: vink aan bij welke van de 4 type cases de vraag
+3. **Plaats in**: kies waar de vraag verschijnt —
+   - onderaan een **bestaand hoofdstuk** (Type opdracht, Provisorium, MS,
+     Trafo & Vult kabel, LS of Overig), onder het kopje "Extra vragen";
+   - in een **eigen hoofdstuk** met zelfgekozen naam (maak hoofdstukken aan
+     in het blok "Eigen hoofdstukken" bovenaan de tab) — elk eigen hoofdstuk
+     wordt een eigen sectie-kaart in de configurator;
+   - of laat staan op het standaardhoofdstuk "Eigen vragen".
+4. **Geldt voor case types**: vink aan bij welke van de 4 type cases de vraag
    verschijnt. Niets aangevinkt = alle vier.
-4. **Artikelen koppelen**: klap de vraag open → "Artikel koppelen". Per regel:
+5. **Artikelen koppelen**: klap de vraag open → "Artikel koppelen". Per regel:
    - **Bij antwoord**: bij welk antwoord dit artikel meekomt (`*` = elk niet-leeg antwoord);
    - **Artikel + hoeveelheid**;
    - Bij een **aantal**-vraag: zet "× ingevuld aantal" aan om de hoeveelheid te

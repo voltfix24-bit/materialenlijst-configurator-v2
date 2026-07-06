@@ -36,7 +36,11 @@ import {
 } from "@/lib/configurator/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useInetDefaultArtikelen, useRingklemSpecs } from "@/lib/configurator/extraStamdata";
-import { vragenVoorCaseType, type MaatwerkVraag } from "@/lib/configurator/berekenen/maatwerk";
+import {
+  FALLBACK_HOOFDSTUK_ID,
+  maatwerkGroepen,
+  type MaatwerkVraag,
+} from "@/lib/configurator/berekenen/maatwerk";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Winkelwagen } from "@/components/winkelwagen/Winkelwagen";
@@ -76,7 +80,6 @@ const SECTIONS = [
   { key: "trafo",       label: "Trafo & Vult kabel",  color: "var(--color-section-trafo)",       icon: Box },
   { key: "ls",          label: "LS — Laagspanning",   color: "var(--color-section-ls)",          icon: Plug },
   { key: "overig",      label: "Overig",              color: "var(--color-section-overig)",      icon: Package },
-  { key: "maatwerk",    label: "Eigen vragen",        color: "#B0578D",                          icon: ClipboardList },
 ] as const;
 
 type SectionKey = (typeof SECTIONS)[number]["key"];
@@ -120,13 +123,15 @@ export function MaterialenConfigurator({
   // Nieuwe lege case → alleen eerste sectie open. Bestaande config → alles open.
   // Secties openen/sluiten daarna alleen nog door expliciet op de header te klikken.
   const isNewCase = !initialConfig;
-  const [open, setOpen] = useState<Record<SectionKey, boolean>>(() =>
+  // Record<string, boolean> i.p.v. Record<SectionKey, ...>: eigen hoofdstukken
+  // (dynamische kaarten uit maatwerk_hoofdstukken) krijgen keys "hoofdstuk:<id>".
+  const [open, setOpen] = useState<Record<string, boolean>>(() =>
     isNewCase
-      ? { project: true, provisorium: false, ms: false, trafo: false, ls: false, overig: false, maatwerk: false }
-      : { project: true, provisorium: true, ms: true, trafo: true, ls: true, overig: true, maatwerk: true },
+      ? { project: true, provisorium: false, ms: false, trafo: false, ls: false, overig: false }
+      : { project: true, provisorium: true, ms: true, trafo: true, ls: true, overig: true },
   );
   // Welke configurator sectie is als laatst door de engineer geopend → winkelwagen synchroniseert mee
-  const [activeSectie, setActiveSectie] = useState<SectionKey | null>("project");
+  const [activeSectie, setActiveSectie] = useState<string | null>("project");
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [debounced, setDebounced] = useState(config);
 
@@ -217,12 +222,6 @@ export function MaterialenConfigurator({
     (config.lsMoffen.length > 0 &&
       config.lsMoffen.every((m) => !!m.type && !!m.bestaandType));
 
-  // Eigen (via Beheer aangemaakte) vragen die voor dit case type gelden.
-  const maatwerkVragen = vragenVoorCaseType(sd, caseType);
-  const maatwerkOk = maatwerkVragen.every(
-    (v) => (config.maatwerkAntwoorden?.[v.vraag_key] ?? "").trim() !== "",
-  );
-
   const completion: Record<SectionKey, boolean> = {
     project: !!config.subType,
     provisorium:
@@ -236,17 +235,50 @@ export function MaterialenConfigurator({
     ls: lsRekOk && lsMoffenOk,
     // Overig (GGI + standaard) — informatief, altijd compleet
     overig: true,
-    maatwerk: maatwerkOk,
   };
   const visibleKeys: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => {
     if (k === "provisorium") return isProvisorum && (!isCompact || isCompactProv);
     if (k === "trafo") return showTrafo || showVultKabel;
-    if (k === "maatwerk") return maatwerkVragen.length > 0;
     if (k === "overig") return true;
     return true;
   });
-  const totalVisible = visibleKeys.length;
-  const completedCount = visibleKeys.filter((k) => completion[k]).length;
+
+  // Eigen (via Beheer aangemaakte) vragen: per bestaand hoofdstuk (sectie_key)
+  // of als eigen hoofdstuk-kaart. Vragen in een hier verborgen sectie (bv.
+  // trafo bij compact) verhuizen naar het fallback-hoofdstuk zodat ze altijd
+  // invulbaar blijven.
+  const groepen = (() => {
+    const g = maatwerkGroepen(sd, caseType);
+    const zichtbaar = new Set<string>(visibleKeys);
+    const perSectie: Record<string, MaatwerkVraag[]> = {};
+    const verplaatst: MaatwerkVraag[] = [];
+    for (const [k, vs] of Object.entries(g.perSectie)) {
+      if (zichtbaar.has(k)) perSectie[k] = vs;
+      else verplaatst.push(...vs);
+    }
+    let hoofdstukken = g.hoofdstukken;
+    if (verplaatst.length > 0) {
+      const fb = hoofdstukken.find((h) => h.id === FALLBACK_HOOFDSTUK_ID);
+      if (fb) {
+        hoofdstukken = hoofdstukken.map((h) =>
+          h.id === FALLBACK_HOOFDSTUK_ID ? { ...h, vragen: [...h.vragen, ...verplaatst] } : h,
+        );
+      } else {
+        hoofdstukken = [
+          ...hoofdstukken,
+          { id: FALLBACK_HOOFDSTUK_ID, naam: "Eigen vragen", vragen: verplaatst },
+        ];
+      }
+    }
+    return { perSectie, hoofdstukken };
+  })();
+  const hoofdstukCompleet = (h: { vragen: MaatwerkVraag[] }) =>
+    h.vragen.every((v) => (config.maatwerkAntwoorden?.[v.vraag_key] ?? "").trim() !== "");
+
+  const totalVisible = visibleKeys.length + groepen.hoofdstukken.length;
+  const completedCount =
+    visibleKeys.filter((k) => completion[k]).length +
+    groepen.hoofdstukken.filter(hoofdstukCompleet).length;
   const allComplete = completedCount === totalVisible;
 
   const update = (patch: Partial<MaterialenConfig>) => setConfig((c) => ({ ...c, ...patch }));
@@ -456,7 +488,7 @@ export function MaterialenConfigurator({
         {SECTIONS.map((sec, idx) => {
           if (sec.key === "provisorium" && (!isProvisorum || (isCompact && !isCompactProv))) return null;
           if (sec.key === "trafo" && !(showTrafo || showVultKabel)) return null;
-          if (sec.key === "maatwerk" && maatwerkVragen.length === 0) return null;
+          const extraVragen = groepen.perSectie[sec.key] ?? [];
           return (
             <div
               key={sec.key}
@@ -514,9 +546,48 @@ export function MaterialenConfigurator({
                     </div>
                   </div>
                 )}
-                {sec.key === "maatwerk" && (
-                  <MaatwerkSection vragen={maatwerkVragen} config={config} update={update} />
+                {extraVragen.length > 0 && (
+                  <div className="border-t border-border pt-5 mt-6">
+                    <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-3">
+                      Extra vragen
+                    </div>
+                    <MaatwerkSection vragen={extraVragen} config={config} update={update} />
+                  </div>
                 )}
+              </SectionCard>
+            </div>
+          );
+        })}
+
+        {/* Eigen hoofdstukken (Beheer → Automations → Eigen vragen) — elk een
+            eigen sectie-kaart met zelfgekozen naam. */}
+        {groepen.hoofdstukken.map((h, i) => {
+          const key = `hoofdstuk:${h.id}`;
+          const isOpen = open[key] ?? !isNewCase;
+          const beantwoord = h.vragen.filter(
+            (v) => (config.maatwerkAntwoorden?.[v.vraag_key] ?? "").trim() !== "",
+          ).length;
+          return (
+            <div key={key} ref={(el) => { sectionRefs.current[key] = el; }} className="scroll-mt-20">
+              <SectionCard
+                color="#B0578D"
+                title={h.naam}
+                index={SECTIONS.length + i + 1}
+                Icon={ClipboardList}
+                isOpen={isOpen}
+                isComplete={beantwoord === h.vragen.length}
+                summary={
+                  beantwoord > 0
+                    ? `${beantwoord}/${h.vragen.length} beantwoord`
+                    : "Nog in te vullen"
+                }
+                onToggle={() => {
+                  const willOpen = !isOpen;
+                  setOpen({ ...open, [key]: willOpen });
+                  if (willOpen) setActiveSectie("maatwerk");
+                }}
+              >
+                <MaatwerkSection vragen={h.vragen} config={config} update={update} />
               </SectionCard>
             </div>
           );
@@ -622,10 +693,6 @@ function sectionSummary(key: SectionKey, c: MaterialenConfig, _sd: ReturnType<ty
     }
     case "overig":
       return c.ggiVervangen ? "GGI wordt vervangen" : "Standaard materialen";
-    case "maatwerk": {
-      const n = Object.values(c.maatwerkAntwoorden ?? {}).filter((v) => `${v}`.trim() !== "").length;
-      return n > 0 ? `${n} vra${n === 1 ? "ag" : "gen"} beantwoord` : "Nog in te vullen";
-    }
   }
 }
 

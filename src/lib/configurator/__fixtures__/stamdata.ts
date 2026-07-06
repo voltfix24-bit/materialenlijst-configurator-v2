@@ -288,6 +288,7 @@ export function makeStamdata(o: StamdataOverrides = {}): Stamdata {
     rmuVeldRegels: wrap(o.rmuVeldRegels ?? DEFAULT_RMU_VELD_REGELS),
     trafoVultKabelSpecs: wrap(o.trafoVultKabelSpecs ?? DEFAULT_VULT_KABEL_SPECS),
     maatwerkVragen: wrap(o.maatwerkVragen ?? []),
+    maatwerkHoofdstukken: wrap([]),
     isLoading: false,
   } as unknown as Stamdata;
 }

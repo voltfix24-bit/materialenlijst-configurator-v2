@@ -21,7 +21,18 @@ export interface MaatwerkVraag {
   opties: string[];
   van_toepassing_bij: string[];
   actief: boolean;
+  /** Bestaand configurator-hoofdstuk waar de vraag onderaan verschijnt. */
+  sectie_key?: string | null;
+  /** Eigen hoofdstuk (maatwerk_hoofdstukken) — eigen sectie-kaart. */
+  hoofdstuk_id?: string | null;
   regels?: MaatwerkRegel[];
+}
+
+export interface MaatwerkHoofdstuk {
+  id: string;
+  naam: string;
+  sort_order: number;
+  actief: boolean;
 }
 
 /** Vragen die gelden voor dit case type (lege van_toepassing_bij = alle). */
@@ -35,6 +46,52 @@ export function vragenVoorCaseType(sd: Stamdata, caseType: string | undefined): 
       (v.van_toepassing_bij.length === 0 ||
         (!!caseType && v.van_toepassing_bij.includes(caseType))),
   );
+}
+
+export interface MaatwerkGroepen {
+  /** Vragen per bestaand configurator-hoofdstuk (sectie_key). */
+  perSectie: Record<string, MaatwerkVraag[]>;
+  /** Eigen hoofdstukken met hun vragen, incl. fallback "Eigen vragen"
+   *  voor vragen zonder plaatsing. Alleen hoofdstukken mét vragen. */
+  hoofdstukken: { id: string; naam: string; vragen: MaatwerkVraag[] }[];
+}
+
+/** Standaard-hoofdstuknaam voor vragen zonder plaatsing (backwards compat). */
+export const FALLBACK_HOOFDSTUK_ID = "__eigen_vragen__";
+
+export function maatwerkGroepen(sd: Stamdata, caseType: string | undefined): MaatwerkGroepen {
+  const vragen = vragenVoorCaseType(sd, caseType);
+  const hoofdstukRows = (sd.maatwerkHoofdstukken?.data ?? []) as unknown as MaatwerkHoofdstuk[];
+
+  const perSectie: Record<string, MaatwerkVraag[]> = {};
+  const perHoofdstuk = new Map<string, MaatwerkVraag[]>();
+  const zonderPlaatsing: MaatwerkVraag[] = [];
+
+  for (const v of vragen) {
+    if (v.sectie_key) {
+      (perSectie[v.sectie_key] ??= []).push(v);
+    } else if (v.hoofdstuk_id) {
+      const arr = perHoofdstuk.get(v.hoofdstuk_id) ?? [];
+      arr.push(v);
+      perHoofdstuk.set(v.hoofdstuk_id, arr);
+    } else {
+      zonderPlaatsing.push(v);
+    }
+  }
+
+  const hoofdstukken: MaatwerkGroepen["hoofdstukken"] = [];
+  for (const h of hoofdstukRows) {
+    if (h.actief === false) continue;
+    const hv = perHoofdstuk.get(h.id);
+    if (hv && hv.length > 0) hoofdstukken.push({ id: h.id, naam: h.naam, vragen: hv });
+    perHoofdstuk.delete(h.id);
+  }
+  // Vragen die naar een verwijderd/inactief hoofdstuk wijzen niet kwijtraken.
+  for (const rest of perHoofdstuk.values()) zonderPlaatsing.push(...rest);
+  if (zonderPlaatsing.length > 0) {
+    hoofdstukken.push({ id: FALLBACK_HOOFDSTUK_ID, naam: "Eigen vragen", vragen: zonderPlaatsing });
+  }
+  return { perSectie, hoofdstukken };
 }
 
 /**

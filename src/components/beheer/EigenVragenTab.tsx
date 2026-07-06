@@ -27,6 +27,16 @@ const TYPE_LABELS: Record<string, string> = {
 
 const CASE_TYPE_KEYS = ["NSA", "provisorium", "compact", "compact_prov"];
 
+/** Bestaande configurator-hoofdstukken waarin een vraag geplaatst kan worden. */
+const SECTIE_OPTIES: { key: string; label: string }[] = [
+  { key: "project", label: "Type opdracht" },
+  { key: "provisorium", label: "Provisorium" },
+  { key: "ms", label: "MS — Middenspanning" },
+  { key: "trafo", label: "Trafo & Vult kabel" },
+  { key: "ls", label: "LS — Laagspanning" },
+  { key: "overig", label: "Overig" },
+];
+
 interface VraagRij {
   id: string;
   vraag_key: string;
@@ -37,6 +47,15 @@ interface VraagRij {
   van_toepassing_bij: string[];
   actief: boolean;
   sort_order: number;
+  sectie_key: string | null;
+  hoofdstuk_id: string | null;
+}
+
+interface HoofdstukRij {
+  id: string;
+  naam: string;
+  sort_order: number;
+  actief: boolean;
 }
 
 interface RegelRij {
@@ -85,9 +104,25 @@ export function EigenVragenTab() {
     },
   });
 
+  // Eigen hoofdstukken (voor plaatsing + beheerblok bovenaan).
+  const { data: hoofdstukken = [] } = useQuery({
+    queryKey: ["beheer-eigen-hoofdstukken"],
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maatwerk_hoofdstukken")
+        .select("*")
+        .order("sort_order");
+      if (error) return [];
+      return data as HoofdstukRij[];
+    },
+  });
+
   const invalideer = () => {
     qc.invalidateQueries({ queryKey: ["beheer-eigen-vragen"] });
     qc.invalidateQueries({ queryKey: ["maatwerk_vragen"] });
+    qc.invalidateQueries({ queryKey: ["beheer-eigen-hoofdstukken"] });
+    qc.invalidateQueries({ queryKey: ["maatwerk_hoofdstukken"] });
   };
 
   const save = useMutation({
@@ -164,6 +199,8 @@ export function EigenVragenTab() {
         </Button>
       </div>
 
+      <HoofdstukkenBeheer hoofdstukken={hoofdstukken} onInvalideer={invalideer} />
+
       {!isLoading && vragen.length === 0 && (
         <DataTable
           headers={["Vraag", "Type", "Geldt voor", "Actief", ""]}
@@ -178,6 +215,13 @@ export function EigenVragenTab() {
         <VraagKaart
           key={v.id}
           vraag={v}
+          plaatsingLabel={
+            v.sectie_key
+              ? `hoofdstuk ${SECTIE_OPTIES.find((s) => s.key === v.sectie_key)?.label ?? v.sectie_key}`
+              : v.hoofdstuk_id
+                ? `eigen hoofdstuk ${hoofdstukken.find((h) => h.id === v.hoofdstuk_id)?.naam ?? "?"}`
+                : `hoofdstuk Eigen vragen (standaard)`
+          }
           isOpen={openVraag === v.id}
           onToggle={() => setOpenVraag(openVraag === v.id ? null : v.id)}
           onEdit={() => {
@@ -249,6 +293,49 @@ export function EigenVragenTab() {
                 />
               </FormField>
             )}
+            <FormField
+              label="Plaats in"
+              hint="Onderaan een bestaand hoofdstuk ('Extra vragen'), of in een eigen hoofdstuk met eigen naam."
+            >
+              <select
+                value={
+                  editing.sectie_key
+                    ? `sectie:${editing.sectie_key}`
+                    : editing.hoofdstuk_id
+                      ? `hoofdstuk:${editing.hoofdstuk_id}`
+                      : ""
+                }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEditing({
+                    ...editing,
+                    sectie_key: v.startsWith("sectie:") ? v.slice(7) : null,
+                    hoofdstuk_id: v.startsWith("hoofdstuk:") ? v.slice(10) : null,
+                  });
+                }}
+                className="h-9 rounded-md border border-border bg-surface px-2 text-sm w-full"
+              >
+                <option value="">Standaardhoofdstuk "Eigen vragen"</option>
+                <optgroup label="Bestaande hoofdstukken">
+                  {SECTIE_OPTIES.map((s) => (
+                    <option key={s.key} value={`sectie:${s.key}`}>
+                      {s.label}
+                    </option>
+                  ))}
+                </optgroup>
+                {hoofdstukken.filter((h) => h.actief).length > 0 && (
+                  <optgroup label="Eigen hoofdstukken">
+                    {hoofdstukken
+                      .filter((h) => h.actief)
+                      .map((h) => (
+                        <option key={h.id} value={`hoofdstuk:${h.id}`}>
+                          {h.naam}
+                        </option>
+                      ))}
+                  </optgroup>
+                )}
+              </select>
+            </FormField>
             <FormField label="Geldt voor case types" hint="Niets aangevinkt = alle vier.">
               <div className="flex flex-wrap gap-3">
                 {CASE_TYPE_KEYS.map((ct) => {
@@ -308,9 +395,117 @@ export function EigenVragenTab() {
   );
 }
 
+/** Beheer van eigen hoofdstukken: naam wijzigen, toevoegen, verwijderen. */
+function HoofdstukkenBeheer({
+  hoofdstukken,
+  onInvalideer,
+}: {
+  hoofdstukken: HoofdstukRij[];
+  onInvalideer: () => void;
+}) {
+  const [nieuweNaam, setNieuweNaam] = useState("");
+  const [namen, setNamen] = useState<Record<string, string>>({});
+  const [toDelete, setToDelete] = useState<HoofdstukRij | null>(null);
+
+  const voegToe = useMutation({
+    mutationFn: async (naam: string) => {
+      const { error } = await supabase
+        .from("maatwerk_hoofdstukken")
+        .insert({ naam, sort_order: hoofdstukken.length + 1 });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      onInvalideer();
+      setNieuweNaam("");
+      toast.success("Hoofdstuk toegevoegd");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const hernoem = useMutation({
+    mutationFn: async ({ id, naam }: { id: string; naam: string }) => {
+      const { error } = await supabase.from("maatwerk_hoofdstukken").update({ naam }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      onInvalideer();
+      toast.success("Naam gewijzigd");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const verwijder = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("maatwerk_hoofdstukken").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      onInvalideer();
+      setToDelete(null);
+      toast.success("Hoofdstuk verwijderd");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="rounded-lg border border-border bg-surface p-3 space-y-2">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+        Eigen hoofdstukken
+      </p>
+      <p className="text-[11px] text-muted-foreground">
+        Elk hoofdstuk wordt een eigen sectie-kaart in de configurator, met de naam die jij kiest.
+        Vragen plaats je erin via het veld "Plaats in" bij de vraag.
+      </p>
+      <div className="space-y-1.5">
+        {hoofdstukken.map((h) => (
+          <div key={h.id} className="flex items-center gap-2">
+            <Input
+              value={namen[h.id] ?? h.naam}
+              onChange={(e) => setNamen((p) => ({ ...p, [h.id]: e.target.value }))}
+              onBlur={() => {
+                const naam = (namen[h.id] ?? h.naam).trim();
+                if (naam && naam !== h.naam) hernoem.mutate({ id: h.id, naam });
+              }}
+              className="h-8 max-w-xs text-sm"
+            />
+            <RowActions onDelete={() => setToDelete(h)} />
+          </div>
+        ))}
+        <div className="flex items-center gap-2 pt-1">
+          <Input
+            value={nieuweNaam}
+            onChange={(e) => setNieuweNaam(e.target.value)}
+            placeholder="Nieuw hoofdstuk, bv. Civiel werk"
+            className="h-8 max-w-xs text-sm"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && nieuweNaam.trim()) voegToe.mutate(nieuweNaam.trim());
+            }}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!nieuweNaam.trim() || voegToe.isPending}
+            onClick={() => voegToe.mutate(nieuweNaam.trim())}
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" /> Toevoegen
+          </Button>
+        </div>
+      </div>
+      <ConfirmDelete
+        open={!!toDelete}
+        onOpenChange={(o) => !o && setToDelete(null)}
+        onConfirm={() => toDelete && verwijder.mutate(toDelete.id)}
+        title="Hoofdstuk verwijderen?"
+        description="Vragen in dit hoofdstuk worden niet verwijderd — ze verhuizen naar het standaardhoofdstuk 'Eigen vragen'."
+      />
+    </div>
+  );
+}
+
 /** Eén vraag met uitklapbare artikel-regels per antwoord. */
 function VraagKaart({
   vraag,
+  plaatsingLabel,
   isOpen,
   onToggle,
   onEdit,
@@ -318,6 +513,7 @@ function VraagKaart({
   onInvalideer,
 }: {
   vraag: VraagRij;
+  plaatsingLabel: string;
   isOpen: boolean;
   onToggle: () => void;
   onEdit: () => void;
@@ -417,6 +613,7 @@ function VraagKaart({
             {vraag.van_toepassing_bij.length === 0
               ? "alle case types"
               : vraag.van_toepassing_bij.map((ct) => CASE_TYPE_LABELS[ct] ?? ct).join(", ")}
+            {" · "}in {plaatsingLabel}
             {" · "}sleutel <span className="font-mono">{vraag.vraag_key}</span>
           </p>
         </div>

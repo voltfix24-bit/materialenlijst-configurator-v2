@@ -212,6 +212,21 @@ export function useStamdata(caseType: string | undefined) {
     },
   });
 
+  // Eigen hoofdstukken waarin eigen vragen geplaatst kunnen worden.
+  const maatwerkHoofdstukken = useQuery({
+    queryKey: ["maatwerk_hoofdstukken"],
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maatwerk_hoofdstukken")
+        .select("*")
+        .eq("actief", true)
+        .order("sort_order");
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+
   const lsBeveiligingOpties = useQuery({
     queryKey: ["ls_beveiliging_opties"],
     queryFn: async () => {
@@ -259,6 +274,7 @@ export function useStamdata(caseType: string | undefined) {
     trafoVultKabelSpecs,
     lsBeveiligingOpties,
     maatwerkVragen,
+    maatwerkHoofdstukken,
     isLoading:
       artikelen.isLoading ||
       rmuConfigs.isLoading ||
