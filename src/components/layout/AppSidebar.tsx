@@ -7,7 +7,7 @@ import { getGlobalDirty, onGlobalDirtyChange } from "@/lib/dirty-state";
 import { useNotificatieBadge } from "@/lib/leersysteem/hooks";
 
 import terrevoltIcon from "@/assets/terrevolt-icon.png.asset.json";
-import terrevoltHorizontal from "@/assets/terrevolt-horizontal-white.svg.asset.json";
+import terrevoltIconWhite from "@/assets/terrevolt-icon-white-print.svg.asset.json";
 
 const items = [
   { to: "/cases", label: "Cases", icon: LayoutGrid },
