@@ -54,10 +54,7 @@ export function AppSidebar() {
       <Link
         to="/cases"
         title="TerreVolt"
-        className={cn(
-          "flex items-center justify-center mb-2",
-          theme === "dark" ? "w-12 h-12 rounded-xl" : "w-12 h-12 rounded-xl",
-        )}
+        className="flex items-center justify-center mb-2 w-12 h-12 rounded-xl"
       >
         <TerreVoltLogo dark={theme === "dark"} className={theme === "dark" ? "w-8 h-8" : "w-7 h-8"} />
       </Link>
