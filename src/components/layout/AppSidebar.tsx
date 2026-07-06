@@ -16,10 +16,10 @@ const items = [
 ];
 
 function TerreVoltLogo({ dark, className }: { dark: boolean; className?: string }) {
-  // In donker thema tonen we het horizontale witte woordmerk; in licht thema
-  // blijft het compacte icoon staan omdat de horizontale variant alleen wit is.
+  // In donker thema tonen we het witte icoon; in licht thema
+  // blijft het compacte gekleurde icoon staan.
   if (dark) {
-    return <img src={terrevoltHorizontal.url} alt="TerreVolt" className={className} />;
+    return <img src={terrevoltIconWhite.url} alt="TerreVolt" className={className} />;
   }
   return <img src={terrevoltIcon.url} alt="TerreVolt" className={className} />;
 }
