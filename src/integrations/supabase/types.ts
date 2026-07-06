@@ -758,6 +758,33 @@ export type Database = {
           },
         ]
       }
+      maatwerk_hoofdstukken: {
+        Row: {
+          actief: boolean
+          created_at: string
+          id: string
+          naam: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actief?: boolean
+          created_at?: string
+          id?: string
+          naam: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actief?: boolean
+          created_at?: string
+          id?: string
+          naam?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       maatwerk_vraag_regels: {
         Row: {
           actief: boolean
@@ -816,9 +843,11 @@ export type Database = {
         Row: {
           actief: boolean
           created_at: string
+          hoofdstuk_id: string | null
           id: string
           label: string
           opties: string[]
+          sectie_key: string | null
           sort_order: number
           type: string
           uitleg: string | null
@@ -829,9 +858,11 @@ export type Database = {
         Insert: {
           actief?: boolean
           created_at?: string
+          hoofdstuk_id?: string | null
           id?: string
           label: string
           opties?: string[]
+          sectie_key?: string | null
           sort_order?: number
           type: string
           uitleg?: string | null
@@ -842,9 +873,11 @@ export type Database = {
         Update: {
           actief?: boolean
           created_at?: string
+          hoofdstuk_id?: string | null
           id?: string
           label?: string
           opties?: string[]
+          sectie_key?: string | null
           sort_order?: number
           type?: string
           uitleg?: string | null
@@ -852,7 +885,15 @@ export type Database = {
           van_toepassing_bij?: string[]
           vraag_key?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "maatwerk_vragen_hoofdstuk_id_fkey"
+            columns: ["hoofdstuk_id"]
+            isOneToOne: false
+            referencedRelation: "maatwerk_hoofdstukken"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ms_kabel_regels: {
         Row: {
