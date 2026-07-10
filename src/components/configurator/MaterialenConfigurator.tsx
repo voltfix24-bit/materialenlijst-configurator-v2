@@ -547,9 +547,10 @@ export function MaterialenConfigurator({
                   </div>
                 )}
                 {extraVragen.length > 0 && (
-                  <div className="border-t border-border pt-5 mt-6">
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-3">
-                      Extra vragen
+                  <div className="mt-6 rounded-xl border border-border bg-muted/30 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <ClipboardList className="w-4 h-4 text-muted-foreground" />
+                      <div className="text-sm font-semibold text-foreground">Extra vragen</div>
                     </div>
                     <MaatwerkSection vragen={extraVragen} config={config} update={update} />
                   </div>
@@ -722,11 +723,15 @@ function MaatwerkSection({
     update({ maatwerkAntwoorden: { ...(config.maatwerkAntwoorden ?? {}), [key]: waarde } });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {vragen.map((v) => {
         const antwoord = config.maatwerkAntwoorden?.[v.vraag_key] ?? "";
         return (
-          <Field key={v.vraag_key} label={v.label}>
+          <div
+            key={v.vraag_key}
+            className="rounded-lg border border-border bg-background/60 p-4 flex flex-col gap-2"
+          >
+            <label className="text-sm font-medium text-foreground">{v.label}</label>
             {v.type === "ja_nee" && (
               <PillGroup
                 value={antwoord}
@@ -749,8 +754,8 @@ function MaatwerkSection({
                 max={999}
               />
             )}
-            {v.uitleg && <p className="text-xs text-muted-foreground mt-1">{v.uitleg}</p>}
-          </Field>
+            {v.uitleg && <p className="text-xs text-muted-foreground">{v.uitleg}</p>}
+          </div>
         );
       })}
     </div>
