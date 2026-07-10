@@ -30,7 +30,7 @@ const STATUS_COLORS: Record<string, string> = {
   afgerond: "bg-success/10 text-success",
 };
 const CASE_TYPE_COLORS: Record<string, string> = {
-  NSA: "bg-[color:var(--navy)] text-white",
+  NSA: "bg-[color:var(--navy)] text-[color:var(--background)]",
   provisorium: "bg-info text-white",
   compact: "bg-primary text-primary-foreground",
   compact_prov: "bg-teal-500/15 text-teal-700 dark:text-teal-300",
