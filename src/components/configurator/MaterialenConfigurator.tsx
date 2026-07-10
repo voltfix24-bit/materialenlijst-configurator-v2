@@ -723,11 +723,15 @@ function MaatwerkSection({
     update({ maatwerkAntwoorden: { ...(config.maatwerkAntwoorden ?? {}), [key]: waarde } });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {vragen.map((v) => {
         const antwoord = config.maatwerkAntwoorden?.[v.vraag_key] ?? "";
         return (
-          <Field key={v.vraag_key} label={v.label}>
+          <div
+            key={v.vraag_key}
+            className="rounded-lg border border-border bg-background/60 p-4 flex flex-col gap-2"
+          >
+            <label className="text-sm font-medium text-foreground">{v.label}</label>
             {v.type === "ja_nee" && (
               <PillGroup
                 value={antwoord}
@@ -750,8 +754,8 @@ function MaatwerkSection({
                 max={999}
               />
             )}
-            {v.uitleg && <p className="text-xs text-muted-foreground mt-1">{v.uitleg}</p>}
-          </Field>
+            {v.uitleg && <p className="text-xs text-muted-foreground">{v.uitleg}</p>}
+          </div>
         );
       })}
     </div>
