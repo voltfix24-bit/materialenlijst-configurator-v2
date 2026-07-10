@@ -53,7 +53,7 @@ export function WinkelwagenFooter({
           )}
           Export naar Liander
           {exportProblemenAantal > 0 && (
-            <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+            <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black dark:bg-amber-400 dark:text-black text-[10px] font-bold">
               {exportProblemenAantal}
             </span>
           )}
