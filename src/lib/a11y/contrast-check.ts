@@ -28,7 +28,7 @@ export interface ContrastIssue {
 
 type RGBA = { r: number; g: number; b: number; a: number };
 
-function parseColor(input: string): RGBA | null {
+export function parseColor(input: string): RGBA | null {
   if (!input) return null;
   const s = input.trim();
   if (s === "transparent") return { r: 0, g: 0, b: 0, a: 0 };
