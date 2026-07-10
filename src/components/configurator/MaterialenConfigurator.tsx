@@ -645,8 +645,12 @@ function SectionCard({
     <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
       <button onClick={onToggle} className="w-full flex items-center gap-4 px-6 py-5 hover:bg-accent/20 transition-colors text-left">
         <span
-          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-white"
-          style={{ background: color }}
+          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border"
+          style={{
+            background: `color-mix(in oklab, ${color} 18%, transparent)`,
+            borderColor: `color-mix(in oklab, ${color} 40%, transparent)`,
+            color: color,
+          }}
         >
           <Icon className="w-5 h-5" />
         </span>
