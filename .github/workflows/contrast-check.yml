@@ -1,0 +1,21 @@
+name: contrast-check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  contrast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - name: Start dev server
+        run: bun run dev &
+      - name: Wait for server
+        run: npx wait-on http://localhost:8080 -t 60000
+      - name: Run contrast check (dark mode)
+        run: bun run test:contrast
