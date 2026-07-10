@@ -290,7 +290,7 @@ function CaseDetailPage() {
 
         {/* Identiteit */}
         <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
-          <span className="text-[10px] px-2 py-0.5 rounded bg-[color:var(--navy)] text-white uppercase tracking-wider font-semibold">
+          <span className="text-[10px] px-2 py-0.5 rounded bg-[color:var(--navy)] text-[color:var(--background)] uppercase tracking-wider font-semibold">
             {CASE_TYPE_LABELS[caseRow.case_type] ?? caseRow.case_type}
           </span>
           <div className="flex flex-col min-w-0">
