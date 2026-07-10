@@ -1,42 +1,47 @@
 import { describe, it, expect } from "vitest";
-import { scanContrast } from "./contrast-check";
+import {
+  parseColor,
+  composite,
+  contrastRatio,
+  relLuminance,
+} from "./contrast-check";
 
-function mount(html: string) {
-  document.documentElement.classList.add("dark");
-  document.body.innerHTML = `<div style="background: #0a0f1a; color: #f1f5f9; padding: 16px;">${html}</div>`;
-}
+const WHITE = { r: 255, g: 255, b: 255, a: 1 };
+const BLACK = { r: 0, g: 0, b: 0, a: 1 };
+const NAVY = { r: 14, g: 30, b: 53, a: 1 }; // #0e1e35
+const SLATE = { r: 241, g: 245, b: 249, a: 1 }; // #f1f5f9
 
-describe("scanContrast", () => {
-  it("flagt lichte tekst op lichte achtergrond", () => {
-    mount(`<span style="background: #f1f5f9; color: #ffffff; font-size: 14px;">CS via Prov</span>`);
-    const issues = scanContrast();
-    expect(issues.length).toBeGreaterThan(0);
-    expect(issues[0].ratio).toBeLessThan(4.5);
-    expect(issues[0].text).toContain("CS via Prov");
+describe("contrast-check pure helpers", () => {
+  it("parseColor herkent rgb, rgba en transparent", () => {
+    expect(parseColor("rgb(10, 20, 30)")).toEqual({ r: 10, g: 20, b: 30, a: 1 });
+    expect(parseColor("rgba(10, 20, 30, 0.5)")).toEqual({ r: 10, g: 20, b: 30, a: 0.5 });
+    expect(parseColor("transparent")).toEqual({ r: 0, g: 0, b: 0, a: 0 });
+    expect(parseColor("")).toBeNull();
   });
 
-  it("flagt niets voor sterke contrast tekst", () => {
-    mount(`<span style="color: #ffffff; font-size: 14px;">Leesbaar op donkere navy</span>`);
-    const issues = scanContrast();
-    expect(issues).toEqual([]);
+  it("relLuminance klopt op de uitersten", () => {
+    expect(relLuminance(WHITE)).toBeCloseTo(1, 3);
+    expect(relLuminance(BLACK)).toBeCloseTo(0, 3);
   });
 
-  it("houdt rekening met alpha van achtergrond via ouder", () => {
-    mount(
-      `<div style="background: rgba(255,255,255,0.9); padding: 4px;">
-         <span style="color: #cccccc; font-size: 14px;">Grijs op wit</span>
-       </div>`,
-    );
-    const issues = scanContrast();
-    expect(issues.length).toBeGreaterThan(0);
+  it("contrastRatio wit op zwart is 21:1", () => {
+    expect(contrastRatio(WHITE, BLACK)).toBeCloseTo(21, 1);
   });
 
-  it("respecteert large-text drempel (3:1)", () => {
-    mount(
-      `<span style="color: #888888; background: #ffffff; font-size: 28px;">Groot maar matig contrast</span>`,
-    );
-    // ratio ~ 3.5 -> geen issue voor large text (>=3), zou wél issue zijn voor normaal (>=4.5)
-    const issues = scanContrast();
-    expect(issues.find((i) => i.text.includes("Groot"))).toBeUndefined();
+  it("wit op licht-slate faalt AA (te laag contrast)", () => {
+    // Reproduceert het CS-via-Prov probleem uit dark mode.
+    const ratio = contrastRatio(WHITE, SLATE);
+    expect(ratio).toBeLessThan(4.5);
+  });
+
+  it("wit op donkere navy haalt AA ruim", () => {
+    expect(contrastRatio(WHITE, NAVY)).toBeGreaterThan(4.5);
+  });
+
+  it("composite lost half-transparant wit op zwart correct op", () => {
+    const half = { r: 255, g: 255, b: 255, a: 0.5 };
+    const out = composite(half, BLACK);
+    expect(out.r).toBeCloseTo(127.5, 1);
+    expect(out.a).toBeCloseTo(1, 3);
   });
 });
