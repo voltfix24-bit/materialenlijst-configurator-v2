@@ -547,9 +547,10 @@ export function MaterialenConfigurator({
                   </div>
                 )}
                 {extraVragen.length > 0 && (
-                  <div className="border-t border-border pt-5 mt-6">
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-3">
-                      Extra vragen
+                  <div className="mt-6 rounded-xl border border-border bg-muted/30 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <ClipboardList className="w-4 h-4 text-muted-foreground" />
+                      <div className="text-sm font-semibold text-foreground">Extra vragen</div>
                     </div>
                     <MaatwerkSection vragen={extraVragen} config={config} update={update} />
                   </div>
