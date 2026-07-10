@@ -44,7 +44,7 @@ export function parseColor(input: string): RGBA | null {
   return { r, g, b, a };
 }
 
-function composite(over: RGBA, under: RGBA): RGBA {
+export function composite(over: RGBA, under: RGBA): RGBA {
   const a = over.a + under.a * (1 - over.a);
   if (a === 0) return { r: 0, g: 0, b: 0, a: 0 };
   return {
@@ -55,7 +55,7 @@ function composite(over: RGBA, under: RGBA): RGBA {
   };
 }
 
-function relLuminance({ r, g, b }: RGBA): number {
+export function relLuminance({ r, g, b }: RGBA): number {
   const conv = (v: number) => {
     const s = v / 255;
     return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
@@ -63,7 +63,7 @@ function relLuminance({ r, g, b }: RGBA): number {
   return 0.2126 * conv(r) + 0.7152 * conv(g) + 0.0722 * conv(b);
 }
 
-function contrastRatio(fg: RGBA, bg: RGBA): number {
+export function contrastRatio(fg: RGBA, bg: RGBA): number {
   const l1 = relLuminance(fg);
   const l2 = relLuminance(bg);
   const [a, b] = l1 > l2 ? [l1, l2] : [l2, l1];
