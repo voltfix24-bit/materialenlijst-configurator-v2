@@ -191,7 +191,7 @@ export function ExportBevestigingDialoog({
             <button
               type="button"
               onClick={onBevestig}
-              className="px-3 py-2 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold"
+              className="px-3 py-2 rounded-md bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm font-semibold"
             >
               Toch exporteren ({aantal})
             </button>
