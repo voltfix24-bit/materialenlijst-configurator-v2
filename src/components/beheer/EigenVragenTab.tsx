@@ -37,7 +37,7 @@ const SECTIE_OPTIES: { key: string; label: string }[] = [
   { key: "overig", label: "Overig" },
 ];
 
-interface VraagRij {
+export interface VraagRij {
   id: string;
   vraag_key: string;
   label: string;
@@ -503,7 +503,7 @@ function HoofdstukkenBeheer({
 }
 
 /** Eén vraag met uitklapbare artikel-regels per antwoord. */
-function VraagKaart({
+export function VraagKaart({
   vraag,
   plaatsingLabel,
   isOpen,

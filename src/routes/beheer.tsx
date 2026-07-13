@@ -2,16 +2,29 @@ import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Info, Package, Settings2, Zap, Wrench, ShieldCheck, LayoutDashboard, History } from "lucide-react";
+import { Info, Package, Zap, ShieldCheck, History } from "lucide-react";
 import { AssortimentTab } from "@/components/beheer/AssortimentTab";
 import { ArtikelenTab } from "@/components/beheer/ArtikelenTab";
 import { RmuTab } from "@/components/beheer/RmuTab";
 import { MsMofTab, LsMofTab } from "@/components/beheer/MofTabs";
-import { StandaardMaterialenTab, VasteArtikelenTab, LsBeveiligingOptiesTab, TrafoVultKabelTab } from "@/components/beheer/OverigeTabs";
-import { GgiRegelsTab, TrafoRegelsTab, LsRekRegelsTab, ProvRegelsTab, MsKabelRegelsTab, RmuVeldRegelsTab } from "@/components/beheer/RegelsTabs";
+import {
+  StandaardMaterialenTab,
+  VasteArtikelenTab,
+  LsBeveiligingOptiesTab,
+  TrafoVultKabelTab,
+} from "@/components/beheer/OverigeTabs";
+import {
+  GgiRegelsTab,
+  TrafoRegelsTab,
+  LsRekRegelsTab,
+  ProvRegelsTab,
+  MsKabelRegelsTab,
+  RmuVeldRegelsTab,
+} from "@/components/beheer/RegelsTabs";
 import { DataKwaliteitTab } from "@/components/beheer/DataKwaliteitTab";
 import { ProefcaseTab } from "@/components/beheer/ProefcaseTab";
 import { EigenVragenTab } from "@/components/beheer/EigenVragenTab";
+import { VragenRegelsTab } from "@/components/beheer/VragenRegelsTab";
 import { RingklemmenTab, InetArtikelenTab } from "@/components/beheer/RingklemInetTabs";
 import { AutomationAuditTab } from "@/components/beheer/AutomationAuditTab";
 import { OverzichtTab } from "@/components/beheer/OverzichtTab";
@@ -31,114 +44,188 @@ export const Route = createFileRoute("/beheer")({
   component: BeheerPage,
 });
 
-type Tab = { key: string; label: string; render: () => React.ReactElement };
-type Groep = { key: string; label: string; icon: typeof Package; beschrijving: string; tabs: Tab[] };
+type Tab = {
+  key: string;
+  label: string;
+  render: () => React.ReactElement;
+  /** Onderliggende tabel-tab: bereikbaar via het "Tabellen"-menu en deep-links. */
+  geavanceerd?: boolean;
+};
+type Groep = {
+  key: string;
+  label: string;
+  icon: typeof Package;
+  beschrijving: string;
+  tabs: Tab[];
+};
 
+// Vier groepen met elk één duidelijke taak. De oude tabel-tabs bestaan nog
+// als "geavanceerd" (voor deep-links en snel tabel-bewerken) maar de ingang
+// is vraag-gecentreerd: Vragen & regels → per hoofdstuk.
 const GROEPEN: Groep[] = [
   {
-    key: "overzicht",
-    label: "Overzicht",
-    icon: LayoutDashboard,
-    beschrijving: "Taakgericht: zoek een artikel, zie impact, vervang veilig met preview.",
+    key: "vragen",
+    label: "Vragen & regels",
+    icon: Zap,
+    beschrijving: "Alles wat de configurator vraagt, per hoofdstuk — met de gekoppelde artikelen.",
     tabs: [
-      { key: "overzicht", label: "Zoek & vervang", render: () => <OverzichtTab /> },
+      { key: "vragen_regels", label: "Per hoofdstuk", render: () => <VragenRegelsTab /> },
+      { key: "eigen_vragen", label: "Eigen vragen", render: () => <EigenVragenTab /> },
       { key: "leesbaar", label: "Leesbaar overzicht", render: () => <RegelsSamenvattingTab /> },
-      { key: "proefcase", label: "Proefcase (simulator)", render: () => <ProefcaseTab /> },
+      {
+        key: "rmu_veld_regels",
+        label: "RMU veld regels",
+        render: () => <RmuVeldRegelsTab />,
+        geavanceerd: true,
+      },
+      {
+        key: "trafo_regels",
+        label: "Trafo regels",
+        render: () => <TrafoRegelsTab />,
+        geavanceerd: true,
+      },
+      {
+        key: "trafo_vult_kabel",
+        label: "Trafo vult-kabel",
+        render: () => <TrafoVultKabelTab />,
+        geavanceerd: true,
+      },
+      {
+        key: "lsrek_regels",
+        label: "LS-rek regels",
+        render: () => <LsRekRegelsTab />,
+        geavanceerd: true,
+      },
+      {
+        key: "prov_regels",
+        label: "Provisorium regels",
+        render: () => <ProvRegelsTab />,
+        geavanceerd: true,
+      },
+      {
+        key: "ms_kabel_regels",
+        label: "MS kabel regels",
+        render: () => <MsKabelRegelsTab />,
+        geavanceerd: true,
+      },
+      {
+        key: "standaard",
+        label: "Standaard materialen",
+        render: () => <StandaardMaterialenTab />,
+        geavanceerd: true,
+      },
+      {
+        key: "vast",
+        label: "Vaste artikelen per subtype",
+        render: () => <VasteArtikelenTab />,
+        geavanceerd: true,
+      },
+      { key: "ggi", label: "GGI artikelen", render: () => <GgiRegelsTab />, geavanceerd: true },
     ],
   },
   {
     key: "catalogus",
-    label: "Catalogus",
+    label: "Catalogus & bouwstenen",
     icon: Package,
-    beschrijving: "De artikelen en het assortiment dat in cases gebruikt kan worden.",
+    beschrijving:
+      "Artikelen, de maandelijkse assortimentslijst en de bouwstenen (RMU's, moffen, klemmen).",
     tabs: [
       { key: "artikelen", label: "Artikelen", render: () => <ArtikelenTab /> },
       { key: "assortiment", label: "Assortimentslijst", render: () => <AssortimentTab /> },
-    ],
-  },
-  {
-    key: "hardware",
-    label: "Hardware (bouwstenen)",
-    icon: Settings2,
-    beschrijving: "Welke RMU's en moftypes bestaan, met hun vaste onderdelen.",
-    tabs: [
       { key: "rmu", label: "RMU configuraties", render: () => <RmuTab /> },
-      { key: "ms_mof", label: "MS mof types", render: () => <MsMofTab /> },
-      { key: "ls_mof", label: "LS mof types", render: () => <LsMofTab /> },
-      { key: "ls_beveiliging", label: "LS beveiligingsopties", render: () => <LsBeveiligingOptiesTab /> },
-      { key: "ringklemmen", label: "Ringklemmen", render: () => <RingklemmenTab /> },
-      { key: "inet", label: "I-Net artikelen", render: () => <InetArtikelenTab /> },
+      { key: "ms_mof", label: "MS mof types", render: () => <MsMofTab />, geavanceerd: true },
+      { key: "ls_mof", label: "LS mof types", render: () => <LsMofTab />, geavanceerd: true },
+      {
+        key: "ls_beveiliging",
+        label: "LS beveiligingsopties",
+        render: () => <LsBeveiligingOptiesTab />,
+        geavanceerd: true,
+      },
+      {
+        key: "ringklemmen",
+        label: "Ringklemmen",
+        render: () => <RingklemmenTab />,
+        geavanceerd: true,
+      },
+      {
+        key: "inet",
+        label: "I-Net artikelen",
+        render: () => <InetArtikelenTab />,
+        geavanceerd: true,
+      },
     ],
   },
   {
-    key: "automations",
-    label: "Automations (regels)",
-    icon: Zap,
-    beschrijving:
-      "Conditionele regels: 'Als de case er zó uitziet, voeg dan dit artikel toe'. Lege voorwaarden = maakt niet uit.",
-    tabs: [
-      { key: "rmu_veld_regels", label: "RMU veld regels", render: () => <RmuVeldRegelsTab /> },
-      { key: "trafo_regels", label: "Trafo regels", render: () => <TrafoRegelsTab /> },
-      { key: "trafo_vult_kabel", label: "Trafo vult-kabel", render: () => <TrafoVultKabelTab /> },
-      { key: "lsrek_regels", label: "LS-rek regels", render: () => <LsRekRegelsTab /> },
-      { key: "prov_regels", label: "Provisorium regels", render: () => <ProvRegelsTab /> },
-      { key: "ms_kabel_regels", label: "MS kabel regels", render: () => <MsKabelRegelsTab /> },
-      { key: "eigen_vragen", label: "Eigen vragen", render: () => <EigenVragenTab /> },
-    ],
-  },
-  {
-    key: "standaard",
-    label: "Standaard & GGI",
-    icon: Wrench,
-    beschrijving: "Artikelen die altijd of bij bepaalde subtypes meekomen.",
-    tabs: [
-      { key: "standaard", label: "Standaard materialen", render: () => <StandaardMaterialenTab /> },
-      { key: "vast", label: "Vaste artikelen per subtype", render: () => <VasteArtikelenTab /> },
-      { key: "ggi", label: "GGI artikelen", render: () => <GgiRegelsTab /> },
-    ],
-  },
-  {
-    key: "kwaliteit",
-    label: "Datakwaliteit",
+    key: "controle",
+    label: "Controle & test",
     icon: ShieldCheck,
-    beschrijving: "Controle op ontbrekende artikelen en referentiële fouten.",
+    beschrijving: "Proefcase-simulator, datakwaliteit, audit en veilig zoeken & vervangen.",
     tabs: [
+      { key: "proefcase", label: "Proefcase (simulator)", render: () => <ProefcaseTab /> },
       { key: "datakwaliteit", label: "Datakwaliteit", render: () => <DataKwaliteitTab /> },
       { key: "automation_audit", label: "Automations audit", render: () => <AutomationAuditTab /> },
+      { key: "overzicht", label: "Zoek & vervang", render: () => <OverzichtTab /> },
     ],
   },
   {
     key: "historie",
     label: "Wijzigingen",
     icon: History,
-    beschrijving: "Log van syncs, vervangingen en alternatief-keuzes — nieuwste bovenaan.",
+    beschrijving:
+      "Log van syncs, vervangingen en doorgevoerde leervoorstellen — nieuwste bovenaan.",
     tabs: [{ key: "wijzigingen", label: "Wijzigingen", render: () => <WijzigingenTab /> }],
   },
 ];
 
+// Deep-link compatibiliteit: tab-keys zijn uniek, dus een oude link met alleen
+// een (verouderde) groep of een tab uit een oude groep blijft gewoon werken.
+const TAB_NAAR_GROEP: Record<string, string> = {};
+for (const g of GROEPEN) for (const t of g.tabs) TAB_NAAR_GROEP[t.key] = g.key;
+
+const GROEP_ALIAS: Record<string, string> = {
+  overzicht: "controle",
+  hardware: "catalogus",
+  automations: "vragen",
+  standaard: "vragen",
+  kwaliteit: "controle",
+};
+
+/** Vertaal (oude of nieuwe) search-params naar geldige groep + tab. */
+function resolveDeeplink(zoek: BeheerSearch): { groepKey: string; tabKey: string } | null {
+  if (zoek.tab && TAB_NAAR_GROEP[zoek.tab]) {
+    return { groepKey: TAB_NAAR_GROEP[zoek.tab], tabKey: zoek.tab };
+  }
+  const groepKey = zoek.groep ? (GROEP_ALIAS[zoek.groep] ?? zoek.groep) : undefined;
+  const g = GROEPEN.find((x) => x.key === groepKey);
+  if (g) return { groepKey: g.key, tabKey: g.tabs[0].key };
+  return null;
+}
+
 function BeheerPage() {
   const search = Route.useSearch();
-  const initialGroep = GROEPEN.find((g) => g.key === search.groep) ?? GROEPEN[0];
-  const initialTab =
-    initialGroep.tabs.find((t) => t.key === search.tab)?.key ?? initialGroep.tabs[0].key;
-  const [groepKey, setGroepKey] = useState<string>(initialGroep.key);
-  const [tabKey, setTabKey] = useState<string>(initialTab);
+  const initieel = resolveDeeplink(search) ?? {
+    groepKey: GROEPEN[0].key,
+    tabKey: GROEPEN[0].tabs[0].key,
+  };
+  const [groepKey, setGroepKey] = useState<string>(initieel.groepKey);
+  const [tabKey, setTabKey] = useState<string>(initieel.tabKey);
   const [intro, setIntro] = useState(true);
 
   // Sync wanneer deep-link search params veranderen (bv. via een andere tab).
   useEffect(() => {
-    if (search.groep) {
-      const g = GROEPEN.find((x) => x.key === search.groep);
-      if (g) {
-        setGroepKey(g.key);
-        const t = g.tabs.find((x) => x.key === search.tab)?.key ?? g.tabs[0].key;
-        setTabKey(t);
-      }
+    const doel = resolveDeeplink(search);
+    if (doel) {
+      setGroepKey(doel.groepKey);
+      setTabKey(doel.tabKey);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.groep, search.tab]);
 
   const groep = GROEPEN.find((g) => g.key === groepKey) ?? GROEPEN[0];
   const tab = groep.tabs.find((t) => t.key === tabKey) ?? groep.tabs[0];
+  const primaireTabs = groep.tabs.filter((t) => !t.geavanceerd);
+  const geavanceerdeTabs = groep.tabs.filter((t) => t.geavanceerd);
+  const actieveIsGeavanceerd = !!tab.geavanceerd;
 
   const kiesGroep = (g: Groep) => {
     setGroepKey(g.key);
@@ -150,7 +237,7 @@ function BeheerPage() {
       <div className="mb-5">
         <h1 className="text-2xl font-semibold tracking-tight">Beheer</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Stamdata, hardware en automations voor de configurator.
+          Vragen, regels en stamdata voor de configurator.
         </p>
       </div>
 
@@ -161,13 +248,27 @@ function BeheerPage() {
             <div className="text-sm flex-1 space-y-1">
               <p className="font-medium">Hoe is dit beheer opgebouwd?</p>
               <ul className="text-muted-foreground space-y-0.5 list-disc list-inside">
-                <li><strong>Catalogus</strong> — alle artikelen die je kunt bestellen.</li>
-                <li><strong>Hardware</strong> — welke RMU's en moffen bestaan (de bouwstenen).</li>
-                <li><strong>Automations</strong> — als-dan regels die bepalen welke extra artikelen automatisch op de bestellijst komen.</li>
-                <li><strong>Standaard & GGI</strong> — artikelen die altijd of bij bepaalde subtypes meekomen.</li>
-                <li><strong>Datakwaliteit</strong> — checks op ontbrekende of foute koppelingen.</li>
+                <li>
+                  <strong>Vragen & regels</strong> — per hoofdstuk zien én aanpassen wat de
+                  configurator vraagt en welke artikelen daaraan hangen.
+                </li>
+                <li>
+                  <strong>Catalogus & bouwstenen</strong> — artikelen, de Liander-assortimentslijst
+                  en de vaste bouwstenen.
+                </li>
+                <li>
+                  <strong>Controle & test</strong> — proefcase draaien, datakwaliteit checken,
+                  artikelen veilig vervangen.
+                </li>
+                <li>
+                  <strong>Wijzigingen</strong> — alles wat er is aangepast, door jou of het
+                  leersysteem.
+                </li>
               </ul>
-              <button onClick={() => setIntro(false)} className="text-xs text-primary hover:underline mt-1">
+              <button
+                onClick={() => setIntro(false)}
+                className="text-xs text-primary hover:underline mt-1"
+              >
                 Verberg
               </button>
             </div>
@@ -176,7 +277,7 @@ function BeheerPage() {
       )}
 
       {/* Groepkeuze – primaire navigatie */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
         {GROEPEN.map((g) => {
           const Icon = g.icon;
           const actief = g.key === groepKey;
@@ -192,7 +293,9 @@ function BeheerPage() {
               )}
             >
               <div className="flex items-center gap-2 mb-1">
-                <Icon className={cn("h-4 w-4", actief ? "text-primary" : "text-muted-foreground")} />
+                <Icon
+                  className={cn("h-4 w-4", actief ? "text-primary" : "text-muted-foreground")}
+                />
                 <span className="text-sm font-medium">{g.label}</span>
               </div>
               <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
@@ -203,9 +306,9 @@ function BeheerPage() {
         })}
       </div>
 
-      {/* Sub-tabs binnen de groep */}
-      <div className="flex gap-1 mb-4 border-b border-border overflow-x-auto">
-        {groep.tabs.map((t) => (
+      {/* Sub-tabs binnen de groep + geavanceerd tabellen-menu */}
+      <div className="flex items-center gap-1 mb-4 border-b border-border overflow-x-auto">
+        {primaireTabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setTabKey(t.key)}
@@ -219,6 +322,26 @@ function BeheerPage() {
             {t.label}
           </button>
         ))}
+        {geavanceerdeTabs.length > 0 && (
+          <select
+            value={actieveIsGeavanceerd ? tab.key : ""}
+            onChange={(e) => e.target.value && setTabKey(e.target.value)}
+            className={cn(
+              "ml-auto shrink-0 h-8 rounded-md border bg-surface px-2 text-xs",
+              actieveIsGeavanceerd
+                ? "border-primary text-foreground font-medium"
+                : "border-border text-muted-foreground",
+            )}
+            title="Onderliggende tabellen — voor snel bewerken van een hele tabel"
+          >
+            <option value="">Tabellen…</option>
+            {geavanceerdeTabs.map((t) => (
+              <option key={t.key} value={t.key}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <DeeplinkBanner artikel={search.artikel} row={search.row} />
