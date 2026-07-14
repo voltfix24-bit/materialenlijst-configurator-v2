@@ -199,14 +199,81 @@ export async function berekenVertaaltabelDiff(rijen: VertaaltabelRij[]): Promise
   return { matches, telling: tel(matches) };
 }
 
+/** Per-conflict keuze: 'overschrijf' = vertaaltabel wint, 'behoud' = huidig DB-alternatief laten staan. */
+export type ConflictBesluit = "overschrijf" | "behoud";
+
 export interface VertaaltabelImportOpties {
-  /** Overschrijf bestaande, afwijkende alternatieven (status "conflict"). Default false. */
-  overschrijfConflicten: boolean;
   /** Markeer oude artikelen inactief zodat de alternatief-migratie ze oppikt. Default true. */
   markeerInactief: boolean;
+  /**
+   * Maak ontbrekende nieuwe artikelen aan (uit vertaaltabel: nummer + omschrijving),
+   * zodat de latere migratie ernaartoe kan verwijzen. Alleen voor rijen waarvan het
+   * oude artikel in de DB staat. Default true.
+   */
+  maakNieuweArtikelenAan: boolean;
+  /**
+   * Per oud_nummer de keuze voor conflict-rijen. Ontbrekende sleutel = "behoud"
+   * (bestaand alternatief laten staan; conflict wordt overgeslagen).
+   */
+  conflictBesluiten: Record<string, ConflictBesluit>;
+}
+
+/** Wat de import concreet met één rij gaat doen. Pure afgeleide van status + opties. */
+export interface ImportActie {
+  /** Nieuw artikel aanmaken (nieuw ontbreekt in DB én oud staat er wél). */
+  maakNieuwAan: boolean;
+  /** `alternatief_artikel_nummer` op het oude artikel zetten. */
+  zetAlternatief: boolean;
+  /** Oud artikel op inactief zetten. */
+  markeerInactief: boolean;
+  /** Rij volledig overslaan (geen DB-actie). */
+  overslaan: boolean;
+  /** Reden van overslaan, voor telling/uitleg. */
+  redenOverslaan: "oud_ontbreekt" | "conflict_behouden" | "niets_te_doen" | null;
+}
+
+/**
+ * Bepaal per rij wat er gebeurt — pure functie, geen database. Regels:
+ *  - oud niet in DB → volledig overslaan (er is geen logica om te verleggen).
+ *  - conflict + besluit ≠ "overschrijf" → overslaan (bestaand alternatief behouden).
+ *  - nieuw ontbreekt → nieuw artikel aanmaken (indien optie aan) + alternatief zetten.
+ *  - al_ingesteld → alleen inactief markeren indien nodig.
+ *  - overige (gereed/nieuw_inactief) → alternatief zetten + inactief markeren.
+ */
+export function bepaalImportActie(
+  m: VertaaltabelMatch,
+  opties: VertaaltabelImportOpties,
+): ImportActie {
+  const niets: ImportActie = {
+    maakNieuwAan: false,
+    zetAlternatief: false,
+    markeerInactief: false,
+    overslaan: true,
+    redenOverslaan: null,
+  };
+
+  if (m.status === "oud_ontbreekt" || !m.oud_id) {
+    return { ...niets, redenOverslaan: "oud_ontbreekt" };
+  }
+  if (
+    m.status === "conflict" &&
+    (opties.conflictBesluiten[m.rij.oud_nummer] ?? "behoud") !== "overschrijf"
+  ) {
+    return { ...niets, redenOverslaan: "conflict_behouden" };
+  }
+
+  const zetAlternatief = m.status !== "al_ingesteld";
+  const maakNieuwAan = opties.maakNieuweArtikelenAan && m.status === "nieuw_ontbreekt";
+  const markeerInactief = opties.markeerInactief && m.oud_actief === true;
+
+  if (!zetAlternatief && !maakNieuwAan && !markeerInactief) {
+    return { ...niets, redenOverslaan: "niets_te_doen" };
+  }
+  return { maakNieuwAan, zetAlternatief, markeerInactief, overslaan: false, redenOverslaan: null };
 }
 
 export interface VertaaltabelImportResult {
+  nieuw_aangemaakt: number;
   alt_gezet: number;
   inactief_gemarkeerd: number;
   overgeslagen: number;
@@ -215,15 +282,16 @@ export interface VertaaltabelImportResult {
 }
 
 /**
- * Voer de import door: schrijf `alternatief_artikel_nummer` op de oude
- * artikelen en markeer ze (optioneel) inactief. Verlegt géén verwijzingen —
- * draai daarna de Alternatief-migratie.
+ * Voer de import door: maak (waar nodig) ontbrekende nieuwe artikelen aan,
+ * schrijf `alternatief_artikel_nummer` op de oude artikelen en markeer ze
+ * inactief. Verlegt géén verwijzingen — draai daarna de Alternatief-migratie.
  */
 export async function voerVertaaltabelImportDoor(
   diff: VertaaltabelDiff,
   opties: VertaaltabelImportOpties,
 ): Promise<VertaaltabelImportResult> {
   const result: VertaaltabelImportResult = {
+    nieuw_aangemaakt: 0,
     alt_gezet: 0,
     inactief_gemarkeerd: 0,
     overgeslagen: 0,
@@ -232,36 +300,54 @@ export async function voerVertaaltabelImportDoor(
   };
 
   for (const m of diff.matches) {
-    if (m.status === "oud_ontbreekt" || !m.oud_id) {
+    const actie = bepaalImportActie(m, opties);
+    if (actie.overslaan) {
       result.overgeslagen++;
-      continue;
-    }
-    if (m.status === "conflict" && !opties.overschrijfConflicten) {
-      result.conflicten_overgeslagen++;
+      if (actie.redenOverslaan === "conflict_behouden") result.conflicten_overgeslagen++;
       continue;
     }
 
-    const moetAltSchrijven = m.status !== "al_ingesteld";
-    const moetInactief = opties.markeerInactief && m.oud_actief === true;
-    if (!moetAltSchrijven && !moetInactief) {
-      result.overgeslagen++;
-      continue;
+    // 1. Nieuw artikel aanmaken indien nodig (uit vertaaltabel: nummer + omschrijving).
+    //    artikel_nummer is UNIQUE; een dubbele insert (dubbelklik) faalt netjes en
+    //    wordt als niet-fataal behandeld.
+    if (actie.maakNieuwAan) {
+      const { error: insErr } = await supabase.from("artikelen").insert({
+        artikel_nummer: m.rij.nieuw_nummer,
+        korte_omschrijving: m.rij.omschrijving ?? m.rij.nieuw_nummer,
+        eenheid: "Stuks",
+        actief: true,
+        status: "Actief",
+      });
+      if (insErr) {
+        // 23505 = unique_violation → artikel bestond tóch al; niet fataal.
+        const bestondAl = /duplicate key|unique/i.test(insErr.message);
+        if (!bestondAl) {
+          result.fouten.push({
+            oud_nummer: m.rij.oud_nummer,
+            detail: `nieuw artikel ${m.rij.nieuw_nummer}: ${insErr.message}`,
+          });
+          continue;
+        }
+      } else {
+        result.nieuw_aangemaakt++;
+      }
     }
 
+    // 2. Oud artikel bijwerken: alternatief + inactief.
     const patch: { alternatief_artikel_nummer?: string; actief?: boolean; status?: string } = {};
-    if (moetAltSchrijven) patch.alternatief_artikel_nummer = m.rij.nieuw_nummer;
-    if (moetInactief) {
+    if (actie.zetAlternatief) patch.alternatief_artikel_nummer = m.rij.nieuw_nummer;
+    if (actie.markeerInactief) {
       patch.actief = false;
       patch.status = "Uitgelopen";
     }
 
-    const { error } = await supabase.from("artikelen").update(patch).eq("id", m.oud_id);
+    const { error } = await supabase.from("artikelen").update(patch).eq("id", m.oud_id!);
     if (error) {
       result.fouten.push({ oud_nummer: m.rij.oud_nummer, detail: error.message });
       continue;
     }
-    if (moetAltSchrijven) result.alt_gezet++;
-    if (moetInactief) result.inactief_gemarkeerd++;
+    if (actie.zetAlternatief) result.alt_gezet++;
+    if (actie.markeerInactief) result.inactief_gemarkeerd++;
   }
 
   // logging — best-effort
@@ -276,13 +362,13 @@ export async function voerVertaaltabelImportDoor(
     /* best-effort */
   }
   const heeftFouten = result.fouten.length > 0;
-  const verwerkt = result.alt_gezet + result.inactief_gemarkeerd;
+  const verwerkt = result.nieuw_aangemaakt + result.alt_gezet + result.inactief_gemarkeerd;
   await logActie({
     actie: "vertaaltabel_import",
     omschrijving:
-      `Vertaaltabel geïmporteerd: ${result.alt_gezet} alternatief(ven) gezet, ` +
-      `${result.inactief_gemarkeerd} artikel(en) inactief gemarkeerd, ` +
-      `${result.conflicten_overgeslagen} conflict(en) overgeslagen, ${result.fouten.length} fout(en).`,
+      `Vertaaltabel geïmporteerd: ${result.nieuw_aangemaakt} nieuw artikel aangemaakt, ` +
+      `${result.alt_gezet} alternatief(ven) gezet, ${result.inactief_gemarkeerd} inactief gemarkeerd, ` +
+      `${result.conflicten_overgeslagen} conflict(en) behouden, ${result.fouten.length} fout(en).`,
     aantal_aangepast: verwerkt,
     resultaat: heeftFouten ? (verwerkt > 0 ? "gedeeltelijk" : "fout") : "ok",
     details: { ...result, telling: diff.telling },
