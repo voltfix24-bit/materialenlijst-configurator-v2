@@ -1,8 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
   categoriseerVertaaltabel,
+  bepaalImportActie,
   type BestaandArtikelMini,
   type VertaaltabelRij,
+  type VertaaltabelMatch,
+  type VertaaltabelImportOpties,
 } from "./vertaaltabel";
 
 function art(
@@ -84,5 +87,87 @@ describe("categoriseerVertaaltabel", () => {
       map,
     );
     expect(res.map((m) => m.status)).toEqual(["gereed", "al_ingesteld", "oud_ontbreekt"]);
+  });
+});
+
+const OPTIES: VertaaltabelImportOpties = {
+  markeerInactief: true,
+  maakNieuweArtikelenAan: true,
+  conflictBesluiten: {},
+};
+
+function match(over: Partial<VertaaltabelMatch>): VertaaltabelMatch {
+  return {
+    rij: rij("26000080", "20050011"),
+    status: "gereed",
+    oud_id: "o1",
+    oud_actief: true,
+    huidig_alternatief: null,
+    nieuw_id: "n1",
+    nieuw_actief: true,
+    ...over,
+  };
+}
+
+describe("bepaalImportActie", () => {
+  it("slaat 'oud_ontbreekt' volledig over", () => {
+    const a = bepaalImportActie(match({ status: "oud_ontbreekt", oud_id: null }), OPTIES);
+    expect(a.overslaan).toBe(true);
+    expect(a.redenOverslaan).toBe("oud_ontbreekt");
+  });
+
+  it("zet alternatief + markeert inactief bij 'gereed'", () => {
+    const a = bepaalImportActie(match({ status: "gereed" }), OPTIES);
+    expect(a).toMatchObject({
+      overslaan: false,
+      zetAlternatief: true,
+      markeerInactief: true,
+      maakNieuwAan: false,
+    });
+  });
+
+  it("maakt nieuw artikel aan bij 'nieuw_ontbreekt' als optie aan staat", () => {
+    const a = bepaalImportActie(match({ status: "nieuw_ontbreekt", nieuw_id: null }), OPTIES);
+    expect(a.maakNieuwAan).toBe(true);
+    expect(a.zetAlternatief).toBe(true);
+  });
+
+  it("maakt géén nieuw artikel aan als de optie uit staat", () => {
+    const a = bepaalImportActie(match({ status: "nieuw_ontbreekt", nieuw_id: null }), {
+      ...OPTIES,
+      maakNieuweArtikelenAan: false,
+    });
+    expect(a.maakNieuwAan).toBe(false);
+  });
+
+  it("behoudt conflict standaard (overslaan)", () => {
+    const a = bepaalImportActie(
+      match({ status: "conflict", huidig_alternatief: "20059999" }),
+      OPTIES,
+    );
+    expect(a.overslaan).toBe(true);
+    expect(a.redenOverslaan).toBe("conflict_behouden");
+  });
+
+  it("overschrijft conflict bij expliciete keuze 'overschrijf'", () => {
+    const a = bepaalImportActie(match({ status: "conflict", huidig_alternatief: "20059999" }), {
+      ...OPTIES,
+      conflictBesluiten: { "26000080": "overschrijf" },
+    });
+    expect(a.overslaan).toBe(false);
+    expect(a.zetAlternatief).toBe(true);
+  });
+
+  it("markeert bij 'al_ingesteld' alleen inactief, zet geen alternatief", () => {
+    const a = bepaalImportActie(match({ status: "al_ingesteld", oud_actief: true }), OPTIES);
+    expect(a.zetAlternatief).toBe(false);
+    expect(a.markeerInactief).toBe(true);
+    expect(a.overslaan).toBe(false);
+  });
+
+  it("slaat 'al_ingesteld' over als het oude artikel al inactief is en niets meer te doen valt", () => {
+    const a = bepaalImportActie(match({ status: "al_ingesteld", oud_actief: false }), OPTIES);
+    expect(a.overslaan).toBe(true);
+    expect(a.redenOverslaan).toBe("niets_te_doen");
   });
 });
