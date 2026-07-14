@@ -18,6 +18,13 @@ import {
   type AlternatiefVoorstel,
   type AlternatiefKeuze,
 } from "@/lib/assortiment/alternatief";
+import {
+  parseVertaaltabel,
+  berekenVertaaltabelDiff,
+  voerVertaaltabelImportDoor,
+  type VertaaltabelDiff,
+  type VertaaltabelStatus,
+} from "@/lib/assortiment/vertaaltabel";
 
 export function AssortimentTab() {
   const qc = useQueryClient();
@@ -74,7 +81,6 @@ export function AssortimentTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-
   const doorvoeren = useMutation({
     mutationFn: async () => {
       if (!diff || !bestand) throw new Error("Geen diff");
@@ -126,9 +132,7 @@ export function AssortimentTab() {
     [impact],
   );
   const doorvoerenGeblokkeerd =
-    !diff ||
-    doorvoeren.isPending ||
-    (hardeImpactZonderAlt.length > 0 && !erkenRisico);
+    !diff || doorvoeren.isPending || (hardeImpactZonderAlt.length > 0 && !erkenRisico);
 
   return (
     <div className="space-y-4">
@@ -137,10 +141,10 @@ export function AssortimentTab() {
           <div className="text-sm font-medium">Assortimentslijst uploaden</div>
           <div className="text-xs text-muted-foreground mt-0.5">
             Upload het maandelijkse Liander .xlsx-bestand. Sheet "
-            <span className="font-mono font-semibold text-foreground">{SHEET_NAAM}</span>"
-            wordt ingelezen als bron voor bestellen/exporteren (artikelen vanaf rij 14, kolommen B/C/D/E/F/G/I/J).
-            Sheet "<span className="font-mono">{VERWIJDERD_SHEET_NAAM}</span>" levert opvolgers voor verwijderde
-            artikelen (kolom A = oud nummer, kolom F = opvolger).
+            <span className="font-mono font-semibold text-foreground">{SHEET_NAAM}</span>" wordt
+            ingelezen als bron voor bestellen/exporteren (artikelen vanaf rij 14, kolommen
+            B/C/D/E/F/G/I/J). Sheet "<span className="font-mono">{VERWIJDERD_SHEET_NAAM}</span>"
+            levert opvolgers voor verwijderde artikelen (kolom A = oud nummer, kolom F = opvolger).
           </div>
           {samenvatting && (
             <div className="text-xs text-muted-foreground mt-1.5 font-mono">
@@ -161,7 +165,11 @@ export function AssortimentTab() {
           disabled={analyseer.isPending || doorvoeren.isPending}
           className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent"
         >
-          {analyseer.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+          {analyseer.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4" />
+          )}
           Bestand kiezen
         </button>
       </div>
@@ -181,10 +189,25 @@ export function AssortimentTab() {
             return (
               <div className="grid grid-cols-5 gap-3">
                 <Stat color="text-success" label="Nieuw" count={diff.nieuw.length} icon="✅" />
-                <Stat color="text-primary" label="Gewijzigd" count={diff.gewijzigd.length} icon="🔄" />
-                <Stat color="text-warning" label="Uitgelopen" count={diff.uitgelopen.length} icon="⚠️" />
+                <Stat
+                  color="text-primary"
+                  label="Gewijzigd"
+                  count={diff.gewijzigd.length}
+                  icon="🔄"
+                />
+                <Stat
+                  color="text-warning"
+                  label="Uitgelopen"
+                  count={diff.uitgelopen.length}
+                  icon="⚠️"
+                />
                 <Stat color="text-destructive" label="Geblokkeerd" count={geblokkeerd} icon="🚫" />
-                <Stat color="text-destructive" label="Verwijderd" count={diff.verwijderd.length} icon="🗑" />
+                <Stat
+                  color="text-destructive"
+                  label="Verwijderd"
+                  count={diff.verwijderd.length}
+                  icon="🗑"
+                />
               </div>
             );
           })()}
@@ -192,8 +215,6 @@ export function AssortimentTab() {
             {diff.ongewijzigd} artikelen ongewijzigd. Sheet "
             <span className="font-mono">{SHEET_NAAM}</span>" wordt ingelezen — niet "Aanvulling".
           </div>
-
-
 
           <DiffSectie titel="Nieuw">
             {diff.nieuw.length === 0 ? (
@@ -225,7 +246,9 @@ export function AssortimentTab() {
                     <tr key={g.huidig.id}>
                       <td className="px-2 py-1 font-mono">{g.nieuw.artikel_nummer}</td>
                       <td className="px-2 py-1">{g.nieuw.korte_omschrijving}</td>
-                      <td className="px-2 py-1 text-muted-foreground">{g.veranderingen.join(", ")}</td>
+                      <td className="px-2 py-1 text-muted-foreground">
+                        {g.veranderingen.join(", ")}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -245,7 +268,9 @@ export function AssortimentTab() {
                       <td className="px-2 py-1 font-mono">{a.artikel_nummer}</td>
                       <td className="px-2 py-1">{a.korte_omschrijving}</td>
                       <td className="px-2 py-1 text-muted-foreground">
-                        {a.alternatief_artikel_nummer ? `alt: ${a.alternatief_artikel_nummer}` : "geen alt."}
+                        {a.alternatief_artikel_nummer
+                          ? `alt: ${a.alternatief_artikel_nummer}`
+                          : "geen alt."}
                       </td>
                     </tr>
                   ))}
@@ -273,7 +298,9 @@ export function AssortimentTab() {
                     <tr key={v.parsed.artikel_nummer}>
                       <td className="px-2 py-1">
                         <span className="font-mono">{v.parsed.artikel_nummer}</span>
-                        <div className="text-muted-foreground text-[11px]">{v.parsed.korte_omschrijving}</div>
+                        <div className="text-muted-foreground text-[11px]">
+                          {v.parsed.korte_omschrijving}
+                        </div>
                       </td>
                       <td className="px-2 py-1">
                         {v.parsed.opvolger_nummers.length === 0 ? (
@@ -307,7 +334,9 @@ export function AssortimentTab() {
                         {v.huidig ? (
                           <span className="text-success">ja</span>
                         ) : (
-                          <span className="text-muted-foreground italic">nee — alleen geregistreerd</span>
+                          <span className="text-muted-foreground italic">
+                            nee — alleen geregistreerd
+                          </span>
                         )}
                       </td>
                       <td className="px-2 py-1 text-muted-foreground text-[11px]">
@@ -329,8 +358,8 @@ export function AssortimentTab() {
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <div className="font-medium text-amber-700">
-                    {hardeImpactZonderAlt.length} uitgelopen/verwijderd artikel(en) worden nog gebruikt in
-                    beheer-regels en hebben géén bruikbaar alternatief.
+                    {hardeImpactZonderAlt.length} uitgelopen/verwijderd artikel(en) worden nog
+                    gebruikt in beheer-regels en hebben géén bruikbaar alternatief.
                   </div>
                   <div className="text-amber-700/80 mt-0.5">
                     Na doorvoeren staan deze artikelen op inactief maar blijven referenties bestaan.
@@ -351,7 +380,13 @@ export function AssortimentTab() {
 
           <div className="flex justify-end gap-2 pt-2">
             <button
-              onClick={() => { setDiff(null); setImpact(null); setBestand(null); setErkenRisico(false); if (fileRef.current) fileRef.current.value = ""; }}
+              onClick={() => {
+                setDiff(null);
+                setImpact(null);
+                setBestand(null);
+                setErkenRisico(false);
+                if (fileRef.current) fileRef.current.value = "";
+              }}
               className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-accent"
             >
               Annuleren
@@ -368,7 +403,273 @@ export function AssortimentTab() {
         </div>
       )}
 
+      <VertaaltabelImportPaneel />
+
       <AlternatiefMigratiePaneel />
+    </div>
+  );
+}
+
+const STATUS_META: Record<VertaaltabelStatus, { label: string; kleur: string; uitleg: string }> = {
+  gereed: {
+    label: "Gereed",
+    kleur: "text-success",
+    uitleg: "Oud + nieuw bestaan; alternatief wordt gezet en oud op inactief → direct migreerbaar.",
+  },
+  nieuw_inactief: {
+    label: "Nieuw inactief",
+    kleur: "text-warning",
+    uitleg: "Nieuw artikel bestaat maar is inactief; migratie kan pas als het nieuwe actief is.",
+  },
+  nieuw_ontbreekt: {
+    label: "Nieuw ontbreekt",
+    kleur: "text-warning",
+    uitleg:
+      "Nieuw nummer staat nog niet in de DB; upload eerst de assortimentslijst met dit artikel.",
+  },
+  al_ingesteld: {
+    label: "Al ingesteld",
+    kleur: "text-muted-foreground",
+    uitleg: "Oud artikel heeft dit alternatief al; alleen inactief-markering indien nodig.",
+  },
+  conflict: {
+    label: "Conflict",
+    kleur: "text-destructive",
+    uitleg:
+      "Oud artikel heeft al een ánder alternatief; wordt niet overschreven tenzij aangevinkt.",
+  },
+  oud_ontbreekt: {
+    label: "Oud ontbreekt",
+    kleur: "text-muted-foreground",
+    uitleg: "Oud nummer staat niet in de DB; niets te doen.",
+  },
+};
+
+const STATUS_VOLGORDE: VertaaltabelStatus[] = [
+  "gereed",
+  "nieuw_inactief",
+  "nieuw_ontbreekt",
+  "conflict",
+  "al_ingesteld",
+  "oud_ontbreekt",
+];
+
+function VertaaltabelImportPaneel() {
+  const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [bestand, setBestand] = useState<File | null>(null);
+  const [diff, setDiff] = useState<VertaaltabelDiff | null>(null);
+  const [overschrijfConflicten, setOverschrijfConflicten] = useState(false);
+  const [markeerInactief, setMarkeerInactief] = useState(true);
+
+  const analyseer = useMutation({
+    mutationFn: async (file: File) => {
+      const rijen = await parseVertaaltabel(file);
+      return berekenVertaaltabelDiff(rijen);
+    },
+    onSuccess: (d) => setDiff(d),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const doorvoeren = useMutation({
+    mutationFn: async () => {
+      if (!diff) throw new Error("Geen vertaaltabel geanalyseerd");
+      return voerVertaaltabelImportDoor(diff, { overschrijfConflicten, markeerInactief });
+    },
+    onSuccess: (res) => {
+      const tekst =
+        `${res.alt_gezet} alternatief(ven) gezet · ${res.inactief_gemarkeerd} inactief · ` +
+        `${res.conflicten_overgeslagen} conflict overgeslagen`;
+      if (res.fouten.length === 0) {
+        toast.success(
+          `Vertaaltabel geïmporteerd · ${tekst}. Draai nu de Alternatief-migratie hieronder.`,
+          {
+            duration: 9000,
+          },
+        );
+      } else {
+        toast.error(
+          `Import gedeeltelijk · ${tekst} · ${res.fouten.length} fout(en): ${res.fouten[0].detail}`,
+          {
+            duration: 12000,
+          },
+        );
+      }
+      reset();
+      qc.invalidateQueries({ queryKey: ["alternatief-voorstellen"] });
+      qc.invalidateQueries({ queryKey: ["alternatief-keuzes"] });
+      qc.invalidateQueries({ queryKey: ["beheer-artikelen"] });
+      qc.invalidateQueries({ queryKey: ["artikelen"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const reset = () => {
+    setBestand(null);
+    setDiff(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const onFile = (f: File | null) => {
+    setDiff(null);
+    setBestand(f);
+    if (f) analyseer.mutate(f);
+  };
+
+  const teVerwerken = useMemo(() => {
+    if (!diff) return 0;
+    const t = diff.telling;
+    return (
+      t.gereed + t.nieuw_inactief + t.nieuw_ontbreekt + (overschrijfConflicten ? t.conflict : 0)
+    );
+  }, [diff, overschrijfConflicten]);
+
+  return (
+    <div className="space-y-2 mt-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
+          <h3 className="text-sm font-medium">
+            Vertaaltabel importeren (oud → nieuw artikelnummer)
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Upload de losse vertaaltabel (kolom A = oud nummer, B = nieuw nummer, C = omschrijving).
+            Zet per oud artikel het <span className="font-mono">alternatief</span> en markeert het
+            inactief. Verlegt zélf niets — draai daarna de{" "}
+            <span className="font-medium">Alternatief-migratie</span> om de
+            regels/vragen/configuraties mee te nemen.
+          </p>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".xlsx"
+          className="hidden"
+          onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+        />
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={analyseer.isPending || doorvoeren.isPending}
+          className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent disabled:opacity-50 flex-shrink-0"
+        >
+          {analyseer.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4" />
+          )}
+          Vertaaltabel kiezen
+        </button>
+      </div>
+
+      {bestand && (
+        <div className="text-xs text-muted-foreground">
+          Bestand: <span className="font-mono text-foreground">{bestand.name}</span>
+        </div>
+      )}
+
+      {diff && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-6 gap-2">
+            {STATUS_VOLGORDE.map((s) => (
+              <div
+                key={s}
+                className="rounded-lg border border-border bg-surface p-2.5"
+                title={STATUS_META[s].uitleg}
+              >
+                <div className="text-[11px] text-muted-foreground">{STATUS_META[s].label}</div>
+                <div className={`text-xl font-mono mt-0.5 ${STATUS_META[s].kleur}`}>
+                  {diff.telling[s]}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-1.5 text-xs">
+            <label className="inline-flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={markeerInactief}
+                onChange={(e) => setMarkeerInactief(e.target.checked)}
+              />
+              <span>
+                Oude artikelen inactief markeren (nodig zodat de Alternatief-migratie ze oppikt).
+              </span>
+            </label>
+            {diff.telling.conflict > 0 && (
+              <label className="inline-flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={overschrijfConflicten}
+                  onChange={(e) => setOverschrijfConflicten(e.target.checked)}
+                />
+                <span className="text-destructive">
+                  Bestaande, afwijkende alternatieven overschrijven ({diff.telling.conflict}{" "}
+                  conflict(en)).
+                </span>
+              </label>
+            )}
+          </div>
+
+          <DiffSectie titel="Vertaaltabel-rijen">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/40 text-muted-foreground">
+                <tr>
+                  <th className="text-left px-2 py-1 font-medium">Oud</th>
+                  <th className="text-left px-2 py-1 font-medium">Nieuw</th>
+                  <th className="text-left px-2 py-1 font-medium">Omschrijving</th>
+                  <th className="text-left px-2 py-1 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {diff.matches.slice(0, 200).map((m) => (
+                  <tr key={m.rij.oud_nummer}>
+                    <td className="px-2 py-1 font-mono">{m.rij.oud_nummer}</td>
+                    <td className="px-2 py-1 font-mono inline-flex items-center gap-1">
+                      <ArrowRight className="w-3 h-3" />
+                      {m.rij.nieuw_nummer}
+                    </td>
+                    <td className="px-2 py-1 text-muted-foreground">{m.rij.omschrijving}</td>
+                    <td
+                      className={`px-2 py-1 ${STATUS_META[m.status].kleur}`}
+                      title={STATUS_META[m.status].uitleg}
+                    >
+                      {STATUS_META[m.status].label}
+                      {m.status === "conflict" && m.huidig_alternatief && (
+                        <span className="text-muted-foreground font-mono">
+                          {" "}
+                          (nu: {m.huidig_alternatief})
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {diff.matches.length > 200 && <Meer n={diff.matches.length - 200} />}
+          </DiffSectie>
+
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-xs text-muted-foreground">
+              {teVerwerken} rij(en) worden verwerkt (rest overgeslagen).
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={reset}
+                className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-accent"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={() => doorvoeren.mutate()}
+                disabled={doorvoeren.isPending || teVerwerken === 0}
+                className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-1.5 text-sm hover:opacity-90 disabled:opacity-50"
+              >
+                {doorvoeren.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                Import doorvoeren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -412,42 +713,46 @@ function ImpactSectie({
               const k = keuzes.get(i.artikel_nummer);
               return (
                 <tr key={i.artikel_id}>
-                <td className="px-2 py-1">
-                  <span className="font-mono">{i.artikel_nummer}</span>
-                  <div className="text-muted-foreground text-[11px]">{i.korte_omschrijving}</div>
-                </td>
-                <td className="px-2 py-1">
-                  {i.alternatief_artikel_nummer ? (
-                    <span className="inline-flex items-center gap-1 font-mono">
-                      <ArrowRight className="w-3 h-3" />
-                      {i.alternatief_artikel_nummer}
-                      {i.alternatiefBeschikbaar ? (
-                        <CheckCircle2 className="w-3 h-3 text-success" aria-label="beschikbaar" />
-                      ) : (
-                        <XCircle className="w-3 h-3 text-destructive" aria-label="niet beschikbaar of inactief" />
-                      )}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </td>
-                <td className="px-2 py-1 text-[11px]">
-                  {k ? (
-                    <span className="inline-flex flex-col">
-                      <span className="font-mono text-success">→ {k.nieuw_artikel_nummer}</span>
-                      <span className="text-muted-foreground">
-                        {new Date(k.created_at).toLocaleString("nl-NL")} · {k.totaal_geupdate} ref(s)
+                  <td className="px-2 py-1">
+                    <span className="font-mono">{i.artikel_nummer}</span>
+                    <div className="text-muted-foreground text-[11px]">{i.korte_omschrijving}</div>
+                  </td>
+                  <td className="px-2 py-1">
+                    {i.alternatief_artikel_nummer ? (
+                      <span className="inline-flex items-center gap-1 font-mono">
+                        <ArrowRight className="w-3 h-3" />
+                        {i.alternatief_artikel_nummer}
+                        {i.alternatiefBeschikbaar ? (
+                          <CheckCircle2 className="w-3 h-3 text-success" aria-label="beschikbaar" />
+                        ) : (
+                          <XCircle
+                            className="w-3 h-3 text-destructive"
+                            aria-label="niet beschikbaar of inactief"
+                          />
+                        )}
                       </span>
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground italic">nog geen migratie</span>
-                  )}
-                </td>
-                <td className="px-2 py-1 text-right font-mono">{i.totaal}</td>
-                <td className="px-2 py-1 text-muted-foreground text-[11px]">
-                  {i.gebruikt_in.map((g) => `${g.tabel}.${g.kolom} (${g.count})`).join(", ")}
-                </td>
-              </tr>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-2 py-1 text-[11px]">
+                    {k ? (
+                      <span className="inline-flex flex-col">
+                        <span className="font-mono text-success">→ {k.nieuw_artikel_nummer}</span>
+                        <span className="text-muted-foreground">
+                          {new Date(k.created_at).toLocaleString("nl-NL")} · {k.totaal_geupdate}{" "}
+                          ref(s)
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground italic">nog geen migratie</span>
+                    )}
+                  </td>
+                  <td className="px-2 py-1 text-right font-mono">{i.totaal}</td>
+                  <td className="px-2 py-1 text-muted-foreground text-[11px]">
+                    {i.gebruikt_in.map((g) => `${g.tabel}.${g.kolom} (${g.count})`).join(", ")}
+                  </td>
+                </tr>
               );
             })}
           </tbody>
@@ -536,8 +841,8 @@ function AlternatiefMigratiePaneel() {
         <div>
           <h3 className="text-sm font-medium">Alternatief-migratie</h3>
           <p className="text-xs text-muted-foreground">
-            Inactieve artikelen met een alternatief. Bij meerdere kandidaten moet je expliciet kiezen —
-            er gebeurt niets automatisch.
+            Inactieve artikelen met een alternatief. Bij meerdere kandidaten moet je expliciet
+            kiezen — er gebeurt niets automatisch.
           </p>
         </div>
         <button
@@ -583,7 +888,9 @@ function AlternatiefMigratiePaneel() {
                     </td>
                     <td className="px-2 py-1.5 font-mono align-top">
                       {v.oud_nummer}
-                      <div className="text-muted-foreground text-[11px] font-sans">{v.oud_omschrijving}</div>
+                      <div className="text-muted-foreground text-[11px] font-sans">
+                        {v.oud_omschrijving}
+                      </div>
                     </td>
                     <td className="px-2 py-1.5 align-top">
                       {v.kandidaten.length === 0 ? (
@@ -617,7 +924,9 @@ function AlternatiefMigratiePaneel() {
                         <div>
                           <select
                             value={keuzeNr ?? ""}
-                            onChange={(e) => setKeuze((p) => ({ ...p, [v.oud_id]: e.target.value }))}
+                            onChange={(e) =>
+                              setKeuze((p) => ({ ...p, [v.oud_id]: e.target.value }))
+                            }
                             disabled={bezigMet !== null}
                             className="text-xs border border-border rounded px-1.5 py-0.5 bg-background font-mono"
                           >
@@ -633,7 +942,8 @@ function AlternatiefMigratiePaneel() {
                           </select>
                           {keuzeNr && (
                             <div className="text-muted-foreground text-[11px] font-sans mt-0.5">
-                              {v.kandidaten.find((k) => k.artikel_nummer === keuzeNr)?.omschrijving ?? ""}
+                              {v.kandidaten.find((k) => k.artikel_nummer === keuzeNr)
+                                ?.omschrijving ?? ""}
                             </div>
                           )}
                         </div>
@@ -655,13 +965,13 @@ function AlternatiefMigratiePaneel() {
                         </div>
                       ) : (
                         <span className="text-muted-foreground text-[11px]">
-                          {v.kandidaten.length === 0
-                            ? "—"
-                            : "geen bruikbare"}
+                          {v.kandidaten.length === 0 ? "—" : "geen bruikbare"}
                         </span>
                       )}
                     </td>
-                    <td className="px-2 py-1.5 text-right font-mono align-top">{v.impact.totaal}</td>
+                    <td className="px-2 py-1.5 text-right font-mono align-top">
+                      {v.impact.totaal}
+                    </td>
                   </tr>
                 );
               })}
@@ -687,10 +997,22 @@ function AlternatiefMigratiePaneel() {
   );
 }
 
-function Stat({ label, count, icon, color }: { label: string; count: number; icon: string; color: string }) {
+function Stat({
+  label,
+  count,
+  icon,
+  color,
+}: {
+  label: string;
+  count: number;
+  icon: string;
+  color: string;
+}) {
   return (
     <div className="rounded-lg border border-border bg-surface p-3">
-      <div className="text-xs text-muted-foreground">{icon} {label}</div>
+      <div className="text-xs text-muted-foreground">
+        {icon} {label}
+      </div>
       <div className={`text-2xl font-mono mt-0.5 ${color}`}>{count}</div>
     </div>
   );
@@ -712,5 +1034,9 @@ function Leeg() {
 }
 
 function Meer({ n }: { n: number }) {
-  return <div className="px-3 py-2 text-xs text-muted-foreground border-t border-border">…en nog {n} meer</div>;
+  return (
+    <div className="px-3 py-2 text-xs text-muted-foreground border-t border-border">
+      …en nog {n} meer
+    </div>
+  );
 }

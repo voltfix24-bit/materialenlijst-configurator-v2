@@ -4,6 +4,7 @@ export type LogResultaat = "ok" | "gedeeltelijk" | "fout";
 
 export type LogActie =
   | "assortiment_sync"
+  | "vertaaltabel_import"
   | "alternatief_migratie"
   | "handmatige_vervanging"
   | "artikel_aangepast"
@@ -55,6 +56,7 @@ export async function logActie(invoer: LogInvoer): Promise<void> {
 
 export const LOG_ACTIE_LABEL: Record<LogActie, string> = {
   assortiment_sync: "Assortimentslijst gesynchroniseerd",
+  vertaaltabel_import: "Vertaaltabel geïmporteerd",
   alternatief_migratie: "Alternatief-migratie uitgevoerd",
   handmatige_vervanging: "Artikel handmatig vervangen",
   artikel_aangepast: "Artikel aangepast",
