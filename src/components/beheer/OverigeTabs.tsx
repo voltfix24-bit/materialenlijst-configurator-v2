@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { deleteRow, listRows, saveRow } from "./beheerCrudRepo";
 import { toast } from "sonner";
 import { Plus, ClipboardList, Anchor, Plug, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,32 +26,21 @@ export function StandaardMaterialenTab() {
 
   const { data = [] } = useQuery({
     queryKey: ["beheer-standaard"],
-    queryFn: async () => (await supabase.from("standaard_materialen_templates").select("*").order("case_type")).data ?? [],
+    queryFn: () => listRows("standaard_materialen_templates", { orderBy: "case_type" }),
   });
 
   const save = useMutation({
-    mutationFn: async (v: Partial<Stand>) => {
-      if (v.id) {
-        const { error } = await supabase.from("standaard_materialen_templates").update(v).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("standaard_materialen_templates").insert(v as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<Stand>) => saveRow("standaard_materialen_templates", v),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-standaard"] });
       toast.success("Opgeslagen");
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("standaard_materialen_templates").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("standaard_materialen_templates", id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-standaard"] });
       toast.success("Verwijderd");
@@ -156,32 +145,21 @@ export function VasteArtikelenTab() {
 
   const { data = [] } = useQuery({
     queryKey: ["beheer-vast"],
-    queryFn: async () => (await supabase.from("station_vaste_artikelen").select("*").order("groep")).data ?? [],
+    queryFn: () => listRows("station_vaste_artikelen", { orderBy: "groep" }),
   });
 
   const save = useMutation({
-    mutationFn: async (v: Partial<Vast>) => {
-      if (v.id) {
-        const { error } = await supabase.from("station_vaste_artikelen").update(v).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("station_vaste_artikelen").insert(v as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<Vast>) => saveRow("station_vaste_artikelen", v),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-vast"] });
       toast.success("Opgeslagen");
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("station_vaste_artikelen").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("station_vaste_artikelen", id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-vast"] });
       toast.success("Verwijderd");
@@ -293,32 +271,21 @@ export function TrafoVultKabelTab() {
 
   const { data = [] } = useQuery({
     queryKey: ["beheer-trafo-kabel"],
-    queryFn: async () => (await supabase.from("trafo_vult_kabel").select("*").order("trafo_kva")).data ?? [],
+    queryFn: () => listRows("trafo_vult_kabel", { orderBy: "trafo_kva" }),
   });
 
   const save = useMutation({
-    mutationFn: async (v: Partial<TrafoKabel>) => {
-      if (v.id) {
-        const { error } = await supabase.from("trafo_vult_kabel").update(v).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("trafo_vult_kabel").insert(v as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<TrafoKabel>) => saveRow("trafo_vult_kabel", v),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-trafo-kabel"] });
       toast.success("Opgeslagen");
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("trafo_vult_kabel").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("trafo_vult_kabel", id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-trafo-kabel"] });
       toast.success("Verwijderd");
@@ -418,34 +385,22 @@ export function LsBeveiligingOptiesTab() {
 
   const { data = [] } = useQuery({
     queryKey: ["beheer-ls-beveiliging-opties"],
-    queryFn: async () =>
-      (await supabase.from("ls_beveiliging_opties").select("*").order("sort_order")).data ?? [],
+    queryFn: () => listRows("ls_beveiliging_opties", { orderBy: "sort_order" }),
   });
 
   const save = useMutation({
-    mutationFn: async (v: Partial<LsBevOptie>) => {
-      if (v.id) {
-        const { error } = await supabase.from("ls_beveiliging_opties").update(v).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("ls_beveiliging_opties").insert(v as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<LsBevOptie>) => saveRow("ls_beveiliging_opties", v),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-ls-beveiliging-opties"] });
       qc.invalidateQueries({ queryKey: ["ls_beveiliging_opties"] });
       toast.success("Opgeslagen");
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ls_beveiliging_opties").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("ls_beveiliging_opties", id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-ls-beveiliging-opties"] });
       qc.invalidateQueries({ queryKey: ["ls_beveiliging_opties"] });

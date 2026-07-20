@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { deleteRow, listRows, saveRow } from "./beheerCrudRepo";
 import { toast } from "sonner";
 import { Plus, Link2, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -87,11 +88,7 @@ export function RingklemmenTab() {
     error,
   } = useQuery({
     queryKey: ["beheer-ringklemmen"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("ringklem_specs").select("*").order("sort_order");
-      if (error) throw error;
-      return data as RingklemRij[];
-    },
+    queryFn: () => listRows<RingklemRij>("ringklem_specs", { orderBy: "sort_order" }),
     retry: false,
   });
 
@@ -101,18 +98,7 @@ export function RingklemmenTab() {
   };
 
   const save = useMutation({
-    mutationFn: async (v: Partial<RingklemRij>) => {
-      if (v.id) {
-        const { error } = await supabase.from("ringklem_specs").update(v).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("ringklem_specs")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .insert(v as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<RingklemRij>) => saveRow("ringklem_specs", v),
     onSuccess: () => {
       invalideer();
       toast.success("Opgeslagen");
@@ -122,10 +108,7 @@ export function RingklemmenTab() {
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ringklem_specs").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("ringklem_specs", id),
     onSuccess: () => {
       invalideer();
       toast.success("Verwijderd");
@@ -333,14 +316,7 @@ export function InetArtikelenTab() {
     error,
   } = useQuery({
     queryKey: ["beheer-inet-artikelen"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inet_default_artikelen")
-        .select("*")
-        .order("sort_order");
-      if (error) throw error;
-      return data as InetRij[];
-    },
+    queryFn: () => listRows<InetRij>("inet_default_artikelen", { orderBy: "sort_order" }),
     retry: false,
   });
 
@@ -353,18 +329,7 @@ export function InetArtikelenTab() {
   };
 
   const save = useMutation({
-    mutationFn: async (v: Partial<InetRij>) => {
-      if (v.id) {
-        const { error } = await supabase.from("inet_default_artikelen").update(v).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("inet_default_artikelen")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .insert(v as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<InetRij>) => saveRow("inet_default_artikelen", v),
     onSuccess: () => {
       invalideer();
       toast.success("Opgeslagen");
@@ -374,10 +339,7 @@ export function InetArtikelenTab() {
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("inet_default_artikelen").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("inet_default_artikelen", id),
     onSuccess: () => {
       invalideer();
       toast.success("Verwijderd");
