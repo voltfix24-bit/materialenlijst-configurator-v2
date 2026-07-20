@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ChevronDown, HelpCircle, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { HelpCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ConfirmDelete, DataTable, FormDialog, FormField, FormRow, RowActions } from "./shared";
-import { ArtikelZoeker } from "./ArtikelZoeker";
-import { ArtikelLabel } from "./RmuTab";
+import { ConfirmDelete, DataTable, FormDialog, FormField, FormRow } from "./shared";
 import { CASE_TYPE_LABELS } from "@/lib/configurator/types";
+import { deleteVraag, fetchHoofdstukken, fetchVragen, saveVraag } from "./eigenVragen/maatwerkRepo";
+import { HoofdstukkenBeheer } from "./eigenVragen/HoofdstukkenBeheer";
+import { VraagKaart } from "./eigenVragen/VraagKaart";
+import { TYPE_LABELS, type VraagRij } from "./eigenVragen/types";
+
+// Re-export zodat bestaande imports (VragenRegelsTab) blijven werken.
+export { VraagKaart } from "./eigenVragen/VraagKaart";
+export type { VraagRij } from "./eigenVragen/types";
 
 /**
  * Eigen vragen: nieuwe configuratorvragen toevoegen zonder code.
@@ -18,12 +22,6 @@ import { CASE_TYPE_LABELS } from "@/lib/configurator/types";
  * koppelen → de vraag verschijnt direct in de configurator (sectie "Eigen
  * vragen") en in de Proefcase-simulator.
  */
-
-const TYPE_LABELS: Record<string, string> = {
-  ja_nee: "Ja / nee",
-  keuze: "Keuzelijst",
-  aantal: "Aantal",
-};
 
 const CASE_TYPE_KEYS = ["NSA", "provisorium", "compact", "compact_prov"];
 
@@ -36,38 +34,6 @@ const SECTIE_OPTIES: { key: string; label: string }[] = [
   { key: "ls", label: "LS — Laagspanning" },
   { key: "overig", label: "Overig" },
 ];
-
-export interface VraagRij {
-  id: string;
-  vraag_key: string;
-  label: string;
-  uitleg: string | null;
-  type: string;
-  opties: string[];
-  van_toepassing_bij: string[];
-  actief: boolean;
-  sort_order: number;
-  sectie_key: string | null;
-  hoofdstuk_id: string | null;
-}
-
-interface HoofdstukRij {
-  id: string;
-  naam: string;
-  sort_order: number;
-  actief: boolean;
-}
-
-interface RegelRij {
-  id: string;
-  vraag_id: string;
-  antwoord: string;
-  artikel_id: string;
-  hoeveelheid: number;
-  per_eenheid: boolean;
-  actief: boolean;
-  sort_order: number;
-}
 
 /** Maak een stabiele vraag_key uit het label: "Is er graafwerk?" → "is_er_graafwerk". */
 function keyUitLabel(label: string): string {
@@ -94,28 +60,14 @@ export function EigenVragenTab() {
   } = useQuery({
     queryKey: ["beheer-eigen-vragen"],
     retry: false,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("maatwerk_vragen")
-        .select("*")
-        .order("sort_order");
-      if (error) throw error;
-      return data as VraagRij[];
-    },
+    queryFn: fetchVragen,
   });
 
   // Eigen hoofdstukken (voor plaatsing + beheerblok bovenaan).
   const { data: hoofdstukken = [] } = useQuery({
     queryKey: ["beheer-eigen-hoofdstukken"],
     retry: false,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("maatwerk_hoofdstukken")
-        .select("*")
-        .order("sort_order");
-      if (error) return [];
-      return data as HoofdstukRij[];
-    },
+    queryFn: fetchHoofdstukken,
   });
 
   const invalideer = () => {
@@ -126,23 +78,12 @@ export function EigenVragenTab() {
   };
 
   const save = useMutation({
-    mutationFn: async (v: Partial<VraagRij>) => {
-      const payload = {
+    mutationFn: (v: Partial<VraagRij>) =>
+      saveVraag({
         ...v,
         vraag_key: v.vraag_key || keyUitLabel(v.label ?? ""),
         opties: v.type === "keuze" ? (v.opties ?? []).filter((o) => o.trim() !== "") : [],
-      };
-      if (v.id) {
-        const { error } = await supabase.from("maatwerk_vragen").update(payload).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("maatwerk_vragen")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .insert(payload as any);
-        if (error) throw error;
-      }
-    },
+      }),
     onSuccess: () => {
       invalideer();
       toast.success("Vraag opgeslagen");
@@ -152,10 +93,7 @@ export function EigenVragenTab() {
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("maatwerk_vragen").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteVraag(id),
     onSuccess: () => {
       invalideer();
       toast.success("Vraag en gekoppelde regels verwijderd");
@@ -390,382 +328,6 @@ export function EigenVragenTab() {
         onConfirm={() => toDelete && del.mutate(toDelete.id)}
         title="Vraag verwijderen?"
         description="De vraag én alle gekoppelde artikel-regels worden verwijderd. Antwoorden in bestaande cases blijven bewaard maar leveren geen artikelen meer op."
-      />
-    </div>
-  );
-}
-
-/** Beheer van eigen hoofdstukken: naam wijzigen, toevoegen, verwijderen. */
-function HoofdstukkenBeheer({
-  hoofdstukken,
-  onInvalideer,
-}: {
-  hoofdstukken: HoofdstukRij[];
-  onInvalideer: () => void;
-}) {
-  const [nieuweNaam, setNieuweNaam] = useState("");
-  const [namen, setNamen] = useState<Record<string, string>>({});
-  const [toDelete, setToDelete] = useState<HoofdstukRij | null>(null);
-
-  const voegToe = useMutation({
-    mutationFn: async (naam: string) => {
-      const { error } = await supabase
-        .from("maatwerk_hoofdstukken")
-        .insert({ naam, sort_order: hoofdstukken.length + 1 });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      onInvalideer();
-      setNieuweNaam("");
-      toast.success("Hoofdstuk toegevoegd");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const hernoem = useMutation({
-    mutationFn: async ({ id, naam }: { id: string; naam: string }) => {
-      const { error } = await supabase.from("maatwerk_hoofdstukken").update({ naam }).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      onInvalideer();
-      toast.success("Naam gewijzigd");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const verwijder = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("maatwerk_hoofdstukken").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      onInvalideer();
-      setToDelete(null);
-      toast.success("Hoofdstuk verwijderd");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <div className="rounded-lg border border-border bg-surface p-3 space-y-2">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-        Eigen hoofdstukken
-      </p>
-      <p className="text-[11px] text-muted-foreground">
-        Elk hoofdstuk wordt een eigen sectie-kaart in de configurator, met de naam die jij kiest.
-        Vragen plaats je erin via het veld "Plaats in" bij de vraag.
-      </p>
-      <div className="space-y-1.5">
-        {hoofdstukken.map((h) => (
-          <div key={h.id} className="flex items-center gap-2">
-            <Input
-              value={namen[h.id] ?? h.naam}
-              onChange={(e) => setNamen((p) => ({ ...p, [h.id]: e.target.value }))}
-              onBlur={() => {
-                const naam = (namen[h.id] ?? h.naam).trim();
-                if (naam && naam !== h.naam) hernoem.mutate({ id: h.id, naam });
-              }}
-              className="h-8 max-w-xs text-sm"
-            />
-            <RowActions onDelete={() => setToDelete(h)} />
-          </div>
-        ))}
-        <div className="flex items-center gap-2 pt-1">
-          <Input
-            value={nieuweNaam}
-            onChange={(e) => setNieuweNaam(e.target.value)}
-            placeholder="Nieuw hoofdstuk, bv. Civiel werk"
-            className="h-8 max-w-xs text-sm"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && nieuweNaam.trim()) voegToe.mutate(nieuweNaam.trim());
-            }}
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!nieuweNaam.trim() || voegToe.isPending}
-            onClick={() => voegToe.mutate(nieuweNaam.trim())}
-          >
-            <Plus className="h-3.5 w-3.5 mr-1" /> Toevoegen
-          </Button>
-        </div>
-      </div>
-      <ConfirmDelete
-        open={!!toDelete}
-        onOpenChange={(o) => !o && setToDelete(null)}
-        onConfirm={() => toDelete && verwijder.mutate(toDelete.id)}
-        title="Hoofdstuk verwijderen?"
-        description="Vragen in dit hoofdstuk worden niet verwijderd — ze verhuizen naar het standaardhoofdstuk 'Eigen vragen'."
-      />
-    </div>
-  );
-}
-
-/** Eén vraag met uitklapbare artikel-regels per antwoord. */
-export function VraagKaart({
-  vraag,
-  plaatsingLabel,
-  isOpen,
-  onToggle,
-  onEdit,
-  onDelete,
-  onInvalideer,
-}: {
-  vraag: VraagRij;
-  plaatsingLabel: string;
-  isOpen: boolean;
-  onToggle: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  onInvalideer: () => void;
-}) {
-  const qc = useQueryClient();
-  const [regelOpen, setRegelOpen] = useState(false);
-  const [regelEditing, setRegelEditing] = useState<Partial<RegelRij> | null>(null);
-  const [regelDelete, setRegelDelete] = useState<RegelRij | null>(null);
-
-  const { data: regels = [] } = useQuery({
-    queryKey: ["beheer-eigen-vraag-regels", vraag.id],
-    enabled: isOpen,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("maatwerk_vraag_regels")
-        .select("*")
-        .eq("vraag_id", vraag.id)
-        .order("sort_order");
-      if (error) throw error;
-      return data as RegelRij[];
-    },
-  });
-
-  const invalideer = () => {
-    qc.invalidateQueries({ queryKey: ["beheer-eigen-vraag-regels", vraag.id] });
-    onInvalideer();
-  };
-
-  const saveRegel = useMutation({
-    mutationFn: async (r: Partial<RegelRij>) => {
-      const payload = { ...r, vraag_id: vraag.id };
-      if (r.id) {
-        const { error } = await supabase
-          .from("maatwerk_vraag_regels")
-          .update(payload)
-          .eq("id", r.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("maatwerk_vraag_regels")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .insert(payload as any);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      invalideer();
-      toast.success("Regel opgeslagen");
-      setRegelOpen(false);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const delRegel = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("maatwerk_vraag_regels").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      invalideer();
-      toast.success("Regel verwijderd");
-      setRegelDelete(null);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const antwoordOpties: string[] =
-    vraag.type === "ja_nee"
-      ? ["ja", "nee", "*"]
-      : vraag.type === "keuze"
-        ? [...vraag.opties, "*"]
-        : ["*"];
-
-  return (
-    <div className="rounded-lg border border-border bg-surface">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/20 transition-colors"
-      >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold">{vraag.label}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground uppercase tracking-wider">
-              {TYPE_LABELS[vraag.type] ?? vraag.type}
-            </span>
-            {!vraag.actief && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive uppercase tracking-wider">
-                Uit
-              </span>
-            )}
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Geldt voor:{" "}
-            {vraag.van_toepassing_bij.length === 0
-              ? "alle case types"
-              : vraag.van_toepassing_bij.map((ct) => CASE_TYPE_LABELS[ct] ?? ct).join(", ")}
-            {" · "}in {plaatsingLabel}
-            {" · "}sleutel <span className="font-mono">{vraag.vraag_key}</span>
-          </p>
-        </div>
-        <RowActions onEdit={onEdit} onDelete={onDelete} />
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform",
-            isOpen && "rotate-180",
-          )}
-        />
-      </button>
-
-      {isOpen && (
-        <div className="border-t border-border px-4 py-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Gekoppelde artikelen per antwoord
-            </p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setRegelEditing({
-                  antwoord:
-                    vraag.type === "ja_nee"
-                      ? "ja"
-                      : vraag.type === "keuze"
-                        ? (vraag.opties[0] ?? "*")
-                        : "*",
-                  hoeveelheid: 1,
-                  per_eenheid: vraag.type === "aantal",
-                  actief: true,
-                  sort_order: regels.length + 1,
-                });
-                setRegelOpen(true);
-              }}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1" /> Artikel koppelen
-            </Button>
-          </div>
-          {regels.length === 0 && (
-            <p className="text-xs text-muted-foreground py-2">
-              Nog geen artikelen gekoppeld — de vraag doet dan nog niets in de winkelwagen.
-            </p>
-          )}
-          {regels.length > 0 && (
-            <DataTable
-              headers={["Bij antwoord", "Artikel", "Hoeveelheid", "Actief", ""]}
-              rowIds={regels.map((r) => r.id)}
-              rows={regels.map((r) => [
-                <span className="font-mono text-xs">
-                  {r.antwoord === "*" ? "elk antwoord" : r.antwoord}
-                </span>,
-                <ArtikelLabel id={r.artikel_id} />,
-                <span className="text-xs">
-                  {r.hoeveelheid}
-                  {vraag.type === "aantal" && r.per_eenheid && " × ingevuld aantal"}
-                </span>,
-                r.actief ? "Ja" : <span className="text-muted-foreground">Nee</span>,
-                <RowActions
-                  onEdit={() => {
-                    setRegelEditing(r);
-                    setRegelOpen(true);
-                  }}
-                  onDelete={() => setRegelDelete(r)}
-                />,
-              ])}
-            />
-          )}
-        </div>
-      )}
-
-      <FormDialog
-        open={regelOpen}
-        onOpenChange={setRegelOpen}
-        title={regelEditing?.id ? "Regel bewerken" : "Artikel koppelen"}
-      >
-        {regelEditing && (
-          <div className="space-y-3">
-            <FormField label="Bij antwoord" required hint="* = bij elk (niet-leeg) antwoord.">
-              <select
-                value={regelEditing.antwoord ?? "*"}
-                onChange={(e) => setRegelEditing({ ...regelEditing, antwoord: e.target.value })}
-                className="h-9 rounded-md border border-border bg-surface px-2 text-sm w-full"
-              >
-                {antwoordOpties.map((o) => (
-                  <option key={o} value={o}>
-                    {o === "*" ? "elk antwoord (*)" : o}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <FormField label="Artikel" required>
-              <ArtikelZoeker
-                value={regelEditing.artikel_id ?? null}
-                onChange={(id) => setRegelEditing({ ...regelEditing, artikel_id: id ?? undefined })}
-              />
-            </FormField>
-            <FormRow>
-              <FormField label="Hoeveelheid" required>
-                <Input
-                  type="number"
-                  min={0}
-                  step="any"
-                  value={regelEditing.hoeveelheid ?? 1}
-                  onChange={(e) =>
-                    setRegelEditing({ ...regelEditing, hoeveelheid: Number(e.target.value) })
-                  }
-                  className="h-9"
-                />
-              </FormField>
-              {vraag.type === "aantal" && (
-                <FormField
-                  label="Vermenigvuldigen"
-                  hint="Aan: totaal = hoeveelheid × ingevuld aantal."
-                >
-                  <div className="flex items-center gap-2 h-9">
-                    <Switch
-                      checked={regelEditing.per_eenheid ?? false}
-                      onCheckedChange={(c) => setRegelEditing({ ...regelEditing, per_eenheid: c })}
-                    />
-                    <span className="text-sm">× ingevuld aantal</span>
-                  </div>
-                </FormField>
-              )}
-            </FormRow>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={regelEditing.actief ?? true}
-                onCheckedChange={(c) => setRegelEditing({ ...regelEditing, actief: c })}
-              />
-              <span className="text-sm">Actief</span>
-            </div>
-            <div className="flex justify-end pt-2">
-              <Button
-                onClick={() => saveRegel.mutate(regelEditing)}
-                disabled={
-                  saveRegel.isPending ||
-                  !regelEditing.artikel_id ||
-                  (regelEditing.hoeveelheid ?? 0) <= 0
-                }
-              >
-                {saveRegel.isPending ? "Opslaan..." : "Opslaan"}
-              </Button>
-            </div>
-          </div>
-        )}
-      </FormDialog>
-      <ConfirmDelete
-        open={!!regelDelete}
-        onOpenChange={(o) => !o && setRegelDelete(null)}
-        onConfirm={() => regelDelete && delRegel.mutate(regelDelete.id)}
       />
     </div>
   );
