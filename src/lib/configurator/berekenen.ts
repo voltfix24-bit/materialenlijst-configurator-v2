@@ -15,6 +15,48 @@ import { berekenProvisorium } from "./berekenen/provisorium";
 import { berekenGgi } from "./berekenen/ggi";
 import { berekenMaatwerk } from "./berekenen/maatwerk";
 
+/** Alles wat een domeinberekening nodig kan hebben. Elke calculator pakt via
+ *  destructuring alleen de velden die hij gebruikt. */
+type CalcInput = {
+  map: PreviewMap;
+  config: MaterialenConfig;
+  sd: Stamdata;
+  ctx: BerekenCtx;
+  caseType: string | undefined;
+};
+
+type Calculator = { naam: string; run: (input: CalcInput) => void };
+
+/**
+ * Registry van domeinberekeningen in vaste volgorde (sectie 1–10). Een nieuwe
+ * berekening toevoegen = hier één entry bijzetten; de orchestrator-lus in
+ * `berekenPreview` blijft ongewijzigd (open/closed). De volgorde is bewust
+ * gelijk aan v0.
+ */
+const CALCULATORS: Calculator[] = [
+  {
+    naam: "standaard",
+    run: ({ map, config, sd, caseType }) => berekenStandaard(map, config, sd, caseType),
+  }, // 1 + 2
+  { naam: "rmuBasis", run: ({ map, config, sd, ctx }) => berekenRmuBasis(map, config, sd, ctx) }, // 3
+  { naam: "rmuVelden", run: ({ map, config, sd, ctx }) => berekenRmuVelden(map, config, sd, ctx) }, // 3b
+  { naam: "trafo", run: ({ map, config, sd, ctx }) => berekenTrafo(map, config, sd, ctx) }, // 3c + 3d
+  { naam: "msMoffen", run: ({ map, config, sd, ctx }) => berekenMsMoffen(map, config, sd, ctx) }, // 4
+  { naam: "msKabelTraces", run: ({ map, config, sd }) => berekenMsKabelTraces(map, config, sd) }, // 4b
+  { naam: "lsMoffen", run: ({ map, config, sd, ctx }) => berekenLsMoffen(map, config, sd, ctx) }, // 5
+  { naam: "lsKabelTraces", run: ({ map, config, ctx }) => berekenLsKabelTraces(map, config, ctx) }, // 5b
+  { naam: "vultKabel", run: ({ map, config, sd, ctx }) => berekenVultKabel(map, config, sd, ctx) }, // 6
+  { naam: "lsRek", run: ({ map, config, sd, ctx }) => berekenLsRek(map, config, sd, ctx) }, // 7
+  {
+    naam: "provisorium",
+    run: ({ map, config, sd, ctx }) => berekenProvisorium(map, config, sd, ctx),
+  }, // 8
+  { naam: "ggi", run: ({ map, config, sd, ctx }) => berekenGgi(map, config, sd, ctx) }, // 9
+  {
+    naam: "maatwerk",
+    run: ({ map, config, sd, caseType }) => berekenMaatwerk(map, config, sd, caseType),
+  }, // 10
+];
 
 export function berekenPreview(
   config: MaterialenConfig,
@@ -29,25 +71,13 @@ export function berekenPreview(
     isRenovatie: config.subType === "renovatie_prov" || config.subType === "renovatie_nsa",
   };
 
-  // Volgorde is bewust gelijk aan v0 (sectie-nummers 1-9).
-  berekenStandaard(map, config, sd, caseType);     // 1 + 2
-  berekenRmuBasis(map, config, sd, ctx);           // 3
-  berekenRmuVelden(map, config, sd, ctx);          // 3b
-  berekenTrafo(map, config, sd, ctx);              // 3c + 3d (DB-driven)
-  berekenMsMoffen(map, config, sd, ctx);           // 4
-  berekenMsKabelTraces(map, config, sd);           // 4b (DB-driven)
-  berekenLsMoffen(map, config, sd, ctx);           // 5
-  berekenLsKabelTraces(map, config, ctx);          // 5b
-  berekenVultKabel(map, config, sd, ctx);          // 6 (DB-driven)
-  berekenLsRek(map, config, sd, ctx);              // 7 (DB-driven)
-  berekenProvisorium(map, config, sd, ctx);        // 8 (DB-driven)
-  berekenGgi(map, config, sd, ctx);                // 9 (DB-driven)
-  berekenMaatwerk(map, config, sd, caseType);      // 10 eigen vragen (DB-driven)
+  // Vaste volgorde uit de registry (sectie 1–10).
+  const input: CalcInput = { map, config, sd, ctx, caseType };
+  for (const calc of CALCULATORS) calc.run(input);
 
   const items = Array.from(map.values()).sort(
     (a, b) =>
-      a.categorie.localeCompare(b.categorie) ||
-      a.artikel_nummer.localeCompare(b.artikel_nummer),
+      a.categorie.localeCompare(b.categorie) || a.artikel_nummer.localeCompare(b.artikel_nummer),
   );
 
   // Dev-mode vangnet: als de gebruiker iets heeft geconfigureerd maar de
@@ -56,7 +86,7 @@ export function berekenPreview(
   if (import.meta.env?.DEV && items.length === 0 && hasNonDefaultConfig(config)) {
     warnOnce(
       `[berekenPreview] config met non-default velden levert 0 winkelwagen-items op ` +
-      `— mogelijk ontbreekt een mapping. subType=${config.subType ?? "?"}`,
+        `— mogelijk ontbreekt een mapping. subType=${config.subType ?? "?"}`,
     );
   }
 
@@ -67,7 +97,7 @@ const _warned = new Set<string>();
 function warnOnce(msg: string) {
   if (_warned.has(msg)) return;
   _warned.add(msg);
-  // eslint-disable-next-line no-console
+
   console.warn(msg);
 }
 
