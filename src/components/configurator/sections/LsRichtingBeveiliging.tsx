@@ -1,41 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Field } from "@/components/ui-prim/Field";
 import { PillGroup } from "@/components/ui-prim/PillGroup";
 import { Stepper } from "@/components/ui-prim/Stepper";
+import { fetchLsBeveiligingOpties } from "@/lib/data/stamdataRepo";
 import type { MaterialenConfig } from "@/lib/configurator/types";
 import type { UpdateFn } from "./shared";
 
 function useLsBeveiligingOpties() {
+  // Zelfde queryKey als useStamdata → React Query deelt de cache; de handmatige
+  // join zit in de data-laag (stamdataRepo) i.p.v. hier in de UI.
   return useQuery({
     queryKey: ["ls_beveiliging_opties"],
-    queryFn: async () => {
-      // Handmatige join: er staat (nog) geen FK van ls_beveiliging_opties.artikel_id
-      // naar artikelen.id, dus de PostgREST-embed `artikel:artikel_id(*)` levert
-      // altijd null op en alle opties zouden weggefilterd worden in de UI.
-      const { data: opties, error } = await supabase
-        .from("ls_beveiliging_opties")
-        .select("*")
-        .eq("actief", true)
-        .order("sort_order");
-      if (error) throw error;
-      const ids = [...new Set((opties ?? []).map((o) => o.artikel_id).filter(Boolean) as string[])];
-      let byId = new Map<
-        string,
-        { id: string; artikel_nummer: string; korte_omschrijving: string; actief: boolean }
-      >();
-      if (ids.length > 0) {
-        const { data: arts } = await supabase
-          .from("artikelen")
-          .select("id, artikel_nummer, korte_omschrijving, actief")
-          .in("id", ids);
-        byId = new Map((arts ?? []).map((a) => [a.id as string, a as never]));
-      }
-      return (opties ?? []).map((o) => ({
-        ...o,
-        artikel: o.artikel_id ? (byId.get(o.artikel_id as string) ?? null) : null,
-      }));
-    },
+    queryFn: fetchLsBeveiligingOpties,
   });
 }
 
