@@ -1,7 +1,7 @@
 import { useState } from "react";
 import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { deleteRow, listRows, saveRow } from "./beheerCrudRepo";
 import { toast } from "sonner";
 import { Plus, ChevronDown, ChevronRight, Cable } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,33 +22,21 @@ export function MofMaterialenSubtable({ mofTypeId, table }: { mofTypeId: string;
 
   const { data = [] } = useQuery({
     queryKey: key,
-    queryFn: async () => (await supabase.from(table as any).select("*").eq("mof_type_id", mofTypeId)).data ?? [],
+    queryFn: () => listRows(table, { eq: ["mof_type_id", mofTypeId] }),
   });
 
   const save = useMutation({
-    mutationFn: async (v: Partial<Mat>) => {
-      const payload = { ...v, mof_type_id: mofTypeId };
-      if (v.id) {
-        const { error } = await supabase.from(table as any).update(payload).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from(table as any).insert(payload as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<Mat>) => saveRow(table, { ...v, mof_type_id: mofTypeId }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: key });
       toast.success("Opgeslagen");
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from(table as any).delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow(table, id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: key });
       toast.success("Verwijderd");
@@ -144,32 +132,21 @@ export function MsMofTab() {
 
   const { data = [] } = useQuery({
     queryKey: ["beheer-ms-mof"],
-    queryFn: async () => (await supabase.from("ms_mof_types").select("*").order("code")).data ?? [],
+    queryFn: () => listRows("ms_mof_types", { orderBy: "code" }),
   });
 
   const save = useMutation({
-    mutationFn: async (v: Partial<MsMof>) => {
-      if (v.id) {
-        const { error } = await supabase.from("ms_mof_types").update(v).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("ms_mof_types").insert(v as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<MsMof>) => saveRow("ms_mof_types", v),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-ms-mof"] });
       toast.success("Opgeslagen");
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ms_mof_types").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("ms_mof_types", id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-ms-mof"] });
       toast.success("Verwijderd");
@@ -320,32 +297,21 @@ export function LsMofTab() {
 
   const { data = [] } = useQuery({
     queryKey: ["beheer-ls-mof"],
-    queryFn: async () => (await supabase.from("ls_mof_types").select("*").order("type")).data ?? [],
+    queryFn: () => listRows("ls_mof_types", { orderBy: "type" }),
   });
 
   const save = useMutation({
-    mutationFn: async (v: Partial<LsMof>) => {
-      if (v.id) {
-        const { error } = await supabase.from("ls_mof_types").update(v).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("ls_mof_types").insert(v as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<LsMof>) => saveRow("ls_mof_types", v),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-ls-mof"] });
       toast.success("Opgeslagen");
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ls_mof_types").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("ls_mof_types", id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-ls-mof"] });
       toast.success("Verwijderd");

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { deleteRow, listRows, saveRow } from "./beheerCrudRepo";
 import { toast } from "sonner";
 import { Plus, Zap, Grid3x3, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -103,36 +104,25 @@ function ConfigsTable() {
 
   const { data = [] } = useQuery({
     queryKey: ["beheer-rmu-configs"],
-    queryFn: async () => (await supabase.from("rmu_configuraties").select("*").order("merk").order("code")).data ?? [],
+    queryFn: () => listRows("rmu_configuraties", { orderBy: ["merk", "code"] }),
   });
 
   const save = useMutation({
-    mutationFn: async (v: Partial<RmuConfig>) => {
-      const payload = {
+    mutationFn: (v: Partial<RmuConfig>) =>
+      saveRow("rmu_configuraties", {
         ...v,
         aantal_velden: (v.aantal_f ?? 0) + (v.aantal_c ?? 0) + (v.aantal_v ?? 0),
-      };
-      if (v.id) {
-        const { error } = await supabase.from("rmu_configuraties").update(payload).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("rmu_configuraties").insert(payload as any);
-        if (error) throw error;
-      }
-    },
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-rmu-configs"] });
       toast.success("Opgeslagen");
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("rmu_configuraties").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("rmu_configuraties", id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-rmu-configs"] });
       toast.success("Verwijderd");
@@ -280,32 +270,21 @@ function VeldenTable() {
 
   const { data = [] } = useQuery({
     queryKey: ["beheer-rmu-velden"],
-    queryFn: async () => (await supabase.from("rmu_veld_artikelen").select("*").order("merk").order("veld_type")).data ?? [],
+    queryFn: () => listRows("rmu_veld_artikelen", { orderBy: ["merk", "veld_type"] }),
   });
 
   const save = useMutation({
-    mutationFn: async (v: Partial<VeldArt>) => {
-      if (v.id) {
-        const { error } = await supabase.from("rmu_veld_artikelen").update(v).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("rmu_veld_artikelen").insert(v as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<VeldArt>) => saveRow("rmu_veld_artikelen", v),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-rmu-velden"] });
       toast.success("Opgeslagen");
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("rmu_veld_artikelen").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("rmu_veld_artikelen", id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-rmu-velden"] });
       toast.success("Verwijderd");
@@ -397,32 +376,21 @@ function ZekeringenTable() {
 
   const { data = [] } = useQuery({
     queryKey: ["beheer-rmu-zekeringen"],
-    queryFn: async () => (await supabase.from("rmu_zekeringen").select("*").order("merk").order("trafo_kva")).data ?? [],
+    queryFn: () => listRows("rmu_zekeringen", { orderBy: ["merk", "trafo_kva"] }),
   });
 
   const save = useMutation({
-    mutationFn: async (v: Partial<Zekering>) => {
-      if (v.id) {
-        const { error } = await supabase.from("rmu_zekeringen").update(v).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("rmu_zekeringen").insert(v as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (v: Partial<Zekering>) => saveRow("rmu_zekeringen", v),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-rmu-zekeringen"] });
       toast.success("Opgeslagen");
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("rmu_zekeringen").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteRow("rmu_zekeringen", id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-rmu-zekeringen"] });
       toast.success("Verwijderd");
