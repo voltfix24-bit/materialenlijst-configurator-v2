@@ -1,25 +1,18 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, ChevronLeft, ChevronRight, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDelete, DataTable, FormDialog, FormField, FormRow, RowActions } from "./shared";
+import {
+  deleteArtikel,
+  fetchArtikelCategorieen,
+  fetchArtikelenPaged,
+  saveArtikel,
+  type BeheerArtikel as Artikel,
+} from "@/lib/data/artikelenRepo";
 import { cn } from "@/lib/utils";
-
-type Artikel = {
-  id: string;
-  artikel_nummer: string;
-  korte_omschrijving: string;
-  eenheid: string;
-  basis_eenheid: string | null;
-  aantal_in_verpakking: number | null;
-  categorie: string | null;
-  status: string | null;
-  alternatief_artikel_nummer: string | null;
-  actief: boolean;
-};
 
 const STATUSSEN = ["Actief", "Uitgelopen", "Geblokkeerd"];
 const EENHEDEN = ["Stuks", "Doos", "Rol", "Meter"];
@@ -42,59 +35,40 @@ export function ArtikelenTab() {
 
   const { data: categorieen = [] } = useQuery({
     queryKey: ["artikel-categorieen"],
-    queryFn: async () => {
-      const { data } = await supabase.from("artikelen").select("categorie").not("categorie", "is", null);
-      return Array.from(new Set((data ?? []).map((r) => r.categorie).filter(Boolean))) as string[];
-    },
+    queryFn: fetchArtikelCategorieen,
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ["beheer-artikelen", search, statusFilter, catFilter, page],
-    queryFn: async () => {
-      let q = supabase.from("artikelen").select("*", { count: "exact" }).order("artikel_nummer");
-      if (search.trim().length >= 2) {
-        const s = search.replace(/[%,]/g, "");
-        q = q.or(`artikel_nummer.ilike.%${s}%,korte_omschrijving.ilike.%${s}%`);
-      }
-      if (statusFilter) q = q.eq("status", statusFilter);
-      if (catFilter) q = q.eq("categorie", catFilter);
-      q = q.range(page * PAGE, page * PAGE + PAGE - 1);
-      const { data, count } = await q;
-      return { rows: (data ?? []) as Artikel[], count: count ?? 0 };
-    },
+    queryFn: () =>
+      fetchArtikelenPaged({
+        search,
+        status: statusFilter,
+        categorie: catFilter,
+        page,
+        pageSize: PAGE,
+      }),
   });
 
   const save = useMutation({
-    mutationFn: async (a: Partial<Artikel>) => {
-      const payload = { ...a };
-      if (a.id) {
-        const { error } = await supabase.from("artikelen").update(payload).eq("id", a.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("artikelen").insert(payload as any);
-        if (error) throw error;
-      }
-    },
+    mutationFn: (a: Partial<Artikel>) => saveArtikel(a),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-artikelen"] });
       toast.success("Opgeslagen");
       setOpen(false);
       setEditing(null);
     },
-    onError: (e: any) => toast.error(e.message ?? "Opslaan mislukt"),
+    onError: (e: Error) => toast.error(e.message ?? "Opslaan mislukt"),
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("artikelen").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => deleteArtikel(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["beheer-artikelen"] });
       toast.success("Verwijderd");
       setToDelete(null);
     },
-    onError: (e: any) => toast.error(e.message ?? "Verwijderen mislukt"),
+    onError: (e: Error) => toast.error(e.message ?? "Verwijderen mislukt"),
   });
 
   const total = data?.count ?? 0;
