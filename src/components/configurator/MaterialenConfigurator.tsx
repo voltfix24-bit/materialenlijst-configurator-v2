@@ -44,6 +44,14 @@ import { LsRekSection } from "./sections/LsRekSection";
 import { LsSection } from "./sections/LsSection";
 import { GgiSection } from "./sections/GgiSection";
 
+/** Afgeleide status die de configurator aan zijn parent (de case-header) doorgeeft. */
+export interface ConfiguratorStatus {
+  completed: number;
+  total: number;
+  saving: boolean;
+  previewCount: number;
+}
+
 interface Props {
   caseId: string;
   caseType: string;
@@ -53,9 +61,8 @@ interface Props {
   /** Datum van de laatste export (= geplaatste bestelling), of null. */
   besteldOp?: string | null;
   onDirtyChange?: (isDirty: boolean) => void;
-  onProgressChange?: (completed: number, total: number) => void;
-  onSavingChange?: (saving: boolean) => void;
-  onPreviewCountChange?: (count: number) => void;
+  /** Afgeleide status (voortgang, opslaan-bezig, preview-telling) in één callback. */
+  onStatusChange?: (status: ConfiguratorStatus) => void;
   onWinkelwagenItemsChange?: (items: PreviewItem[]) => void;
   saveSignal?: number;
   mobileTab?: "config" | "preview";
@@ -97,9 +104,7 @@ export function MaterialenConfigurator({
   initialAanpassingen,
   besteldOp,
   onDirtyChange,
-  onProgressChange,
-  onSavingChange,
-  onPreviewCountChange,
+  onStatusChange,
   onWinkelwagenItemsChange,
   saveSignal,
   mobileTab = "config",
@@ -286,14 +291,6 @@ export function MaterialenConfigurator({
 
   const update = (patch: Partial<MaterialenConfig>) => setConfig((c) => ({ ...c, ...patch }));
 
-  // State doorgeven aan parent (header)
-  useEffect(() => {
-    onProgressChange?.(completedCount, totalVisible);
-  }, [completedCount, totalVisible, onProgressChange]);
-  useEffect(() => {
-    onPreviewCountChange?.(preview.length);
-  }, [preview.length, onPreviewCountChange]);
-
   const opslaan = useMutation({
     mutationFn: async () => {
       // Waarschuw maar blokkeer niet bij onvolledige secties
@@ -451,10 +448,16 @@ export function MaterialenConfigurator({
     onError: (e: Error) => toast.error(e.message),
   });
 
-  // Saving status doorgeven
+  // Afgeleide status (voortgang, opslaan-bezig, preview-telling) in één callback
+  // naar de parent (header). Eén effect i.p.v. losse callbacks per veld.
   useEffect(() => {
-    onSavingChange?.(opslaan.isPending);
-  }, [opslaan.isPending, onSavingChange]);
+    onStatusChange?.({
+      completed: completedCount,
+      total: totalVisible,
+      saving: opslaan.isPending,
+      previewCount: preview.length,
+    });
+  }, [completedCount, totalVisible, opslaan.isPending, preview.length, onStatusChange]);
 
   // Save trigger vanuit de header
   const lastSaveSignalRef = useRef(saveSignal ?? 0);

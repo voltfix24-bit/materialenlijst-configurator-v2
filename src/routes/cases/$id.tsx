@@ -421,9 +421,12 @@ function CaseDetailPage() {
               initialAanpassingen={initialAanpassingen}
               besteldOp={laatsteExport?.created_at ?? null}
               onDirtyChange={setIsDirty}
-              onProgressChange={(c, t) => { setCompleted(c); setTotal(t); }}
-              onSavingChange={setSaving}
-              onPreviewCountChange={setPreviewCount}
+              onStatusChange={(s) => {
+                setCompleted(s.completed);
+                setTotal(s.total);
+                setSaving(s.saving);
+                setPreviewCount(s.previewCount);
+              }}
               onWinkelwagenItemsChange={(items) => { winkelwagenItemsRef.current = items; }}
               saveSignal={saveSignal}
               mobileTab={mobileTab}
